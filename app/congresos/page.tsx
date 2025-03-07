@@ -1,10 +1,6 @@
-import Hero from "@/components/hero";
-import Features from "@/components/features";
-import PublicationTypes from "@/components/publication-types";
-import Pricing from "@/components/pricing";
-import UpcomingEditions from "@/components/upcoming-editions";
-import Contact from "@/components/contact";
+import React from "react";
 import CongresosCard from "@/components/CongresosCard";
+import { Button } from "@/components/ui/button";
 
 const congresos = [
   {
@@ -38,16 +34,36 @@ const congresos = [
     ],
   },
 ];
-export default function Home() {
+
+export default function CongresosPage() {
   return (
-    <>
-      <Hero />
-      <Features />
-      <PublicationTypes />
-      <Pricing />
-      <CongresosCard congresos={congresos} />
-      <UpcomingEditions />
-      <Contact />
-    </>
+    <section className='py-16'>
+      <div className='container mx-auto px-4'>
+        <h1 className='text-3xl font-bold text-center mb-8'>Congresos</h1>
+
+        <CongresosCard congresos={congresos} />
+
+        {/* Pack Especial – Miembro del Comité */}
+        <div className='bg-white p-6 rounded-lg shadow mt-8'>
+          <h2 className='text-xl font-bold mb-2'>
+            Pack Especial – Miembro del Comité
+          </h2>
+          <p className='mb-4'>
+            Aprovecha un precio especial si deseas participar como miembro del
+            Comité Científico:
+          </p>
+          <ul className='list-disc list-inside pl-2'>
+            <li>Pack 2 Congresos: 65€</li>
+            <li>
+              Si ya estás inscrito en uno de los congresos, precio especial: 55€
+              (te proporcionaremos un cupón)
+            </li>
+          </ul>
+          <div className='mt-6'>
+            <Button>Solicitar ser parte del Comité Científico</Button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

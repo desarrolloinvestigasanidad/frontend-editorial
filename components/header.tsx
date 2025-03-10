@@ -68,21 +68,19 @@ export default function Header() {
             <Link href='/' className='text-gray-600 hover:text-primary'>
               Inicio
             </Link>
-            <Link href='/contacto' className='text-gray-600 hover:text-primary'>
+            <Link href='/contact' className='text-gray-600 hover:text-primary'>
               Contacto
             </Link>
-            <Link
-              href='/congresos'
-              className='text-gray-600 hover:text-primary'>
+            <Link href='/congress' className='text-gray-600 hover:text-primary'>
               Congresos
             </Link>
 
             {/* Si el usuario está logueado, mostramos su nombre y Logout */}
             {user ? (
               <div className='flex items-center space-x-4'>
-                <span className='text-gray-600'>
+                <Link href='/profile' className='text-gray-600'>
                   Hola, {user.firstName || user.id}
-                </span>
+                </Link>
                 <Button variant='outline' onClick={handleLogout}>
                   Logout
                 </Button>

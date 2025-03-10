@@ -62,6 +62,19 @@ const pricingData = [
       "Promoción destacada",
     ],
   },
+  {
+    titulo: "Libro completo",
+    precio: "99 €",
+    destacado: true,
+    subtitulo: "Ilimitada como coautor",
+    caracteristicas: [
+      "Participación como autor",
+      "Revisión por expertos",
+      "Certificado oficial",
+      "ISBN individual",
+      "Promoción destacada",
+    ],
+  },
 ];
 
 export default function Pricing() {

@@ -38,7 +38,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        window.location.href = "/profile";
+        window.location.href = "/";
       } else {
         setMessage(data.message || "Error al iniciar sesión.");
       }

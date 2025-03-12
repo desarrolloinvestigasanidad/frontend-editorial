@@ -3,7 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  FileBadge,
+  Home,
+  LibraryIcon,
+  User,
+} from "lucide-react";
 
 interface Edition {
   id: number;
@@ -126,6 +133,47 @@ export default function LibraryPage() {
             Volver
           </Button>
         </Link>
+        <header className='flex flex-col items-center justify-center gap-4 mb-8 md:flex-row md:items-center md:justify-start'>
+          {/* Opción: "Inicio" */}
+          <Link
+            href='/'
+            className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
+            <Home className='h-8 w-8' />
+            <span className='text-sm mt-1'>Inicio</span>
+          </Link>
+
+          {/* Opción: "Mi Perfil" */}
+          <Link
+            href='/profile'
+            className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
+            <User className='h-8 w-8' />
+            <span className='text-sm mt-1'>Mi Perfil</span>
+          </Link>
+
+          {/* Opción: "Certificados" (provisionales/definitivos) */}
+          <Link
+            href='/certificates'
+            className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
+            <FileBadge className='h-8 w-8' />
+            <span className='text-sm mt-1'>Certificados</span>
+          </Link>
+
+          {/* Opción: "Mis Publicaciones" */}
+          <Link
+            href='/publications'
+            className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
+            <BookOpen className='h-8 w-8' />
+            <span className='text-sm mt-1'>Mis Publicaciones</span>
+          </Link>
+
+          {/* Opción: "Biblioteca" */}
+          <Link
+            href='/library'
+            className='flex flex-col items-center text-gray-700 hover:text-blue-600 transition-colors mx-2'>
+            <LibraryIcon className='h-8 w-8' />
+            <span className='text-sm mt-1'>Biblioteca</span>
+          </Link>
+        </header>
         <h1 className='text-xl font-bold'>Biblioteca</h1>
       </div>
 

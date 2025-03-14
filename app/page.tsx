@@ -17,7 +17,7 @@ export default function UserProfile() {
   return (
     <div className='container mx-auto px-4 py-8'>
       {/* Encabezado / Menú principal */}
-      <header className='flex flex-col items-center justify-center gap-4 mb-8 md:flex-row md:items-center md:justify-start'>
+      <header className='flex flex-col items-center justify-center gap-4 mb-8 md:flex-row md:items-center md:center md:gap-8'>
         {/* Opción: "Inicio" */}
         <Link
           href='/'
@@ -71,20 +71,6 @@ export default function UserProfile() {
           <Link href='/books' className='block w-full'>
             <Button variant='outline' className='w-full'>
               Ver Libros
-            </Button>
-          </Link>
-        </div>
-
-        {/* Tarjeta 2: Revistas */}
-        <div className='bg-green-50 p-6 rounded-xl shadow-sm border border-green-200 flex flex-col items-center text-center'>
-          <Newspaper className='h-16 w-16 text-green-600 mb-4' />
-          <h3 className='text-xl font-semibold mb-2'>Revistas</h3>
-          <p className='text-gray-600 mb-4'>
-            Publicaciones en revistas científicas
-          </p>
-          <Link href='/journals' className='block w-full'>
-            <Button variant='outline' className='w-full'>
-              Ver Revistas
             </Button>
           </Link>
         </div>

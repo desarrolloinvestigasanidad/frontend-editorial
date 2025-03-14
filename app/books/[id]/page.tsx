@@ -54,7 +54,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
         <Link href={`/books/${bookId}/payment`} className='group'>
           <div className='bg-blue-50 p-4 rounded-lg hover:shadow flex flex-col items-center text-center'>
             <CreditCard className='h-10 w-10 text-blue-600 mb-2' />
-            <h2 className='font-semibold text-blue-700'>Pago</h2>
+            <h2 className='font-semibold text-blue-700'>Pago de tasas</h2>
           </div>
         </Link>
 
@@ -62,7 +62,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
         <Link href={`/books/${bookId}/coordinate`} className='group'>
           <div className='bg-blue-50 p-4 rounded-lg hover:shadow flex flex-col items-center text-center'>
             <Users className='h-10 w-10 text-blue-600 mb-2' />
-            <h2 className='font-semibold text-blue-700'>Coordinar libro</h2>
+            <h2 className='font-semibold text-blue-700'>Mis capítulos</h2>
           </div>
         </Link>
 
@@ -78,7 +78,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
         <Link href={`/books/${bookId}/my-chapters`} className='group'>
           <div className='bg-blue-50 p-4 rounded-lg hover:shadow flex flex-col items-center text-center'>
             <FileText className='h-10 w-10 text-blue-600 mb-2' />
-            <h2 className='font-semibold text-blue-700'>Mis capítulos</h2>
+            <h2 className='font-semibold text-blue-700'>Libros definitivos</h2>
           </div>
         </Link>
 

@@ -124,7 +124,9 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
 
       {/* Encabezado principal */}
       <header className='flex items-center justify-between mb-6'>
-        <h1 className='text-2xl font-bold text-orange-600'>Libro Propio</h1>
+        <h1 className='text-2xl font-bold text-orange-600'>
+          Envía tu capítulo
+        </h1>
         <Button
           variant='outline'
           className='border border-orange-300 text-orange-600 hover:bg-orange-50'>

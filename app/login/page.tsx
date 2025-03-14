@@ -23,16 +23,19 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res: Response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: formData.id,
-          password: formData.password,
-        }),
-      });
+      const res: Response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: formData.id,
+            password: formData.password,
+          }),
+        }
+      );
 
       const data = await res.json();
 

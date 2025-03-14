@@ -145,13 +145,16 @@ export default function RegisterPage() {
     }
 
     try {
-      const res: Response = await fetch("http://localhost:5000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const res: Response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       const data = await res.json();
       if (res.ok) {

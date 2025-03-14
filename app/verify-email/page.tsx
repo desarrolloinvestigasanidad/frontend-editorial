@@ -15,7 +15,7 @@ function VerifyEmailContent() {
       return;
     }
 
-    fetch(`http://localhost:5000/api/verify-email?token=${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${token}`)
       .then((res) => {
         if (!res.ok) throw new Error("Verification failed.");
         return res.json();

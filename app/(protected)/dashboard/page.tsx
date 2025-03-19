@@ -1,26 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Library, PlusCircle } from "lucide-react";
-import Link from "next/link";
 
 export default function DashboardPage() {
-  // Datos de la edición actualmente disponible
-  const currentEdition = {
-    name: "Edición de Libros Electrónicos Abril 2025 Investiga Sanidad",
-    books: [
-      "Lecciones en Ciencias de la Salud y Gestión Sanitaria",
-      "Lecciones en Innovación y Desarrollo en el Ámbito de la Salud",
-      "Lecciones en Salud, Tecnología y Nuevos Modelos de Atención",
-      "Lecciones en Avances Científicos y Gestión del Conocimiento en Salud",
-      "Lecciones de Prevención y Atención Sanitaria Básica",
-      "Lecciones de Promoción de la Salud y Prevención de Enfermedades",
-      "Lecciones de Salud Pública y Prevención Comunitaria",
-      "Lecciones de Cuidados y Atención a la Salud de los pacientes",
-    ],
-  };
+  const [editions, setEditions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`)
+      .then((res) => res.json())
+      .then((data) => {
+        setEditions(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching editions:", error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div>Cargando ediciones...</div>;
 
   return (
     <div className='space-y-6'>
@@ -29,51 +33,39 @@ export default function DashboardPage() {
       </div>
 
       <div className='grid gap-4 md:grid-cols-2'>
-        {/* Card: Edición Disponible (con 8 libros) */}
-        <Card className='bg-gradient-to-br from-purple-50 to-white'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
-            <CardTitle className='text-sm font-medium'>
-              Edición Disponible
-            </CardTitle>
-            <Library className='w-4 h-4 text-purple-600' />
-          </CardHeader>
+        {/* Lista de ediciones obtenidas desde la BBDD */}
+        {editions.length > 0 ? (
+          editions.map((edition) => (
+            <Card
+              key={edition.id}
+              className='bg-gradient-to-br from-purple-50 to-white'>
+              <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                <CardTitle className='text-sm font-medium'>
+                  {edition.name}
+                </CardTitle>
+                <Library className='w-4 h-4 text-purple-600' />
+              </CardHeader>
+              <CardContent>
+                <p className='text-xs text-muted-foreground mt-2'>
+                  {edition.description}
+                </p>
+                <div className='flex gap-2 mt-4'>
+                  <Link href={`/editions/${edition.id}/books`}>
+                    <Button
+                      variant='outline'
+                      className='border-purple-200 hover:bg-purple-50'>
+                      Participar en Edición
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div>No hay ediciones disponibles.</div>
+        )}
 
-          <CardContent>
-            <div className='text-lg font-bold'>{currentEdition.name}</div>
-            <p className='text-xs text-muted-foreground mt-2'>
-              En esta edición contamos con {currentEdition.books.length} libros:
-            </p>
-            <ul className='mt-2 text-xs text-muted-foreground list-disc list-inside'>
-              {currentEdition.books.map((book, index) => (
-                <li key={index}>{book}</li>
-              ))}
-            </ul>
-
-            <p className='text-xs text-muted-foreground mt-4'>
-              Envía tus capítulos a esta edición o crea el tuyo propio:
-            </p>
-
-            {/* Dos botones: Participar en Edición / Crear tu propio libro */}
-            <div className='flex gap-2 mt-4'>
-              <Link href='/books'>
-                <Button
-                  variant='outline'
-                  className='border-purple-200 hover:bg-purple-50'>
-                  Participar en Edición
-                </Button>
-              </Link>
-              <Link href='/create-book'>
-                <Button
-                  variant='outline'
-                  className='border-purple-200 hover:bg-purple-50'>
-                  Crear tu propio libro
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card: Biblioteca (libros ya publicados) */}
+        {/* Card: Biblioteca de libros publicados */}
         <Card className='bg-gradient-to-br from-yellow-50 to-white'>
           <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
             <CardTitle className='text-sm font-medium'>Biblioteca</CardTitle>
@@ -89,6 +81,28 @@ export default function DashboardPage() {
                 variant='outline'
                 className='w-full border-yellow-200 hover:bg-yellow-50'>
                 Ver Biblioteca
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Card: Crear libro propio */}
+        <Card className='bg-gradient-to-br from-green-50 to-white'>
+          <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+            <CardTitle className='text-sm font-medium'>
+              Crear Libro Propio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-lg font-bold'>¿No encuentras una edición?</div>
+            <p className='text-xs text-muted-foreground mt-2'>
+              Crea tu propio libro y coordina tus capítulos.
+            </p>
+            <Link href='/create-book'>
+              <Button
+                variant='outline'
+                className='mt-4 border-green-200 hover:bg-green-50'>
+                Crear tu propio libro
               </Button>
             </Link>
           </CardContent>

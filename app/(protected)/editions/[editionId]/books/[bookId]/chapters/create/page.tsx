@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,39 +18,80 @@ export default function CreateChapterPage() {
   const { editionId, bookId } = useParams();
   const router = useRouter();
 
-  // Campos para el capítulo
+  // Estados para los campos del capítulo
   const [title, setTitle] = useState("");
   const [studyType, setStudyType] = useState("");
+  const [methodology, setMethodology] = useState("");
   const [introduction, setIntroduction] = useState("");
   const [objectives, setObjectives] = useState("");
   const [results, setResults] = useState("");
   const [discussion, setDiscussion] = useState("");
   const [bibliography, setBibliography] = useState("");
 
-  // Autor: en un entorno real, obtendrás el authorId del usuario autenticado
-  const [authorId] = useState("id_del_usuario");
+  // Estado para authorId obtenido desde GET /profile
+  const [authorId, setAuthorId] = useState("");
+
+  // Obtener perfil y extraer authorId
+  useEffect(() => {
+    const fetchProfile = async () => {
+      console.log("Llamando a fetchProfile...");
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/profile`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (!res.ok) {
+            throw new Error("Error al obtener el perfil");
+          }
+          const data = await res.json();
+          console.log("Perfil obtenido:", data);
+          if (data && data.id) {
+            setAuthorId(data.id);
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+      } else {
+        console.warn("Token no encontrado en sessionStorage.");
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Verificamos que se haya obtenido el authorId
+    if (!authorId) {
+      setError("No se pudo obtener el perfil del autor. Intente nuevamente.");
+      return;
+    }
     setLoading(true);
     setError("");
 
     try {
-      // Incluimos "content" para evitar el error en la base de datos.
-      // En este ejemplo usamos la introducción como fallback; podrías concatenar otros campos si lo prefieres.
+      // Se envía el campo "content" usando la introducción como fallback.
       const body = {
         title,
         studyType,
+        methodology,
         introduction,
         objectives,
         results,
         discussion,
         bibliography,
         authorId,
-        content: introduction, // Valor de fallback para "content"
+        content: introduction,
       };
 
       const res = await fetch(
@@ -67,7 +108,6 @@ export default function CreateChapterPage() {
         throw new Error(data.message || "Error al crear el capítulo");
       }
 
-      // Redirige a la lista de capítulos del libro
       router.push(`/editions/${editionId}/books/${bookId}/chapters`);
     } catch (err: any) {
       setError(err.message);
@@ -80,6 +120,7 @@ export default function CreateChapterPage() {
     <form onSubmit={handleSubmit} className='space-y-6 p-4'>
       <h1 className='text-xl font-bold mb-4'>Crear Capítulo</h1>
       {error && <p className='text-red-600'>{error}</p>}
+
       <div>
         <Label>Título del capítulo</Label>
         <Input
@@ -89,6 +130,7 @@ export default function CreateChapterPage() {
           required
         />
       </div>
+
       {/* Tipo de estudio */}
       <div>
         <Label className='mb-1'>Tipo de estudio</Label>
@@ -107,6 +149,18 @@ export default function CreateChapterPage() {
             </SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Metodología */}
+      <div>
+        <Label>Metodología</Label>
+        <Textarea
+          value={methodology}
+          onChange={(e) => setMethodology(e.target.value)}
+          rows={5}
+          placeholder='Describe la metodología utilizada (obligatorio)'
+          required
+        />
       </div>
 
       {/* Introducción */}

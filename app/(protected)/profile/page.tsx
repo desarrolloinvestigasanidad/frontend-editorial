@@ -2,9 +2,16 @@
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Briefcase, Calendar } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Asegúrate de tener este componente
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 
 type UserData = {
@@ -12,9 +19,12 @@ type UserData = {
   lastName: string;
   email: string;
   phone: string;
-  category: string;
+  professionalCategory: string;
+  gender: string;
+  address: string;
+  interests: string;
   country: string;
-  region: string;
+  autonomousCommunity: string;
   province: string;
   createdAt: string;
 };
@@ -41,6 +51,7 @@ export default function ProfilePage() {
       .then((res) => res.json())
       .then((data) => {
         setUserData(data);
+        console.log(data);
         setLoading(false);
       })
       .catch((error) => {
@@ -56,16 +67,21 @@ export default function ProfilePage() {
         lastName: userData.lastName || "",
         email: userData.email || "",
         phone: userData.phone || "",
-        category: userData.category || "",
+        professionalCategory: userData.professionalCategory || "",
+        gender: userData.gender || "",
+        address: userData.address || "",
+        interests: userData.interests || "",
         country: userData.country || "",
-        region: userData.region || "",
+        autonomousCommunity: userData.autonomousCommunity || "",
         province: userData.province || "",
       });
     }
     setEditing(true);
   };
 
-  const handleInputChange = (e: { target: { name: any; value: any } }) => {
+  const handleInputChange = (e: {
+    target: { name: string; value: string };
+  }) => {
     const { name, value } = e.target;
     setEditData((prev) => ({ ...prev, [name]: value }));
   };
@@ -139,7 +155,9 @@ export default function ProfilePage() {
                 {userData.firstName} {userData.lastName}
               </h2>
             )}
-            <p className='text-sm text-muted-foreground'>{userData.category}</p>
+            <p className='text-sm text-muted-foreground'>
+              {userData.professionalCategory}
+            </p>
             <p className='text-xs text-muted-foreground mt-1'>
               Miembro desde{" "}
               {new Date(userData.createdAt).toLocaleDateString("es-ES", {
@@ -149,7 +167,9 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div className='space-y-4'>
+          {/* Layout de información usando grid */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            {/* Email */}
             <div className='flex items-center gap-3'>
               <div className='bg-purple-100 p-2 rounded-full'>
                 <Mail className='h-4 w-4 text-purple-700' />
@@ -170,6 +190,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Teléfono */}
             <div className='flex items-center gap-3'>
               <div className='bg-purple-100 p-2 rounded-full'>
                 <Phone className='h-4 w-4 text-purple-700' />
@@ -190,14 +211,118 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Categoría Profesional */}
             <div className='flex items-center gap-3'>
+              <div className='bg-purple-100 p-2 rounded-full'>
+                <Briefcase className='h-4 w-4 text-purple-700' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>
+                  Categoría profesional
+                </p>
+                {editing ? (
+                  <Input
+                    name='professionalCategory'
+                    value={editData?.professionalCategory || ""}
+                    onChange={handleInputChange}
+                    placeholder='Categoría profesional'
+                    className='text-sm'
+                  />
+                ) : (
+                  <p className='text-sm'>{userData.professionalCategory}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Género */}
+            <div className='flex items-center gap-3'>
+              <div className='bg-purple-100 p-2 rounded-full'>
+                <Briefcase className='h-4 w-4 text-purple-700' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Género</p>
+                {editing ? (
+                  <select
+                    name='gender'
+                    value={editData?.gender || ""}
+                    onChange={handleInputChange}
+                    className='w-full border border-gray-200 rounded-md p-2 bg-white text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                    <option value=''>Selecciona tu género</option>
+                    <option value='M'>Masculino</option>
+                    <option value='F'>Femenino</option>
+                    <option value='Otro'>Otro</option>
+                  </select>
+                ) : (
+                  <p className='text-sm'>{userData.gender}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Dirección */}
+            <div className='flex items-center gap-3'>
+              <div className='bg-purple-100 p-2 rounded-full'>
+                <MapPin className='h-4 w-4 text-purple-700' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Dirección</p>
+                {editing ? (
+                  <Input
+                    name='address'
+                    value={editData?.address || ""}
+                    onChange={handleInputChange}
+                    placeholder='Dirección'
+                    className='text-sm'
+                  />
+                ) : (
+                  <p className='text-sm'>{userData.address}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Intereses */}
+            <div className='flex items-center gap-3'>
+              <div className='bg-purple-100 p-2 rounded-full'>
+                <Briefcase className='h-4 w-4 text-purple-700' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Intereses</p>
+                {editing ? (
+                  <Input
+                    name='interests'
+                    value={editData?.interests || ""}
+                    onChange={handleInputChange}
+                    placeholder='Intereses'
+                    className='text-sm'
+                  />
+                ) : (
+                  <p className='text-sm'>{userData.interests}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Ubicación */}
+            <div className='flex items-center gap-3 col-span-1 sm:col-span-2'>
               <div className='bg-purple-100 p-2 rounded-full'>
                 <MapPin className='h-4 w-4 text-purple-700' />
               </div>
               <div>
                 <p className='text-xs text-muted-foreground'>Ubicación</p>
                 {editing ? (
-                  <div className='grid grid-cols-1 gap-2'>
+                  <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                    <Input
+                      name='country'
+                      value={editData?.country || ""}
+                      onChange={handleInputChange}
+                      placeholder='País'
+                      className='text-sm'
+                    />
+                    <Input
+                      name='autonomousCommunity'
+                      value={editData?.autonomousCommunity || ""}
+                      onChange={handleInputChange}
+                      placeholder='Comunidad Autónoma'
+                      className='text-sm'
+                    />
                     <Input
                       name='province'
                       value={editData?.province || ""}
@@ -205,59 +330,29 @@ export default function ProfilePage() {
                       placeholder='Provincia'
                       className='text-sm'
                     />
-                    <Input
-                      name='region'
-                      value={editData?.region || ""}
-                      onChange={handleInputChange}
-                      placeholder='Comunidad Autónoma'
-                      className='text-sm'
-                    />
                   </div>
                 ) : (
                   <p className='text-sm'>
-                    {userData.province}, {userData.region}
+                    {userData.province}, {userData.autonomousCommunity},{" "}
+                    {userData.country}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Briefcase className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Categoría</p>
-                {editing ? (
-                  <Input
-                    name='category'
-                    value={editData?.category || ""}
-                    onChange={handleInputChange}
-                    placeholder='Categoría'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.category}</p>
-                )}
-              </div>
-            </div>
-
-            <div className='flex items-center gap-3'>
+            {/* Miembro desde */}
+            <div className='flex items-center gap-3 col-span-1 sm:col-span-2'>
               <div className='bg-purple-100 p-2 rounded-full'>
                 <Calendar className='h-4 w-4 text-purple-700' />
               </div>
               <div>
-                <p className='text-xs text-muted-foreground'>País</p>
-                {editing ? (
-                  <Input
-                    name='country'
-                    value={editData?.country || ""}
-                    onChange={handleInputChange}
-                    placeholder='País'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.country}</p>
-                )}
+                <p className='text-xs text-muted-foreground'>Miembro desde</p>
+                <p className='text-sm'>
+                  {new Date(userData.createdAt).toLocaleDateString("es-ES", {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
           </div>
@@ -278,6 +373,51 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Componente StepIndicator
+function StepIndicator({
+  stepNumber,
+  label,
+  active,
+  completed,
+}: {
+  stepNumber: number;
+  label: string;
+  active: boolean;
+  completed?: boolean;
+}) {
+  return (
+    <div
+      className={`flex flex-col items-center transition-all duration-300 ${
+        active ? "opacity-100" : completed ? "opacity-90" : "opacity-60"
+      }`}>
+      <div
+        className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+          completed
+            ? "bg-purple-600 text-white"
+            : active
+            ? "border-2 border-purple-600 bg-white text-purple-600"
+            : "border-2 border-gray-300 bg-transparent text-gray-400"
+        }`}>
+        {completed ? (
+          <CheckCircle className='w-4 h-4 md:w-5 md:h-5' />
+        ) : (
+          stepNumber
+        )}
+      </div>
+      <span
+        className={`text-xs md:text-sm font-medium mt-1 ${
+          active
+            ? "text-purple-900"
+            : completed
+            ? "text-purple-700"
+            : "text-gray-500"
+        }`}>
+        {label}
+      </span>
     </div>
   );
 }

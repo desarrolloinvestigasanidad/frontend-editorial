@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Library, PlusCircle } from "lucide-react";
+import { Library, PlusCircle, BookOpen } from "lucide-react";
 
 export default function DashboardPage() {
   const [editions, setEditions] = useState<any[]>([]);
@@ -41,7 +41,7 @@ export default function DashboardPage() {
               className='bg-gradient-to-br from-purple-50 to-white'>
               <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
                 <CardTitle className='text-sm font-medium'>
-                  {edition.name}
+                  {edition.title || edition.name}
                 </CardTitle>
                 <Library className='w-4 h-4 text-purple-600' />
               </CardHeader>
@@ -49,12 +49,14 @@ export default function DashboardPage() {
                 <p className='text-xs text-muted-foreground mt-2'>
                   {edition.description}
                 </p>
-                <div className='flex gap-2 mt-4'>
+                <div className='flex flex-col gap-2 mt-4'>
+                  Participar en Edición
+                  {/* Ver libros existentes para mandar capítulos */}
                   <Link href={`/editions/${edition.id}/books`}>
                     <Button
                       variant='outline'
-                      className='border-purple-200 hover:bg-purple-50'>
-                      Participar en Edición
+                      className='border-purple-200 hover:bg-purple-50 w-full'>
+                      Ver Libros / Mandar Capítulos
                     </Button>
                   </Link>
                 </div>
@@ -92,6 +94,7 @@ export default function DashboardPage() {
             <CardTitle className='text-sm font-medium'>
               Crear Libro Propio
             </CardTitle>
+            <BookOpen className='w-4 h-4 text-green-600' />
           </CardHeader>
           <CardContent>
             <div className='text-lg font-bold'>¿No encuentras una edición?</div>
@@ -101,7 +104,7 @@ export default function DashboardPage() {
             <Link href='/create-book'>
               <Button
                 variant='outline'
-                className='mt-4 border-green-200 hover:bg-green-50'>
+                className='mt-4 border-green-200 hover:bg-green-50 w-full'>
                 Crear tu propio libro
               </Button>
             </Link>

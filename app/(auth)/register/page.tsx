@@ -1,9 +1,9 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import Terminos from "@/components/terminos";
 
 // TODAS las comunidades y provincias
 const regionsProvinces: { [key: string]: string[] } = {
@@ -69,19 +69,16 @@ const regionsProvinces: { [key: string]: string[] } = {
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
-  // Si ya hay token, redirige a /dashboard
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    }
-  }, [router]);
-
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [message, setMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [step, setStep] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // Datos del formulario
+  // Campos actualizados según el nuevo modelo (se ha eliminado 'dni')
   const [formData, setFormData] = useState({
     id: "",
     password: "",
@@ -90,74 +87,68 @@ export default function RegisterPage() {
     firstName: "",
     lastName: "",
     phone: "",
-    category: "",
+    professionalCategory: "",
+    gender: "",
+    address: "",
+    interests: "",
     country: "España",
-    region: "",
+    autonomousCommunity: "",
     province: "",
   });
 
-  // Estado para el paso actual (0, 1, 2)
-  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
-  // Estados para mostrar u ocultar contraseña
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Añadir una función de validación de email y un estado para el error de email
-  const [emailError, setEmailError] = useState("");
-
-  // Añadir esta función de validación de email después de la declaración de estados:
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Manejo de cambios
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Si cambia el país y no es España, se vacían region/province
     if (name === "country" && value !== "España") {
       setFormData((prev) => ({
         ...prev,
-        region: "",
+        autonomousCommunity: "",
         province: "",
       }));
     }
   };
 
-  // Modificar la función handleNext para validar el email en el primer paso:
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setEmailError("");
 
     if (step === 0) {
-      // Validar credenciales
-      const { id, password, confirmPassword, email } = formData;
+      const { id, email, password, confirmPassword } = formData;
       if (!id || !email || !password || !confirmPassword) {
-        setMessage("Por favor, completa todos los campos requeridos.");
+        setMessage(
+          "Por favor, completa todos los campos requeridos en Credenciales."
+        );
         return;
       }
-
-      // Validar formato de email
       if (!validateEmail(email)) {
         setEmailError("Por favor, introduce un email válido.");
         return;
       }
-
       if (password !== confirmPassword) {
         setMessage("Las contraseñas no coinciden.");
         return;
       }
     } else if (step === 1) {
-      // Validar datos personales
-      const { firstName, lastName, phone, category } = formData;
-      if (!firstName || !lastName || !phone || !category) {
-        setMessage("Por favor, completa todos los campos requeridos.");
+      const { firstName, lastName, phone, professionalCategory } = formData;
+      if (!firstName || !lastName || !phone || !professionalCategory) {
+        setMessage(
+          "Por favor, completa todos los campos requeridos en Datos Personales."
+        );
         return;
       }
     }
@@ -170,15 +161,13 @@ export default function RegisterPage() {
     setStep((prev) => prev - 1);
   };
 
-  // Manejar envío final
   const handleSubmitFinal = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setIsLoading(true);
 
-    // Validar ubicacion
     if (formData.country === "España") {
-      if (!formData.region || !formData.province) {
+      if (!formData.autonomousCommunity || !formData.province) {
         setMessage("Por favor, selecciona tu comunidad y provincia.");
         setIsLoading(false);
         return;
@@ -186,17 +175,16 @@ export default function RegisterPage() {
     }
 
     try {
-      const res: Response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Se envía infoAccepted igual a termsAccepted
+        body: JSON.stringify({
+          ...formData,
+          termsAccepted,
+          infoAccepted: termsAccepted,
+        }),
+      });
       const data = await res.json();
       if (res.ok) {
         setMessage(
@@ -214,7 +202,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Ajustar el mensaje de registro completado para mejor responsividad
   if (registrationComplete) {
     return (
       <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
@@ -236,7 +223,7 @@ export default function RegisterPage() {
           </p>
           <Button
             onClick={() => router.push("/login")}
-            className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 transition-all duration-300'>
+            className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
             Ir a iniciar sesión
           </Button>
         </motion.div>
@@ -244,16 +231,14 @@ export default function RegisterPage() {
     );
   }
 
-  // Render del multi-step con layout
   return (
-    // Ajustar el contenedor principal para mejor responsividad
     <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className='bg-white w-full max-w-5xl shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row'>
-        {/* Columna izquierda con imagen y overlay - Ajustada para mejor responsividad */}
+        {/* Columna izquierda: Imagen y overlay */}
         <div className='relative md:w-2/5 min-h-[250px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700'>
           <Image
             src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'
@@ -285,9 +270,8 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Columna derecha: Formulario - Ajustada para mejor responsividad */}
+        {/* Columna derecha: Formulario */}
         <div className='md:w-3/5 p-6 md:p-8'>
-          {/* Indicadores de pasos en la parte superior - Ajustados para mejor responsividad */}
           <div className='flex justify-center mb-6 md:mb-8'>
             <div className='flex space-x-2 md:space-x-4 overflow-x-auto w-full justify-center'>
               <StepIndicator
@@ -304,7 +288,7 @@ export default function RegisterPage() {
               />
               <StepIndicator
                 stepNumber={3}
-                label='Ubicación'
+                label='Ubicación y Términos'
                 active={step === 2}
                 completed={step > 2}
               />
@@ -319,69 +303,44 @@ export default function RegisterPage() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}>
               <form className='space-y-5'>
-                {/* Título del paso */}
-                {step === 0 && (
-                  <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
-                    Paso 1: Credenciales
-                  </h2>
-                )}
-                {step === 1 && (
-                  <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
-                    Paso 2: Datos Personales
-                  </h2>
-                )}
-                {step === 2 && (
-                  <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
-                    Paso 3: Ubicación
-                  </h2>
-                )}
-
-                {/* Paso 0: Credenciales */}
                 {step === 0 && (
                   <>
+                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
+                      Paso 1: Credenciales
+                    </h2>
+                    {/* Identificador */}
                     <div className='space-y-2'>
                       <Label htmlFor='id' className='text-gray-700 font-medium'>
-                        DNI/PASAPORTE/NIE{" "}
-                        <span className='text-red-500'>*</span>
+                        Identificador <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='text'
-                            id='id'
-                            name='id'
-                            placeholder='Introduce tu identificador'
-                            required
-                            value={formData.id}
-                            onChange={handleChange}
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='text'
+                        id='id'
+                        name='id'
+                        placeholder='Introduce tu identificador'
+                        required
+                        value={formData.id}
+                        onChange={handleChange}
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                     </div>
-
+                    {/* Email */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='email'
                         className='text-gray-700 font-medium'>
                         Email <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='email'
-                            id='email'
-                            name='email'
-                            placeholder='ejemplo@correo.com'
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='email'
+                        id='email'
+                        name='email'
+                        placeholder='ejemplo@correo.com'
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                       {emailError && (
                         <motion.p
                           initial={{ opacity: 0, y: -10 }}
@@ -391,42 +350,37 @@ export default function RegisterPage() {
                         </motion.p>
                       )}
                     </div>
-
-                    {/* Password con icono de ojo */}
+                    {/* Password */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='password'
                         className='text-gray-700 font-medium'>
                         Contraseña <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            id='password'
-                            name='password'
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
-                          />
-                          <button
-                            type='button'
-                            onClick={() => setShowPassword(!showPassword)}
-                            className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
-                            aria-label='Toggle password visibility'>
-                            {showPassword ? (
-                              <EyeOff className='w-5 h-5' />
-                            ) : (
-                              <Eye className='w-5 h-5' />
-                            )}
-                          </button>
-                        </div>
+                      <div className='relative'>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          id='password'
+                          name='password'
+                          required
+                          value={formData.password}
+                          onChange={handleChange}
+                          className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
+                        />
+                        <button
+                          type='button'
+                          onClick={() => setShowPassword(!showPassword)}
+                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                          aria-label='Toggle password visibility'>
+                          {showPassword ? (
+                            <EyeOff className='w-5 h-5' />
+                          ) : (
+                            <Eye className='w-5 h-5' />
+                          )}
+                        </button>
                       </div>
                     </div>
-
-                    {/* Confirm Password con icono de ojo */}
+                    {/* Confirm Password */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='confirmPassword'
@@ -434,226 +388,261 @@ export default function RegisterPage() {
                         Repite la contraseña{" "}
                         <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type={showConfirmPassword ? "text" : "password"}
-                            id='confirmPassword'
-                            name='confirmPassword'
-                            required
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
-                          />
-                          <button
-                            type='button'
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
-                            aria-label='Toggle confirm password visibility'>
-                            {showConfirmPassword ? (
-                              <EyeOff className='w-5 h-5' />
-                            ) : (
-                              <Eye className='w-5 h-5' />
-                            )}
-                          </button>
-                        </div>
+                      <div className='relative'>
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          id='confirmPassword'
+                          name='confirmPassword'
+                          required
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
+                        />
+                        <button
+                          type='button'
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                          aria-label='Toggle confirm password visibility'>
+                          {showConfirmPassword ? (
+                            <EyeOff className='w-5 h-5' />
+                          ) : (
+                            <Eye className='w-5 h-5' />
+                          )}
+                        </button>
                       </div>
                     </div>
                   </>
                 )}
 
-                {/* Paso 1: Datos Personales */}
                 {step === 1 && (
                   <>
+                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
+                      Paso 2: Datos Personales
+                    </h2>
+                    {/* Nombre */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='firstName'
                         className='text-gray-700 font-medium'>
                         Nombre <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='text'
-                            id='firstName'
-                            name='firstName'
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='text'
+                        id='firstName'
+                        name='firstName'
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        required
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                     </div>
-
+                    {/* Apellido */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='lastName'
                         className='text-gray-700 font-medium'>
                         Apellido <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='text'
-                            id='lastName'
-                            name='lastName'
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='text'
+                        id='lastName'
+                        name='lastName'
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        required
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                     </div>
-
+                    {/* Teléfono */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='phone'
                         className='text-gray-700 font-medium'>
                         Teléfono <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='text'
-                            id='phone'
-                            name='phone'
-                            value={formData.phone}
-                            onChange={handleChange}
-                            required
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='text'
+                        id='phone'
+                        name='phone'
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                     </div>
-
+                    {/* Categoría Profesional */}
                     <div className='space-y-2'>
                       <Label
-                        htmlFor='category'
+                        htmlFor='professionalCategory'
                         className='text-gray-700 font-medium'>
-                        Categoría <span className='text-red-500'>*</span>
+                        Categoría profesional{" "}
+                        <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <Input
-                            type='text'
-                            id='category'
-                            name='category'
-                            value={formData.category}
-                            onChange={handleChange}
-                            required
-                            className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        type='text'
+                        id='professionalCategory'
+                        name='professionalCategory'
+                        value={formData.professionalCategory}
+                        onChange={handleChange}
+                        required
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
+                    </div>
+                    {/* Género */}
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='gender'
+                        className='text-gray-700 font-medium'>
+                        Género
+                      </Label>
+                      <select
+                        id='gender'
+                        name='gender'
+                        value={formData.gender}
+                        onChange={handleChange}
+                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                        <option value=''>Selecciona tu género</option>
+                        <option value='M'>Masculino</option>
+                        <option value='F'>Femenino</option>
+                        <option value='Otro'>Otro</option>
+                      </select>
+                    </div>
+                    {/* Dirección */}
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='address'
+                        className='text-gray-700 font-medium'>
+                        Dirección
+                      </Label>
+                      <Input
+                        type='text'
+                        id='address'
+                        name='address'
+                        value={formData.address}
+                        onChange={handleChange}
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
+                    </div>
+                    {/* Intereses */}
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='interests'
+                        className='text-gray-700 font-medium'>
+                        Intereses
+                      </Label>
+                      <Input
+                        type='text'
+                        id='interests'
+                        name='interests'
+                        value={formData.interests}
+                        onChange={handleChange}
+                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                      />
                     </div>
                   </>
                 )}
 
-                {/* Paso 2: Ubicación */}
                 {step === 2 && (
                   <>
+                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
+                      Paso 3: Ubicación y Términos
+                    </h2>
+                    {/* País */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='country'
                         className='text-gray-700 font-medium'>
                         País <span className='text-red-500'>*</span>
                       </Label>
-                      <div className='relative group'>
-                        <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                        <div className='relative'>
-                          <select
-                            id='country'
-                            name='country'
-                            required
-                            value={formData.country}
-                            onChange={handleChange}
-                            className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                            <option value='España'>España</option>
-                            <option value='Otros'>Otros</option>
-                          </select>
-                        </div>
-                      </div>
+                      <select
+                        id='country'
+                        name='country'
+                        required
+                        value={formData.country}
+                        onChange={handleChange}
+                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                        <option value='España'>España</option>
+                        <option value='Otros'>Otros</option>
+                      </select>
                     </div>
-
                     {formData.country === "España" && (
                       <>
                         <div className='space-y-2'>
                           <Label
-                            htmlFor='region'
+                            htmlFor='autonomousCommunity'
                             className='text-gray-700 font-medium'>
                             Comunidad Autónoma{" "}
                             <span className='text-red-500'>*</span>
                           </Label>
-                          <div className='relative group'>
-                            <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                            <div className='relative'>
-                              <select
-                                id='region'
-                                name='region'
-                                required
-                                value={formData.region}
-                                onChange={handleChange}
-                                className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                                <option value=''>
-                                  Selecciona una comunidad
-                                </option>
-                                {Object.keys(regionsProvinces).map((region) => (
-                                  <option key={region} value={region}>
-                                    {region}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
+                          <select
+                            id='autonomousCommunity'
+                            name='autonomousCommunity'
+                            required
+                            value={formData.autonomousCommunity}
+                            onChange={handleChange}
+                            className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                            <option value=''>Selecciona una comunidad</option>
+                            {Object.keys(regionsProvinces).map((comunidad) => (
+                              <option key={comunidad} value={comunidad}>
+                                {comunidad}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-
-                        {formData.region && (
+                        {formData.autonomousCommunity && (
                           <div className='space-y-2'>
                             <Label
                               htmlFor='province'
                               className='text-gray-700 font-medium'>
                               Provincia <span className='text-red-500'>*</span>
                             </Label>
-                            <div className='relative group'>
-                              <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg opacity-0 group-focus-within:opacity-70 blur transition duration-300'></div>
-                              <div className='relative'>
-                                <select
-                                  id='province'
-                                  name='province'
-                                  required
-                                  value={formData.province}
-                                  onChange={handleChange}
-                                  className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                                  <option value=''>
-                                    Selecciona una provincia
-                                  </option>
-                                  {regionsProvinces[formData.region].map(
-                                    (prov) => (
-                                      <option key={prov} value={prov}>
-                                        {prov}
-                                      </option>
-                                    )
-                                  )}
-                                </select>
-                              </div>
-                            </div>
+                            <select
+                              id='province'
+                              name='province'
+                              required
+                              value={formData.province}
+                              onChange={handleChange}
+                              className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                              <option value=''>Selecciona una provincia</option>
+                              {regionsProvinces[
+                                formData.autonomousCommunity
+                              ]?.map((prov) => (
+                                <option key={prov} value={prov}>
+                                  {prov}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         )}
                       </>
                     )}
+                    {/* Términos y Condiciones */}
+                    <div className='flex items-center space-x-2 mt-4'>
+                      <input
+                        type='checkbox'
+                        id='termsAccepted'
+                        name='termsAccepted'
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className='h-4 w-4'
+                      />
+                      <label
+                        htmlFor='termsAccepted'
+                        className='text-sm text-gray-700'>
+                        Acepto los{" "}
+                        <button
+                          type='button'
+                          onClick={() => setShowTermsModal(true)}
+                          className='text-purple-600 underline'>
+                          Términos y Condiciones
+                        </button>
+                      </label>
+                    </div>
                   </>
                 )}
 
-                {/* Mensaje de error */}
                 {message && (
                   <motion.p
                     initial={{ opacity: 0, y: -10 }}
@@ -663,32 +652,29 @@ export default function RegisterPage() {
                   </motion.p>
                 )}
 
-                {/* Botones de navegación */}
                 <div className='flex justify-between mt-8'>
                   {step > 0 && (
                     <Button
                       variant='outline'
                       onClick={handleBack}
-                      className='border-purple-500 text-purple-700 hover:bg-purple-50 group'>
-                      <ArrowLeft className='mr-2 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1' />
+                      className='border-purple-500 text-purple-700 hover:bg-purple-50'>
+                      <ArrowLeft className='mr-2 h-4 w-4' />
                       Anterior
                     </Button>
                   )}
-
                   {step < 2 && (
                     <Button
                       onClick={handleNext}
-                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 transition-all duration-300 group'>
+                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
                       Siguiente
-                      <ArrowRight className='ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
+                      <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   )}
-
                   {step === 2 && (
                     <Button
                       onClick={handleSubmitFinal}
-                      disabled={isLoading}
-                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 transition-all duration-300 group'>
+                      disabled={isLoading || !termsAccepted}
+                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
                       {isLoading ? (
                         <span className='flex items-center'>
                           <svg
@@ -720,13 +706,12 @@ export default function RegisterPage() {
                   )}
                 </div>
               </form>
-
               <div className='mt-8 text-center'>
                 <p className='text-gray-600'>
                   ¿Ya tienes una cuenta?{" "}
                   <Link
                     href='/login'
-                    className='text-purple-600 hover:text-purple-800 font-medium hover:underline transition-colors'>
+                    className='text-purple-600 hover:text-purple-800 font-medium hover:underline'>
                     Inicia sesión
                   </Link>
                 </p>
@@ -735,11 +720,29 @@ export default function RegisterPage() {
           </AnimatePresence>
         </div>
       </motion.div>
+      <AnimatePresence>
+        {showTermsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+            <div className='bg-white rounded-lg p-6 max-w-3xl mx-auto relative'>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'>
+                Cerrar
+              </button>
+              <Terminos />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// Ajustar el componente StepIndicator para mejor responsividad
+// Componente StepIndicator
 function StepIndicator({
   stepNumber,
   label,

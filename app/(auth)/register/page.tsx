@@ -78,7 +78,6 @@ export default function RegisterPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // Campos actualizados según el nuevo modelo (se ha eliminado 'dni')
   const [formData, setFormData] = useState({
     id: "",
     password: "",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,13 +23,16 @@ export default function ResetPasswordForm() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Obtén la URL base del .env
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
   // Manejo del formulario de recuperación (envío de correo)
   const handleRecoverySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/password-reset", {
+      const res = await fetch(`${baseUrl}/password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: identifier }),
@@ -56,7 +59,7 @@ export default function ResetPasswordForm() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/password-reset", {
+      const res = await fetch(`${baseUrl}/password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),

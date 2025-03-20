@@ -1,7 +1,6 @@
 "use client";
 
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Mail,
   Phone,
@@ -9,12 +8,24 @@ import {
   Briefcase,
   Calendar,
   CheckCircle,
+  User,
+  Heart,
+  Edit,
+  Save,
+  X,
+  Award,
+  BookOpen,
+  FileText,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 type UserData = {
+  id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -34,6 +45,9 @@ export default function ProfilePage() {
   const [editData, setEditData] = useState<Partial<UserData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"personal" | "publications">(
+    "personal"
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -111,313 +125,495 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
+  // Datos de ejemplo para publicaciones
+  const publications = [
+    {
+      id: 1,
+      title: "Avances en medicina preventiva",
+      type: "Capítulo",
+      date: "2023-05-15",
+      status: "Publicado",
+    },
+    {
+      id: 2,
+      title: "Técnicas innovadoras en enfermería",
+      type: "Libro",
+      date: "2023-08-22",
+      status: "En revisión",
+    },
+    {
+      id: 3,
+      title: "Estudio de caso: Manejo de diabetes",
+      type: "Capítulo",
+      date: "2023-10-10",
+      status: "Publicado",
+    },
+  ];
+
   if (loading) {
-    return <div>Cargando...</div>;
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <div className='relative'>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <User className='h-6 w-6 text-purple-500' />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!userData) {
-    return <div>No se encontraron datos del usuario.</div>;
+    return (
+      <div className='flex flex-col items-center justify-center h-64 text-center'>
+        <User className='h-12 w-12 text-gray-400 mb-4' />
+        <h2 className='text-xl font-semibold text-gray-800 mb-2'>
+          No se encontraron datos del usuario
+        </h2>
+        <p className='text-gray-600'>
+          Por favor, inicia sesión para ver tu perfil
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <Breadcrumb />
+    <div className='relative overflow-hidden py-8'>
+      {/* Background with gradient and blobs */}
+      <div className='absolute inset-0 z-0'>
+        <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
+        <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
+        <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
       </div>
 
-      <Card className='mx-auto max-w-2xl bg-gradient-to-br from-purple-50 to-white'>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-xl font-bold'>Mi Perfil</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='flex flex-col items-center mb-6'>
-            <div className='w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4'>
-              {userData.firstName?.charAt(0)}
-              {userData.lastName?.charAt(0)}
-            </div>
-            {editing ? (
-              <div className='flex flex-col items-center space-y-2'>
-                <Input
-                  name='firstName'
-                  value={editData?.firstName || ""}
-                  onChange={handleInputChange}
-                  placeholder='Nombre'
-                />
-                <Input
-                  name='lastName'
-                  value={editData?.lastName || ""}
-                  onChange={handleInputChange}
-                  placeholder='Apellidos'
-                />
-              </div>
-            ) : (
-              <h2 className='text-xl font-bold'>
-                {userData.firstName} {userData.lastName}
-              </h2>
-            )}
-            <p className='text-sm text-muted-foreground'>
-              {userData.professionalCategory}
-            </p>
-            <p className='text-xs text-muted-foreground mt-1'>
-              Miembro desde{" "}
-              {new Date(userData.createdAt).toLocaleDateString("es-ES", {
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
+      <div className='container mx-auto px-4 relative z-10 space-y-8'>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className='flex items-center justify-between'>
+          <Breadcrumb />
+
+          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+            Mi Perfil
           </div>
+        </motion.div>
 
-          {/* Layout de información usando grid */}
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-            {/* Email */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Mail className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Email</p>
+        <div className='max-w-4xl mx-auto'>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50 mb-8'>
+            <div className='flex flex-col md:flex-row items-center md:items-start gap-8'>
+              {/* Avatar y nombre */}
+              <div className='flex flex-col items-center'>
+                <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-lg'>
+                  {userData.firstName?.charAt(0)}
+                  {userData.lastName?.charAt(0)}
+                </div>
                 {editing ? (
-                  <Input
-                    name='email'
-                    value={editData?.email || ""}
-                    onChange={handleInputChange}
-                    placeholder='Email'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.email}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Teléfono */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Phone className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Teléfono</p>
-                {editing ? (
-                  <Input
-                    name='phone'
-                    value={editData?.phone || ""}
-                    onChange={handleInputChange}
-                    placeholder='Teléfono'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.phone}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Categoría Profesional */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Briefcase className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>
-                  Categoría profesional
-                </p>
-                {editing ? (
-                  <Input
-                    name='professionalCategory'
-                    value={editData?.professionalCategory || ""}
-                    onChange={handleInputChange}
-                    placeholder='Categoría profesional'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.professionalCategory}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Género */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Briefcase className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Género</p>
-                {editing ? (
-                  <select
-                    name='gender'
-                    value={editData?.gender || ""}
-                    onChange={handleInputChange}
-                    className='w-full border border-gray-200 rounded-md p-2 bg-white text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                    <option value=''>Selecciona tu género</option>
-                    <option value='M'>Masculino</option>
-                    <option value='F'>Femenino</option>
-                    <option value='Otro'>Otro</option>
-                  </select>
-                ) : (
-                  <p className='text-sm'>{userData.gender}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Dirección */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <MapPin className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Dirección</p>
-                {editing ? (
-                  <Input
-                    name='address'
-                    value={editData?.address || ""}
-                    onChange={handleInputChange}
-                    placeholder='Dirección'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.address}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Intereses */}
-            <div className='flex items-center gap-3'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Briefcase className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Intereses</p>
-                {editing ? (
-                  <Input
-                    name='interests'
-                    value={editData?.interests || ""}
-                    onChange={handleInputChange}
-                    placeholder='Intereses'
-                    className='text-sm'
-                  />
-                ) : (
-                  <p className='text-sm'>{userData.interests}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Ubicación */}
-            <div className='flex items-center gap-3 col-span-1 sm:col-span-2'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <MapPin className='h-4 w-4 text-purple-700' />
-              </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Ubicación</p>
-                {editing ? (
-                  <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                  <div className='flex flex-col items-center space-y-2 w-full'>
                     <Input
-                      name='country'
-                      value={editData?.country || ""}
+                      name='firstName'
+                      value={editData?.firstName || ""}
                       onChange={handleInputChange}
-                      placeholder='País'
-                      className='text-sm'
+                      placeholder='Nombre'
+                      className='text-center'
                     />
                     <Input
-                      name='autonomousCommunity'
-                      value={editData?.autonomousCommunity || ""}
+                      name='lastName'
+                      value={editData?.lastName || ""}
                       onChange={handleInputChange}
-                      placeholder='Comunidad Autónoma'
-                      className='text-sm'
-                    />
-                    <Input
-                      name='province'
-                      value={editData?.province || ""}
-                      onChange={handleInputChange}
-                      placeholder='Provincia'
-                      className='text-sm'
+                      placeholder='Apellidos'
+                      className='text-center'
                     />
                   </div>
                 ) : (
-                  <p className='text-sm'>
-                    {userData.province}, {userData.autonomousCommunity},{" "}
-                    {userData.country}
-                  </p>
+                  <div className='text-center'>
+                    <h2 className='text-2xl font-bold text-gray-900'>
+                      {userData.firstName} {userData.lastName}
+                    </h2>
+                    <p className='text-sm text-gray-500 mt-1'>
+                      {userData.professionalCategory}
+                    </p>
+                    <div className='flex items-center justify-center mt-2'>
+                      <Calendar className='h-4 w-4 text-purple-600 mr-1' />
+                      <p className='text-xs text-gray-500'>
+                        Miembro desde{" "}
+                        {new Date(userData.createdAt).toLocaleDateString(
+                          "es-ES",
+                          {
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Información principal */}
+              <div className='flex-1'>
+                <div className='flex space-x-4 mb-6'>
+                  <button
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      activeTab === "personal"
+                        ? "bg-purple-100 text-purple-800"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    onClick={() => setActiveTab("personal")}>
+                    Información Personal
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      activeTab === "publications"
+                        ? "bg-purple-100 text-purple-800"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    onClick={() => setActiveTab("publications")}>
+                    Mis Publicaciones
+                  </button>
+                </div>
+
+                {activeTab === "personal" ? (
+                  <div className='space-y-6'>
+                    {/* Grid de información personal */}
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                      {/* Email */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <Mail className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Email</p>
+                          {editing ? (
+                            <Input
+                              name='email'
+                              value={editData?.email || ""}
+                              onChange={handleInputChange}
+                              placeholder='Email'
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>{userData.email}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Teléfono */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <Phone className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Teléfono</p>
+                          {editing ? (
+                            <Input
+                              name='phone'
+                              value={editData?.phone || ""}
+                              onChange={handleInputChange}
+                              placeholder='Teléfono'
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.phone || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Categoría Profesional */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <Briefcase className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>
+                            Categoría profesional
+                          </p>
+                          {editing ? (
+                            <Input
+                              name='professionalCategory'
+                              value={editData?.professionalCategory || ""}
+                              onChange={handleInputChange}
+                              placeholder='Categoría profesional'
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.professionalCategory ||
+                                "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Género */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <User className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Género</p>
+                          {editing ? (
+                            <select
+                              name='gender'
+                              value={editData?.gender || ""}
+                              onChange={handleInputChange}
+                              className='w-full border border-gray-200 rounded-md p-2 bg-white mt-1 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                              <option value=''>Selecciona tu género</option>
+                              <option value='M'>Masculino</option>
+                              <option value='F'>Femenino</option>
+                              <option value='Otro'>Otro</option>
+                            </select>
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.gender === "M"
+                                ? "Masculino"
+                                : userData.gender === "F"
+                                ? "Femenino"
+                                : userData.gender || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Dirección */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <MapPin className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Dirección</p>
+                          {editing ? (
+                            <Input
+                              name='address'
+                              value={editData?.address || ""}
+                              onChange={handleInputChange}
+                              placeholder='Dirección'
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.address || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Intereses */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <Heart className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Intereses</p>
+                          {editing ? (
+                            <Input
+                              name='interests'
+                              value={editData?.interests || ""}
+                              onChange={handleInputChange}
+                              placeholder='Intereses'
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.interests || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Ubicación */}
+                      <div className='flex items-start gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm col-span-1 md:col-span-2'>
+                        <div className='bg-purple-100 p-2 rounded-full mt-1'>
+                          <MapPin className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>Ubicación</p>
+                          {editing ? (
+                            <div className='grid grid-cols-1 md:grid-cols-3 gap-3 mt-2'>
+                              <Input
+                                name='country'
+                                value={editData?.country || ""}
+                                onChange={handleInputChange}
+                                placeholder='País'
+                              />
+                              <Input
+                                name='autonomousCommunity'
+                                value={editData?.autonomousCommunity || ""}
+                                onChange={handleInputChange}
+                                placeholder='Comunidad Autónoma'
+                              />
+                              <Input
+                                name='province'
+                                value={editData?.province || ""}
+                                onChange={handleInputChange}
+                                placeholder='Provincia'
+                              />
+                            </div>
+                          ) : (
+                            <p className='font-medium'>
+                              {[
+                                userData.province,
+                                userData.autonomousCommunity,
+                                userData.country,
+                              ]
+                                .filter(Boolean)
+                                .join(", ") || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones de acción */}
+                    {editing ? (
+                      <div className='flex gap-3 mt-8'>
+                        <Button
+                          onClick={handleSave}
+                          className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+                          <Save className='mr-2 h-4 w-4' />
+                          Guardar Cambios
+                        </Button>
+                        <Button variant='outline' onClick={handleCancel}>
+                          <X className='mr-2 h-4 w-4' />
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className='mt-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
+                        onClick={handleEdit}>
+                        <Edit className='mr-2 h-4 w-4' />
+                        Editar Perfil
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className='space-y-6'>
+                    <div className='flex items-center justify-between'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Mis Publicaciones
+                      </h3>
+                      <Badge className='bg-purple-100 text-purple-800 hover:bg-purple-200'>
+                        {publications.length} publicaciones
+                      </Badge>
+                    </div>
+
+                    <div className='space-y-4'>
+                      {publications.map((pub) => (
+                        <motion.div
+                          key={pub.id}
+                          whileHover={{ y: -3 }}
+                          className='bg-white/60 p-4 rounded-lg border border-gray-100 shadow-sm hover:border-purple-200 transition-all'>
+                          <div className='flex items-start gap-3'>
+                            <div
+                              className={`p-2 rounded-full ${
+                                pub.type === "Libro"
+                                  ? "bg-yellow-100"
+                                  : "bg-purple-100"
+                              }`}>
+                              {pub.type === "Libro" ? (
+                                <BookOpen className='h-5 w-5 text-yellow-700' />
+                              ) : (
+                                <FileText className='h-5 w-5 text-purple-700' />
+                              )}
+                            </div>
+                            <div className='flex-1'>
+                              <div className='flex items-center justify-between'>
+                                <h4 className='font-medium text-gray-900'>
+                                  {pub.title}
+                                </h4>
+                                <Badge
+                                  className={
+                                    pub.status === "Publicado"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }>
+                                  {pub.status}
+                                </Badge>
+                              </div>
+                              <div className='flex items-center mt-2 text-sm text-gray-500'>
+                                <Badge
+                                  variant='outline'
+                                  className='mr-2 border-gray-200'>
+                                  {pub.type}
+                                </Badge>
+                                <span className='flex items-center'>
+                                  <Calendar className='h-3 w-3 mr-1' />
+                                  {new Date(pub.date).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    <div className='flex justify-center mt-6'>
+                      <Button
+                        variant='outline'
+                        className='border-purple-200 text-purple-700 hover:bg-purple-50'>
+                        <BookOpen className='mr-2 h-4 w-4' />
+                        Ver todas mis publicaciones
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
+          </motion.div>
 
-            {/* Miembro desde */}
-            <div className='flex items-center gap-3 col-span-1 sm:col-span-2'>
-              <div className='bg-purple-100 p-2 rounded-full'>
-                <Calendar className='h-4 w-4 text-purple-700' />
+          {/* Estadísticas */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className='backdrop-blur-sm bg-white/60 p-6 rounded-xl shadow-lg border border-purple-100'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-6'>
+              Estadísticas de Publicación
+            </h3>
+
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+              <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
+                <div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3'>
+                  <BookOpen className='h-5 w-5 text-purple-700' />
+                </div>
+                <h4 className='font-semibold text-gray-900 mb-1'>3</h4>
+                <p className='text-sm text-gray-600'>Publicaciones</p>
               </div>
-              <div>
-                <p className='text-xs text-muted-foreground'>Miembro desde</p>
-                <p className='text-sm'>
-                  {new Date(userData.createdAt).toLocaleDateString("es-ES", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
+
+              <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
+                <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3'>
+                  <CheckCircle className='h-5 w-5 text-green-700' />
+                </div>
+                <h4 className='font-semibold text-gray-900 mb-1'>2</h4>
+                <p className='text-sm text-gray-600'>Publicados</p>
+              </div>
+
+              <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
+                <div className='w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-3'>
+                  <Clock className='h-5 w-5 text-yellow-700' />
+                </div>
+                <h4 className='font-semibold text-gray-900 mb-1'>1</h4>
+                <p className='text-sm text-gray-600'>En revisión</p>
+              </div>
+
+              <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
+                <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3'>
+                  <Award className='h-5 w-5 text-blue-700' />
+                </div>
+                <h4 className='font-semibold text-gray-900 mb-1'>2</h4>
+                <p className='text-sm text-gray-600'>Certificados</p>
               </div>
             </div>
-          </div>
-
-          {editing ? (
-            <div className='flex gap-3 mt-6'>
-              <Button onClick={handleSave}>Guardar</Button>
-              <Button variant='outline' onClick={handleCancel}>
-                Cancelar
-              </Button>
-            </div>
-          ) : (
-            <Button
-              className='w-full mt-6 bg-gradient-to-r from-purple-600 to-purple-800'
-              onClick={handleEdit}>
-              Editar Perfil
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Componente StepIndicator
-function StepIndicator({
-  stepNumber,
-  label,
-  active,
-  completed,
-}: {
-  stepNumber: number;
-  label: string;
-  active: boolean;
-  completed?: boolean;
-}) {
-  return (
-    <div
-      className={`flex flex-col items-center transition-all duration-300 ${
-        active ? "opacity-100" : completed ? "opacity-90" : "opacity-60"
-      }`}>
-      <div
-        className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-          completed
-            ? "bg-purple-600 text-white"
-            : active
-            ? "border-2 border-purple-600 bg-white text-purple-600"
-            : "border-2 border-gray-300 bg-transparent text-gray-400"
-        }`}>
-        {completed ? (
-          <CheckCircle className='w-4 h-4 md:w-5 md:h-5' />
-        ) : (
-          stepNumber
-        )}
+          </motion.div>
+        </div>
       </div>
-      <span
-        className={`text-xs md:text-sm font-medium mt-1 ${
-          active
-            ? "text-purple-900"
-            : completed
-            ? "text-purple-700"
-            : "text-gray-500"
-        }`}>
-        {label}
-      </span>
     </div>
   );
 }

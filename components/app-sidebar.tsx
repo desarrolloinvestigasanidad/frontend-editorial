@@ -37,7 +37,7 @@ export function AppSidebar() {
 
   // Menú principal
   const menuItems = [
-    { title: "Dashboard", icon: Home, href: "/dashboard" },
+    { title: "Inicio", icon: Home, href: "/dashboard" },
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
     { title: "Mis Publicaciones", icon: BookOpen, href: "/publications" },

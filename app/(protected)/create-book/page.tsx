@@ -35,7 +35,7 @@ export default function CrearLibroPage() {
       // Puedes enviar el título del libro como metadata (aquí lo enviamos con la clave bookTitle)
       try {
         const response = await fetch(
-          "http://localhost:5000/create-checkout-session",
+          `${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

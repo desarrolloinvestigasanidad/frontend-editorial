@@ -1,20 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertCircle,
-  Book,
-  CheckCircle,
-  Users,
-  Shield,
-  ArrowRight,
-  ArrowLeft,
-  BookOpen,
-} from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, ArrowRight, ArrowLeft, Book } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 
 export default function CrearLibroPage() {
@@ -22,23 +12,38 @@ export default function CrearLibroPage() {
   const userId = user?.id;
   const [step, setStep] = useState<"normativa" | "titulo">("normativa");
   const [titulo, setTitulo] = useState("");
-  const [isHovered, setIsHovered] = useState(false);
 
-  // Función que maneja el avance de pasos o la creación final
+  // Estado para la edición actual
+  const [currentEdition, setCurrentEdition] = useState<any>(null);
+  const [loadingEdition, setLoadingEdition] = useState(true);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.length > 0) {
+          // Se asume que la primera edición es la actual
+          setCurrentEdition(data[0]);
+        }
+        setLoadingEdition(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching editions:", err);
+        setLoadingEdition(false);
+      });
+  }, []);
+
+  // Función para avanzar en el proceso o crear el libro
   const handleCreateBook = async () => {
-    // Validamos que el usuario esté autenticado
     if (!userId) {
       console.error("El usuario no está autenticado");
-      // Opcional: redirige al login o muestra una notificación
       return;
     }
 
     if (step === "normativa") {
-      // Avanza del paso de normativa al de título
       setStep("titulo");
     } else if (step === "titulo" && titulo.trim()) {
       const amount = 9900;
-
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`,
@@ -50,7 +55,6 @@ export default function CrearLibroPage() {
         );
         const data = await response.json();
         if (data.url) {
-          // Redirige al usuario a la sesión de Checkout de Stripe
           window.location.href = data.url;
         } else {
           console.error("No se recibió URL de Checkout", data);
@@ -61,15 +65,7 @@ export default function CrearLibroPage() {
     }
   };
 
-  // Variantes para animaciones
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
+  // Variantes de animación para los elementos
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
@@ -86,242 +82,182 @@ export default function CrearLibroPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}>
-              <motion.div
-                initial='hidden'
-                animate='visible'
-                variants={itemVariants}
-                className='text-center mb-12'>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700 mb-4'>
-                  Crea tu propio libro
-                </motion.span>
-                <h2 className='text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
-                  Libro Personalizado
-                </h2>
-                <p className='text-gray-600 max-w-2xl mx-auto'>
-                  Crea tu propio libro y coordina tus capítulos. Tú eliges el
-                  título y puedes invitar a otros autores.
-                </p>
-                <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mt-4'></div>
-              </motion.div>
-
-              <div className='grid md:grid-cols-2 gap-8 max-w-5xl mx-auto'>
-                {/* Tarjeta de precio */}
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={{ y: -10 }}
-                  className='backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-white border-2 border-purple-500 relative'>
-                  <div className='absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg'>
-                    Recomendado
-                  </div>
-                  <div className='p-8'>
-                    <h3 className='text-2xl font-bold text-center mb-2'>
-                      Libro personalizado
-                    </h3>
-                    <div className='text-center mb-8'>
-                      <span className='text-5xl font-bold text-purple-700'>
-                        99€
-                      </span>
-                      <span className='text-gray-600 ml-2'>IVA incluido</span>
-                    </div>
-                    <ul className='space-y-4 mb-8'>
-                      {[
-                        "Título personalizado para tu libro",
-                        "Hasta 7 autores en total",
-                        "ISBN oficial reconocido",
-                        "Certificado de autoría",
-                        "Revisión por expertos",
-                        "Publicación digital",
-                        "Difusión internacional",
-                      ].map((feature, idx) => (
-                        <li key={idx} className='flex items-center'>
-                          <CheckCircle className='h-5 w-5 text-green-500 mr-3 flex-shrink-0' />
-                          <span className='text-gray-700'>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}>
-                      <Button
-                        onClick={handleCreateBook}
-                        className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white py-6 text-lg rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}>
-                        <span className='flex items-center justify-center'>
-                          Crear mi libro
-                          <motion.span
-                            animate={{ x: isHovered ? 5 : 0 }}
-                            transition={{ duration: 0.2 }}>
-                            <ArrowRight className='ml-2 h-5 w-5' />
-                          </motion.span>
-                        </span>
-                      </Button>
-                    </motion.div>
-                  </div>
-                </motion.div>
-
-                {/* Información adicional */}
-                <motion.div variants={containerVariants} className='space-y-6'>
+              <div className='grid md:grid-cols-2 gap-8'>
+                {/* Columna Izquierda: Normativa */}
+                <div className='space-y-8'>
                   <motion.div
-                    variants={itemVariants}
-                    className='backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-md border border-purple-100'>
-                    <div className='flex items-center gap-2 mb-3'>
-                      <Users className='h-5 w-5 text-purple-700' />
-                      <h4 className='font-semibold text-lg text-gray-900'>
-                        Participación
-                      </h4>
-                    </div>
+                    className='bg-white p-8 rounded-xl shadow-xl border border-gray-200'
+                    initial='hidden'
+                    animate='visible'
+                    variants={itemVariants}>
+                    <h2 className='text-3xl font-bold mb-4 text-purple-800'>
+                      Normativa de Publicación - Edición de Libros de Investiga
+                      Sanidad
+                    </h2>
                     <p className='text-gray-700 mb-4'>
-                      Un usuario podrá crear un libro con hasta otros 6 autores
-                      (7 autores en total). El autor que proponga el libro será
-                      el "coordinador" y el encargado de vincular a todos los
-                      autores que quiera que participen en ese libro.
+                      Estimado/a autor/a, te damos la bienvenida a la{" "}
+                      <strong>[Nombre de la Edición/Libro]</strong> de Investiga
+                      Sanidad. A continuación, te detallamos las normativas y
+                      fechas importantes para el envío de tus capítulos, la
+                      publicación de la edición y la descarga de los libros y
+                      certificados:
                     </p>
-                    <Alert className='bg-yellow-50 border-yellow-200 text-yellow-800'>
-                      <AlertCircle className='h-4 w-4 text-yellow-700' />
-                      <AlertDescription className='text-yellow-800'>
-                        Todos los autores deberán estar registrados e inscritos
-                        para que el libro se pueda publicar.
-                      </AlertDescription>
-                    </Alert>
+                    <ol className='list-decimal ml-5 space-y-2 text-gray-700'>
+                      <li>
+                        <strong>Envío de Capítulos:</strong> El plazo para el
+                        envío es <strong>[Fecha límite]</strong>. Cada capítulo
+                        debe ajustarse a las especificaciones requeridas; de lo
+                        contrario, se devolverá para corrección.
+                      </li>
+                      <li>
+                        <strong>Revisión y Publicación:</strong> Los capítulos
+                        serán evaluados por nuestro equipo editorial y se
+                        notificará a los autores sobre aceptación o
+                        correcciones. La publicación oficial será el{" "}
+                        <strong>[Fecha de publicación]</strong>.
+                      </li>
+                      <li>
+                        <strong>Descarga de Libros y Certificados:</strong>
+                        <br />
+                        <em>Libro Completo:</em> Disponible en{" "}
+                        <strong>[Fecha de publicación]</strong>.
+                        <br />
+                        <em>Certificados de Participación:</em> Disponibles
+                        desde <strong>[Fecha de publicación]</strong> hasta{" "}
+                        <strong>[Fecha límite de descarga]</strong>.
+                      </li>
+                      <li>
+                        <strong>Términos y Condiciones:</strong> Al enviar tu
+                        capítulo, cedes los derechos de publicación y aceptas la
+                        Ley de Propiedad Intelectual. No se aceptarán
+                        correcciones post-publicación.
+                      </li>
+                    </ol>
+                    <p className='text-gray-700 mt-4'>
+                      Envío de capítulos: <strong>[FECHA]</strong>
+                      <br />
+                      Revisión y corrección: <strong>[FECHA]</strong>
+                      <br />
+                      Publicación y descarga: <strong>[FECHA]</strong>
+                    </p>
+                    <p className='text-gray-700 mt-4'>
+                      El equipo de Investiga Sanidad
+                    </p>
                   </motion.div>
 
                   <motion.div
+                    className='bg-white p-8 rounded-xl shadow-xl border border-gray-200'
+                    initial='hidden'
+                    animate='visible'
                     variants={itemVariants}
-                    className='backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-md border border-purple-100'>
-                    <div className='flex items-center gap-2 mb-3'>
-                      <BookOpen className='h-5 w-5 text-purple-700' />
-                      <h4 className='font-semibold text-lg text-gray-900'>
-                        El coordinador podrá:
-                      </h4>
-                    </div>
-                    <ul className='space-y-3'>
-                      {[
-                        "Añadir o quitar coautores en cualquier momento hasta llegar al máximo permitido de 7.",
-                        "Consultar todos los capítulos que forman parte de su libro y su estado.",
-                        "Visualizar el libro definitivo antes de mandarlo a publicar.",
-                      ].map((item, index) => (
-                        <li key={index} className='flex items-start gap-2'>
-                          <div className='bg-purple-100 p-1 rounded-full mt-1'>
-                            <CheckCircle className='h-3 w-3 text-purple-700' />
-                          </div>
-                          <span className='text-gray-700'>{item}</span>
-                        </li>
-                      ))}
+                    transition={{ delay: 0.3 }}>
+                    <h2 className='text-3xl font-bold mb-4 text-purple-800'>
+                      Normativa de Libros Completos Antes de Pagar
+                    </h2>
+                    <p className='text-gray-700 mb-4'>
+                      Revisa la siguiente información antes de proceder al pago:
+                    </p>
+                    <ul className='list-disc ml-5 space-y-2 text-gray-700'>
+                      <li>
+                        <strong>Añadir coautores:</strong> El autor principal
+                        debe incluir a todos los coautores con sus datos de
+                        contacto.
+                      </li>
+                      <li>
+                        <strong>Responsabilidades:</strong> Gestionar y
+                        coordinar el proceso de publicación, asegurando el envío
+                        de capítulos y correcciones.
+                      </li>
+                      <li>
+                        <strong>Participación:</strong> Los coautores colaboran
+                        en la edición, pero la responsabilidad final es del
+                        autor principal.
+                      </li>
+                      <li>
+                        <strong>Proceso:</strong> Tras añadir coautores y
+                        realizar el pago, iniciará la creación y revisión del
+                        libro.
+                      </li>
                     </ul>
-                  </motion.div>
-
-                  <motion.div
-                    variants={itemVariants}
-                    className='backdrop-blur-sm bg-white/80 p-6 rounded-xl shadow-md border border-purple-100'>
-                    <div className='flex items-center gap-2 mb-3'>
-                      <Shield className='h-5 w-5 text-purple-700' />
-                      <h4 className='font-semibold text-lg text-gray-900'>
-                        Medidas anti-plagio
-                      </h4>
-                    </div>
-                    <p className='text-gray-700'>
-                      Si tu capítulo es detectado con un porcentaje de plagio
-                      superior al 45%, será rechazado directamente. Puedes
-                      comprobar el plagio en:{" "}
-                      <a
-                        href='http://plagiarisma.net/es/'
-                        className='text-purple-700 font-medium hover:underline'
-                        target='_blank'
-                        rel='noopener noreferrer'>
-                        plagiarisma.net
-                      </a>
+                    <p className='text-gray-700 mt-4'>
+                      Recuerda que el cumplimiento de estas normativas es
+                      fundamental para una correcta publicación.
+                    </p>
+                    <p className='text-gray-700 mt-4'>
+                      Derechos de autor y correcciones post-publicación aplican
+                      según la Ley.
                     </p>
                   </motion.div>
-                </motion.div>
-              </div>
-
-              {/* Tabla comparativa */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className='mt-16 backdrop-blur-sm bg-white/60 p-8 rounded-xl shadow-lg border border-purple-100 max-w-5xl mx-auto'>
-                <h3 className='text-2xl font-bold text-center mb-8'>
-                  Comparativa de Opciones
-                </h3>
-                <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-b border-gray-200'>
-                        <th className='py-3 px-4 text-left font-semibold text-gray-700'>
-                          Características
-                        </th>
-                        <th className='py-3 px-4 text-center font-semibold text-gray-700'>
-                          Capítulos Individuales
-                        </th>
-                        <th className='py-3 px-4 text-center font-semibold text-gray-700'>
-                          Libro Completo
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className='border-b border-gray-200'>
-                        <td className='py-3 px-4 text-gray-700'>
-                          ISBN Oficial
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                      </tr>
-                      <tr className='border-b border-gray-200'>
-                        <td className='py-3 px-4 text-gray-700'>
-                          Certificado de autoría
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                      </tr>
-                      <tr className='border-b border-gray-200'>
-                        <td className='py-3 px-4 text-gray-700'>
-                          Elección del título
-                        </td>
-                        <td className='py-3 px-4 text-center text-red-600'>
-                          <AlertCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                      </tr>
-                      <tr className='border-b border-gray-200'>
-                        <td className='py-3 px-4 text-gray-700'>Coautores</td>
-                        <td className='py-3 px-4 text-center text-gray-600'>
-                          Limitado
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          Hasta 7 autores
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className='py-3 px-4 text-gray-700'>
-                          Difusión internacional
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                        <td className='py-3 px-4 text-center text-green-600'>
-                          <CheckCircle className='h-5 w-5 mx-auto' />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
-              </motion.div>
+
+                {/* Columna Derecha: Tarjeta de Precio con Información de Edición */}
+                <div>
+                  {loadingEdition ? (
+                    <div>Cargando edición...</div>
+                  ) : (
+                    <motion.div
+                      className='backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-white border-2 border-purple-500 relative'
+                      initial='hidden'
+                      animate='visible'
+                      variants={itemVariants}>
+                      <div className='absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg'>
+                        Recomendado
+                      </div>
+                      <div className='p-8'>
+                        {currentEdition && (
+                          <div className='mb-4'>
+                            <h4 className='text-xl font-bold text-purple-800'>
+                              Edición Actual: {currentEdition.name}
+                            </h4>
+                            <p className='text-gray-600'>
+                              {currentEdition.description}
+                            </p>
+                          </div>
+                        )}
+                        <h3 className='text-2xl font-bold text-center mb-2'>
+                          Libro personalizado
+                        </h3>
+                        <div className='text-center mb-8'>
+                          <span className='text-5xl font-bold text-purple-700'>
+                            99€
+                          </span>
+                          <span className='text-gray-600 ml-2'>
+                            IVA incluido
+                          </span>
+                        </div>
+                        <ul className='space-y-4 mb-8'>
+                          {[
+                            "Título personalizado para tu libro",
+                            "Hasta 7 autores en total",
+                            "ISBN oficial reconocido",
+                            "Certificado de autoría",
+                            "Revisión por expertos",
+                            "Publicación digital",
+                            "Difusión internacional",
+                          ].map((feature, idx) => (
+                            <li key={idx} className='flex items-center'>
+                              <CheckCircle className='h-5 w-5 text-green-500 mr-3 flex-shrink-0' />
+                              <span className='text-gray-700'>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <motion.div
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.98 }}>
+                          <Button
+                            onClick={handleCreateBook}
+                            className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white py-6 text-lg rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'>
+                            <span className='flex items-center justify-center'>
+                              Aceptar Normativa y Continuar
+                              <ArrowRight className='ml-2 h-5 w-5' />
+                            </span>
+                          </Button>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 

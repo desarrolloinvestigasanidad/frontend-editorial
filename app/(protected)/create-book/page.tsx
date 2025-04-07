@@ -15,9 +15,11 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUser } from "@/context/UserContext";
 
 export default function CrearLibroPage() {
-  // Control de pasos: "normativa" o "titulo"
+  const { user } = useUser();
+  const userId = user?.id;
   const [step, setStep] = useState<"normativa" | "titulo">("normativa");
   const [titulo, setTitulo] = useState("");
   const [isHovered, setIsHovered] = useState(false);
@@ -28,11 +30,8 @@ export default function CrearLibroPage() {
       // Paso 1 -> Paso 2
       setStep("titulo");
     } else if (step === "titulo" && titulo.trim()) {
-      // Datos para la sesión de Checkout
-      // Asegúrate de obtener el userId real (por ejemplo, desde contexto o auth)
-      const userId = "44599085S"; // Reemplazar con el id real
-      const amount = 99; // Precio en euros fijo
-      // Puedes enviar el título del libro como metadata (aquí lo enviamos con la clave bookTitle)
+      const amount = 99;
+
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`,

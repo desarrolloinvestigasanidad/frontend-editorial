@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -33,7 +31,7 @@ export default function CreateChapterPage() {
   const { editionId, bookId } = useParams();
   const router = useRouter();
 
-  // Estados para los campos del capítulo
+  // Estados para el formulario
   const [title, setTitle] = useState("");
   const [studyType, setStudyType] = useState("");
   const [methodology, setMethodology] = useState("");
@@ -43,18 +41,36 @@ export default function CreateChapterPage() {
   const [discussion, setDiscussion] = useState("");
   const [bibliography, setBibliography] = useState("");
 
-  // Estado para authorId obtenido desde GET /profile
+  // Estados adicionales: perfil, detalles del libro y créditos disponibles
   const [authorId, setAuthorId] = useState("");
   const [bookTitle, setBookTitle] = useState("");
+  const [availableCredits, setAvailableCredits] = useState<number | null>(null);
 
-  // Obtener perfil y extraer authorId
+  // Estados de UI
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  // Variantes de animación para framer-motion
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
+
+  // useEffect para obtener datos: perfil, detalles del libro y créditos disponibles
   useEffect(() => {
-    const fetchProfile = async () => {
-      console.log("Llamando a fetchProfile...");
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const res = await fetch(
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        let userId = localStorage.getItem("userId");
+        // Obtener perfil para confirmar el authorId
+        if (token) {
+          const profileRes = await fetch(
             `${process.env.NEXT_PUBLIC_BASE_URL}/profile`,
             {
               method: "GET",
@@ -64,47 +80,47 @@ export default function CreateChapterPage() {
               },
             }
           );
-          if (!res.ok) {
+          if (!profileRes.ok) {
             throw new Error("Error al obtener el perfil");
           }
-          const data = await res.json();
-          console.log("Perfil obtenido:", data);
-          if (data && data.id) {
-            setAuthorId(data.id);
+          const profileData = await profileRes.json();
+          if (profileData && profileData.id) {
+            setAuthorId(profileData.id);
+            userId = profileData.id;
           }
-        } catch (error) {
-          console.error("Error fetching profile:", error);
         }
-      } else {
-        console.warn("Token no encontrado en sessionStorage.");
-      }
-    };
-
-    const fetchBookDetails = async () => {
-      try {
-        const res = await fetch(
+        // Obtener detalles del libro
+        const bookRes = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`
         );
-        if (res.ok) {
-          const data = await res.json();
-          setBookTitle(data.title || "Libro seleccionado");
+        if (bookRes.ok) {
+          const bookData = await bookRes.json();
+          setBookTitle(bookData.title || "Libro seleccionado");
         }
-      } catch (error) {
-        console.error("Error fetching book details:", error);
+        // Obtener créditos disponibles: usamos el endpoint para calcular créditos disponibles
+        if (userId) {
+          const creditsRes = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/users/${userId}/editions/${editionId}/available-credits`
+          );
+          const creditsData = await creditsRes.json();
+          setAvailableCredits(creditsData.available);
+        } else {
+          setAvailableCredits(0);
+        }
+      } catch (err: any) {
+        console.error("Error al obtener datos:", err);
+        setError(err.message);
+        setAvailableCredits(0);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProfile();
-    fetchBookDetails();
+    fetchData();
   }, [editionId, bookId]);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Verificamos que se haya obtenido el authorId
     if (!authorId) {
       setError("No se pudo obtener el perfil del autor. Intente nuevamente.");
       return;
@@ -113,7 +129,6 @@ export default function CreateChapterPage() {
     setError("");
 
     try {
-      // Se envía el campo "content" usando la introducción como fallback.
       const body = {
         title,
         studyType,
@@ -124,7 +139,7 @@ export default function CreateChapterPage() {
         discussion,
         bibliography,
         authorId,
-        content: introduction,
+        content: introduction, // Se usa la introducción como fallback para el contenido
       };
 
       const res = await fetch(
@@ -152,25 +167,19 @@ export default function CreateChapterPage() {
     }
   };
 
-  // Animación para los elementos del formulario
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4 },
-    },
-  };
+  // Si se está cargando o hay éxito, se muestran las vistas correspondientes
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <div className='relative'>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <BookOpen className='h-6 w-6 text-purple-500' />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -202,9 +211,28 @@ export default function CreateChapterPage() {
     );
   }
 
+  // Si no hay créditos disponibles, se redirige a la página de compra
+  if (availableCredits === null || availableCredits <= 0) {
+    return (
+      <div className='p-4 text-center'>
+        <p className='mb-4'>
+          Para enviar un capítulo, primero debes comprar participación.
+        </p>
+        <Button
+          onClick={() =>
+            router.push(
+              `/editions/${editionId}/books/${bookId}/chapters/purchase`
+            )
+          }>
+          Comprar Participación
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className='relative overflow-hidden py-8'>
-      {/* Background with gradient and blobs */}
+      {/* Background */}
       <div className='absolute inset-0 z-0'>
         <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
         <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
@@ -224,7 +252,6 @@ export default function CreateChapterPage() {
             <ChevronLeft className='mr-1 h-4 w-4' />
             Volver
           </Button>
-
           <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
             Nuevo Capítulo
           </div>
@@ -432,7 +459,6 @@ export default function CreateChapterPage() {
             </div>
           </motion.div>
 
-          {/* Columna lateral con información y consejos */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -442,7 +468,6 @@ export default function CreateChapterPage() {
                 <Info className='h-4 w-4 mr-2 text-purple-600' />
                 Consejos para tu capítulo
               </h2>
-
               <div className='space-y-6'>
                 <div className='bg-purple-50/70 p-4 rounded-lg'>
                   <h3 className='text-sm font-medium text-purple-800 mb-2 flex items-center'>
@@ -476,7 +501,6 @@ export default function CreateChapterPage() {
                     </li>
                   </ul>
                 </div>
-
                 <div className='bg-yellow-50/70 p-4 rounded-lg'>
                   <h3 className='text-sm font-medium text-yellow-800 mb-2 flex items-center'>
                     <Lightbulb className='h-4 w-4 mr-1' />
@@ -509,7 +533,6 @@ export default function CreateChapterPage() {
                     </li>
                   </ul>
                 </div>
-
                 <div className='bg-green-50/70 p-4 rounded-lg'>
                   <h3 className='text-sm font-medium text-green-800 mb-2 flex items-center'>
                     <BookMarked className='h-4 w-4 mr-1' />

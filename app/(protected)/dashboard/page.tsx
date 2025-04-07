@@ -100,8 +100,13 @@ export default function DashboardPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className='text-center mb-8'>
           <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
-            Ediciones Disponibles
+            Bienvenido a tu panel de autor
           </h2>
+          <p className='text-gray-600 text-sm md:text-base'>
+            Aquí encontrarás un resumen y acceso directo a las principales
+            funcionalidades de tu plataforma
+          </p>
+
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
         </motion.div>
 
@@ -173,48 +178,6 @@ export default function DashboardPage() {
               </div>
             </motion.div>
           )}
-
-          {/* Card: Biblioteca de libros publicados */}
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5 }}
-            className='group'>
-            <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-yellow-200'>
-              <div className='absolute top-0 left-0 w-24 h-24 bg-yellow-100 rounded-br-full -z-10 group-hover:bg-yellow-200 transition-colors duration-300'></div>
-
-              <div className='flex items-center mb-4'>
-                <div className='bg-yellow-100 p-3 rounded-full mr-3 group-hover:bg-yellow-200 transition-colors duration-300 group-hover:scale-110'>
-                  <PlusCircle className='w-5 h-5 text-yellow-700' />
-                </div>
-                <h3 className='text-xl font-bold text-gray-900 group-hover:text-yellow-700 transition-colors'>
-                  Biblioteca
-                </h3>
-              </div>
-
-              <p className='text-gray-600 mb-6'>
-                Consulta los libros definitivos publicados y disponibles en
-                nuestra biblioteca.
-              </p>
-
-              <div className='mt-auto'>
-                <Link href='/library'>
-                  <Button
-                    className='w-full bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
-                    onMouseEnter={() => handleMouseEnter("library")}
-                    onMouseLeave={() => handleMouseLeave("library")}>
-                    <span className='flex items-center justify-center'>
-                      Ver Biblioteca
-                      <motion.span
-                        animate={{ x: hoverStates["library"] ? 5 : 0 }}
-                        transition={{ duration: 0.2 }}>
-                        <ArrowRight className='ml-2 h-4 w-4' />
-                      </motion.span>
-                    </span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
 
           {/* Card: Crear libro propio */}
           <motion.div

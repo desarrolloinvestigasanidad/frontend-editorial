@@ -2,8 +2,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import { UserProvider } from "@/context/UserContext";
+import { User } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +23,9 @@ export default function RootLayout({
     <html lang='es'>
       <body className={inter.className}>
         <div className='flex flex-col min-h-screen'>
-          <main className='flex-grow'>{children}</main>
+          <main className='flex-grow'>
+            <UserProvider>{children}</UserProvider>
+          </main>
         </div>
       </body>
     </html>

@@ -40,6 +40,22 @@ type UserData = {
   createdAt: string;
 };
 
+type Publication = {
+  id: number | string;
+  title: string;
+  type: string;
+  date: string;
+  status: string;
+};
+
+type Payment = {
+  id: string;
+  amount: string;
+  paymentDate: string;
+  method: string;
+  status: string;
+};
+
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [editData, setEditData] = useState<Partial<UserData> | null>(null);
@@ -48,7 +64,10 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"personal" | "publications">(
     "personal"
   );
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
+  // Cargar perfil del usuario
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -65,7 +84,6 @@ export default function ProfilePage() {
       .then((res) => res.json())
       .then((data) => {
         setUserData(data);
-        console.log(data);
         setLoading(false);
       })
       .catch((error) => {
@@ -73,6 +91,36 @@ export default function ProfilePage() {
         setLoading(false);
       });
   }, []);
+
+  // Cargar publicaciones y pagos reales, usando el id del usuario obtenido
+  useEffect(() => {
+    if (!userData) return;
+    const token = localStorage.getItem("token");
+
+    // Obtener publicaciones: ajusta la URL según tu endpoint real
+    fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/publications?userId=${userData.id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setPublications(data))
+      .catch((error) =>
+        console.error("Error al obtener publicaciones:", error)
+      );
+
+    // Obtener pagos: ajusta la URL según tu endpoint real
+    fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/payments?userId=${userData.id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setPayments(data))
+      .catch((error) => console.error("Error al obtener pagos:", error));
+  }, [userData]);
 
   const handleEdit = () => {
     if (userData) {
@@ -125,31 +173,6 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
-  // Datos de ejemplo para publicaciones
-  const publications = [
-    {
-      id: 1,
-      title: "Avances en medicina preventiva",
-      type: "Capítulo",
-      date: "2023-05-15",
-      status: "Publicado",
-    },
-    {
-      id: 2,
-      title: "Técnicas innovadoras en enfermería",
-      type: "Libro",
-      date: "2023-08-22",
-      status: "En revisión",
-    },
-    {
-      id: 3,
-      title: "Estudio de caso: Manejo de diabetes",
-      type: "Capítulo",
-      date: "2023-10-10",
-      status: "Publicado",
-    },
-  ];
-
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -192,7 +215,9 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
-          <Breadcrumb />
+          <Breadcrumb>
+            <span>Mi Perfil</span>
+          </Breadcrumb>
 
           <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
             Mi Perfil
@@ -234,6 +259,7 @@ export default function ProfilePage() {
                     <h2 className='text-2xl font-bold text-gray-900'>
                       {userData.firstName} {userData.lastName}
                     </h2>
+                    <p className='text-sm text-gray-500 mt-1'>{userData.id}</p>
                     <p className='text-sm text-gray-500 mt-1'>
                       {userData.professionalCategory}
                     </p>
@@ -273,7 +299,7 @@ export default function ProfilePage() {
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                     onClick={() => setActiveTab("publications")}>
-                    Mis Publicaciones
+                    Mis Publicaciones y Pagos
                   </button>
                 </div>
 
@@ -562,6 +588,48 @@ export default function ProfilePage() {
                         Ver todas mis publicaciones
                       </Button>
                     </div>
+
+                    <div className='mt-8'>
+                      <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+                        Mis Pagos
+                      </h3>
+                      {payments.length === 0 ? (
+                        <p>No se encontraron pagos.</p>
+                      ) : (
+                        <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
+                          <thead className='bg-purple-100'>
+                            <tr>
+                              <th className='px-4 py-2'>ID</th>
+                              <th className='px-4 py-2'>Monto</th>
+                              <th className='px-4 py-2'>Fecha</th>
+                              <th className='px-4 py-2'>Método</th>
+                              <th className='px-4 py-2'>Estado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {payments.map((pay) => (
+                              <tr key={pay.id} className='hover:bg-gray-50'>
+                                <td className='border px-4 py-2'>{pay.id}</td>
+                                <td className='border px-4 py-2'>
+                                  {pay.amount}€
+                                </td>
+                                <td className='border px-4 py-2'>
+                                  {new Date(
+                                    pay.paymentDate
+                                  ).toLocaleDateString()}
+                                </td>
+                                <td className='border px-4 py-2'>
+                                  {pay.method}
+                                </td>
+                                <td className='border px-4 py-2'>
+                                  {pay.status}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -577,7 +645,6 @@ export default function ProfilePage() {
             <h3 className='text-lg font-semibold text-gray-900 mb-6'>
               Estadísticas de Publicación
             </h3>
-
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3'>
@@ -586,7 +653,6 @@ export default function ProfilePage() {
                 <h4 className='font-semibold text-gray-900 mb-1'>3</h4>
                 <p className='text-sm text-gray-600'>Publicaciones</p>
               </div>
-
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3'>
                   <CheckCircle className='h-5 w-5 text-green-700' />
@@ -594,7 +660,6 @@ export default function ProfilePage() {
                 <h4 className='font-semibold text-gray-900 mb-1'>2</h4>
                 <p className='text-sm text-gray-600'>Publicados</p>
               </div>
-
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-3'>
                   <Clock className='h-5 w-5 text-yellow-700' />
@@ -602,7 +667,6 @@ export default function ProfilePage() {
                 <h4 className='font-semibold text-gray-900 mb-1'>1</h4>
                 <p className='text-sm text-gray-600'>En revisión</p>
               </div>
-
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3'>
                   <Award className='h-5 w-5 text-blue-700' />

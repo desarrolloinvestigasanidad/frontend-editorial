@@ -37,7 +37,7 @@ export default function CrearLibroPage() {
       // Avanza del paso de normativa al de título
       setStep("titulo");
     } else if (step === "titulo" && titulo.trim()) {
-      const amount = 99;
+      const amount = 9900;
 
       try {
         const response = await fetch(

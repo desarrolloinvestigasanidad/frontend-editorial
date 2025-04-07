@@ -26,6 +26,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAvailableCredits } from "@/hooks/useAvailableCredits";
 
 export default function CreateChapterPage() {
   const { editionId, bookId } = useParams();
@@ -44,7 +45,8 @@ export default function CreateChapterPage() {
   // Estados adicionales: perfil, detalles del libro y créditos disponibles
   const [authorId, setAuthorId] = useState("");
   const [bookTitle, setBookTitle] = useState("");
-  const [availableCredits, setAvailableCredits] = useState<number | null>(null);
+  const { availableCredits, loadingCredits, errorCredits } =
+    useAvailableCredits(editionId as string);
 
   // Estados de UI
   const [loading, setLoading] = useState(true);
@@ -97,20 +99,9 @@ export default function CreateChapterPage() {
           const bookData = await bookRes.json();
           setBookTitle(bookData.title || "Libro seleccionado");
         }
-        // Obtener créditos disponibles: usamos el endpoint para calcular créditos disponibles
-        if (userId) {
-          const creditsRes = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/users/${userId}/editions/${editionId}/available-credits`
-          );
-          const creditsData = await creditsRes.json();
-          setAvailableCredits(creditsData.available);
-        } else {
-          setAvailableCredits(0);
-        }
       } catch (err: any) {
         console.error("Error al obtener datos:", err);
         setError(err.message);
-        setAvailableCredits(0);
       } finally {
         setLoading(false);
       }
@@ -211,7 +202,19 @@ export default function CreateChapterPage() {
     );
   }
 
-  // Si no hay créditos disponibles, se redirige a la página de compra
+  if (loadingCredits || loading) {
+    return (
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <div className='relative'>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <BookOpen className='h-6 w-6 text-purple-500' />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (availableCredits === null || availableCredits <= 0) {
     return (
       <div className='p-4 text-center'>

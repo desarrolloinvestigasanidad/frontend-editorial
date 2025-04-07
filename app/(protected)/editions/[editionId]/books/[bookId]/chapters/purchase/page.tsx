@@ -10,9 +10,10 @@ export default function PurchaseChaptersPage() {
   const { editionId, bookId } = useParams();
   const router = useRouter();
   const [totalPurchased, setTotalPurchased] = useState(0);
+  const [bookTitle, setBookTitle] = useState("");
   const maxChapters = 8;
 
-  // Esperamos a que el usuario esté disponible
+  // Obtener el total de capítulos comprados para el usuario en esta edición
   useEffect(() => {
     if (!user) return;
     const fetchPurchasedChapters = async () => {
@@ -25,7 +26,6 @@ export default function PurchaseChaptersPage() {
           throw new Error("Error al obtener los capítulos comprados");
         }
         const data = await res.json();
-        // data.creditos es el total de capítulos comprados
         setTotalPurchased(data.creditos);
       } catch (error) {
         console.error("Error al obtener capítulos comprados:", error);
@@ -33,6 +33,26 @@ export default function PurchaseChaptersPage() {
     };
     fetchPurchasedChapters();
   }, [user, editionId]);
+
+  // Obtener los detalles del libro para extraer el título
+  useEffect(() => {
+    if (!editionId || !bookId) return;
+    const fetchBookDetails = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`
+        );
+        if (!res.ok) {
+          throw new Error("Error al obtener detalles del libro");
+        }
+        const data = await res.json();
+        setBookTitle(data.title);
+      } catch (error) {
+        console.error("Error al obtener detalles del libro:", error);
+      }
+    };
+    fetchBookDetails();
+  }, [editionId, bookId]);
 
   const remainingToBuy = maxChapters - totalPurchased;
 
@@ -42,20 +62,27 @@ export default function PurchaseChaptersPage() {
       console.error("UserId no encontrado en el contexto.");
       return;
     }
-    // Construir metadata para la sesión de checkout:
-    const metadata = {
+
+    // Asumiendo que editionId viene de useParams y está definido.
+    // Y que el componente ChapterSelection invoca onSelect con el número de capítulos.
+    const payload = {
       userId,
-      editionId,
-      chapterCount: chaptersToBuy.toString(),
+      bookTitle, // obtenido de la consulta al endpoint de Book
+      amount: (priceToCharge * 100).toString(), // En céntimos
+      metadata: {
+        userId,
+        editionId,
+        chapterCount: chaptersToBuy.toString(),
+        bookTitle,
+      },
     };
+
+    console.log("Payload de checkout:", payload); // Verifica que la metadata incluya chapterCount y editionId
 
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        metadata,
-        amount: (priceToCharge * 100).toString(), // monto en céntimos
-      }),
+      body: JSON.stringify(payload),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -78,10 +105,9 @@ export default function PurchaseChaptersPage() {
         Compra de Capítulos
       </h1>
       <ChapterSelection
-        purchasedChapters={totalPurchased} // total comprados hasta el momento
+        purchasedChapters={totalPurchased}
         onSelect={handleSelect}
       />
-      {/* Aquí podrías mostrar un resumen adicional si es necesario */}
     </div>
   );
 }

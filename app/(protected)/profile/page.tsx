@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-
+import CreditConsumptionHistory from "@/components/CreditConsumptionHistory";
 type UserData = {
   id: string;
   firstName: string;
@@ -46,6 +46,9 @@ type Publication = {
   type: string;
   date: string;
   status: string;
+  cover?: string; // Added optional 'cover' property
+  publishDate: string; // Added 'publishDate' property
+  bookType?: string; // Added optional 'bookType' property
 };
 
 type Payment = {
@@ -61,12 +64,13 @@ export default function ProfilePage() {
   const [editData, setEditData] = useState<Partial<UserData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"personal" | "publications">(
-    "personal"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "personal" | "publications" | "payments"
+  >("personal");
   const [publications, setPublications] = useState<Publication[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
 
+  const userId = userData ? userData.id : null;
   // Cargar perfil del usuario
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -299,16 +303,24 @@ export default function ProfilePage() {
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                     onClick={() => setActiveTab("publications")}>
-                    Mis Publicaciones y Pagos
+                    Mis Publicaciones
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      activeTab === "payments"
+                        ? "bg-purple-100 text-purple-800"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    onClick={() => setActiveTab("payments")}>
+                    Mis Pagos
                   </button>
                 </div>
-
-                {activeTab === "personal" ? (
+                {activeTab === "personal" && (
                   <div className='space-y-6'>
                     {/* Grid de información personal */}
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                       {/* Email */}
-                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm col-span-1 md:col-span-2'>
                         <div className='bg-purple-100 p-2 rounded-full'>
                           <Mail className='h-5 w-5 text-purple-700' />
                         </div>
@@ -323,7 +335,17 @@ export default function ProfilePage() {
                               className='mt-1'
                             />
                           ) : (
-                            <p className='font-medium'>{userData.email}</p>
+                            <div className='relative group w-full'>
+                              <p
+                                className='font-medium overflow-hidden text-ellipsis whitespace-nowrap w-full'
+                                title={userData.email}>
+                                {userData.email}
+                              </p>
+                              {/* Tooltip que se muestra al hacer hover */}
+                              <div className='absolute left-0 -top-8 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-normal z-10'>
+                                {userData.email}
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -430,29 +452,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Intereses */}
-                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
-                        <div className='bg-purple-100 p-2 rounded-full'>
-                          <Heart className='h-5 w-5 text-purple-700' />
-                        </div>
-                        <div className='flex-1'>
-                          <p className='text-xs text-gray-500'>Intereses</p>
-                          {editing ? (
-                            <Input
-                              name='interests'
-                              value={editData?.interests || ""}
-                              onChange={handleInputChange}
-                              placeholder='Intereses'
-                              className='mt-1'
-                            />
-                          ) : (
-                            <p className='font-medium'>
-                              {userData.interests || "No especificado"}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
                       {/* Ubicación */}
                       <div className='flex items-start gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm col-span-1 md:col-span-2'>
                         <div className='bg-purple-100 p-2 rounded-full mt-1'>
@@ -519,117 +518,136 @@ export default function ProfilePage() {
                       </Button>
                     )}
                   </div>
-                ) : (
-                  <div className='space-y-6'>
-                    <div className='flex items-center justify-between'>
-                      <h3 className='text-lg font-semibold text-gray-900'>
-                        Mis Publicaciones
-                      </h3>
-                      <Badge className='bg-purple-100 text-purple-800 hover:bg-purple-200'>
-                        {publications.length} publicaciones
-                      </Badge>
-                    </div>
+                )}{" "}
+                {activeTab === "publications" && (
+                  <div className='space-y-10'>
+                    {/* Publicaciones */}
+                    <div>
+                      <div className='flex items-center justify-between mb-4'>
+                        <h3 className='text-lg font-semibold text-gray-900'>
+                          Mis Publicaciones
+                        </h3>
+                        <Badge className='bg-purple-100 text-purple-800 hover:bg-purple-200'>
+                          {publications.length} publicaciones
+                        </Badge>
+                      </div>
 
-                    <div className='space-y-4'>
-                      {publications.map((pub) => (
-                        <motion.div
-                          key={pub.id}
-                          whileHover={{ y: -3 }}
-                          className='bg-white/60 p-4 rounded-lg border border-gray-100 shadow-sm hover:border-purple-200 transition-all'>
-                          <div className='flex items-start gap-3'>
-                            <div
-                              className={`p-2 rounded-full ${
-                                pub.type === "Libro"
-                                  ? "bg-yellow-100"
-                                  : "bg-purple-100"
-                              }`}>
-                              {pub.type === "Libro" ? (
-                                <BookOpen className='h-5 w-5 text-yellow-700' />
-                              ) : (
-                                <FileText className='h-5 w-5 text-purple-700' />
+                      <div className='space-y-4'>
+                        {publications.map((pub) => (
+                          <motion.div
+                            key={pub.id}
+                            whileHover={{ y: -3 }}
+                            className='bg-white/60 p-4 rounded-lg border border-gray-100 shadow-sm hover:border-purple-200 transition-all'>
+                            <div className='flex items-start gap-4'>
+                              {/* Portada */}
+                              {pub.cover && (
+                                <img
+                                  src={pub.cover}
+                                  alt={`Portada de ${pub.title}`}
+                                  className='w-16 h-16 object-cover rounded shadow'
+                                />
                               )}
-                            </div>
-                            <div className='flex-1'>
-                              <div className='flex items-center justify-between'>
-                                <h4 className='font-medium text-gray-900'>
-                                  {pub.title}
-                                </h4>
-                                <Badge
-                                  className={
-                                    pub.status === "Publicado"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-yellow-100 text-yellow-800"
-                                  }>
-                                  {pub.status}
-                                </Badge>
-                              </div>
-                              <div className='flex items-center mt-2 text-sm text-gray-500'>
-                                <Badge
-                                  variant='outline'
-                                  className='mr-2 border-gray-200'>
-                                  {pub.type}
-                                </Badge>
-                                <span className='flex items-center'>
-                                  <Calendar className='h-3 w-3 mr-1' />
-                                  {new Date(pub.date).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
 
-                    <div className='flex justify-center mt-6'>
-                      <Button
-                        variant='outline'
-                        className='border-purple-200 text-purple-700 hover:bg-purple-50'>
-                        <BookOpen className='mr-2 h-4 w-4' />
-                        Ver todas mis publicaciones
-                      </Button>
-                    </div>
+                              <div className='flex-1'>
+                                <div className='flex items-center justify-between mb-1'>
+                                  <h4 className='font-medium text-gray-900'>
+                                    {pub.title}
+                                  </h4>
+                                  <Badge
+                                    className={
+                                      pub.status === "Publicado"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }>
+                                    {pub.status}
+                                  </Badge>
+                                </div>
+                                <div className='flex items-center mt-1 text-sm text-gray-500 space-x-3'>
+                                  <Badge
+                                    variant='outline'
+                                    className='border-gray-200'>
+                                    {pub.bookType}
+                                  </Badge>
+                                  <span className='flex items-center'>
+                                    <Calendar className='h-3 w-3 mr-1' />
+                                    {new Date(
+                                      pub.publishDate
+                                    ).toLocaleDateString("es-ES")}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
 
-                    <div className='mt-8'>
+                      <div className='flex justify-center mt-6'>
+                        <Button
+                          variant='outline'
+                          className='border-purple-200 text-purple-700 hover:bg-purple-50'>
+                          <BookOpen className='mr-2 h-4 w-4' />
+                          Ver todas mis publicaciones
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {activeTab === "payments" && (
+                  <div className='space-y-10'>
+                    {/* Pagos */}
+                    <div>
                       <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                         Mis Pagos
                       </h3>
+
                       {payments.length === 0 ? (
                         <p>No se encontraron pagos.</p>
                       ) : (
-                        <table className='min-w-full bg-white rounded-lg shadow overflow-hidden'>
-                          <thead className='bg-purple-100'>
-                            <tr>
-                              <th className='px-4 py-2'>ID</th>
-                              <th className='px-4 py-2'>Monto</th>
-                              <th className='px-4 py-2'>Fecha</th>
-                              <th className='px-4 py-2'>Método</th>
-                              <th className='px-4 py-2'>Estado</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {payments.map((pay) => (
-                              <tr key={pay.id} className='hover:bg-gray-50'>
-                                <td className='border px-4 py-2'>{pay.id}</td>
-                                <td className='border px-4 py-2'>
-                                  {pay.amount}€
-                                </td>
-                                <td className='border px-4 py-2'>
-                                  {new Date(
-                                    pay.paymentDate
-                                  ).toLocaleDateString()}
-                                </td>
-                                <td className='border px-4 py-2'>
-                                  {pay.method}
-                                </td>
-                                <td className='border px-4 py-2'>
-                                  {pay.status}
-                                </td>
+                        <div className='overflow-x-auto'>
+                          <table className='min-w-full bg-white rounded-lg shadow'>
+                            <thead className='bg-purple-100 text-gray-700'>
+                              <tr>
+                                <th className='px-4 py-2 text-left'>Fecha</th>
+                                <th className='px-4 py-2 text-left'>Número</th>
+                                <th className='px-4 py-2 text-left'>Importe</th>
+                                <th className='px-4 py-2 text-left'>Acción</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className='text-gray-600'>
+                              {payments.map((pay) => (
+                                <tr
+                                  key={pay.id}
+                                  className='border-b hover:bg-gray-50'>
+                                  <td className='px-4 py-2'>
+                                    {new Date(
+                                      pay.paymentDate
+                                    ).toLocaleDateString("es-ES")}
+                                  </td>
+                                  <td className='px-4 py-2'>{pay.id}</td>
+                                  <td className='px-4 py-2'>
+                                    {Number(pay.amount).toFixed(2)}€
+                                  </td>
+                                  <td className='px-4 py-2'>
+                                    <Button
+                                      size='sm'
+                                      className='bg-lime-400 text-white hover:bg-lime-500 flex items-center'>
+                                      <svg
+                                        className='w-4 h-4 mr-1'
+                                        fill='currentColor'
+                                        viewBox='0 0 20 20'>
+                                        <path d='M13 10V3H7v7H4l6 6 6-6h-3z' />
+                                      </svg>
+                                      Descargar
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       )}
                     </div>
+                    <CreditConsumptionHistory userId={userId || ""} />
                   </div>
                 )}
               </div>

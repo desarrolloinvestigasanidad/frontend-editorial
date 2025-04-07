@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { useAvailableCredits } from "@/hooks/useAvailableCredits";
 
 export default function EditionBooksPage() {
   const { editionId } = useParams();
@@ -24,6 +25,9 @@ export default function EditionBooksPage() {
   const [loading, setLoading] = useState(true);
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
+  const { availableCredits, loadingCredits } = useAvailableCredits(
+    editionId as string
+  );
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -143,7 +147,13 @@ export default function EditionBooksPage() {
             Libros de la Edición
           </div>
         </motion.div>
-
+        {loadingCredits ? (
+          <p>Cargando créditos disponibles...</p>
+        ) : (
+          <p className='text-sm text-gray-600'>
+            Créditos disponibles: <strong>{availableCredits}</strong>
+          </p>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

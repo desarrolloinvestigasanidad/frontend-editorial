@@ -13,9 +13,14 @@ export default function PurchaseChaptersPage() {
   const [bookTitle, setBookTitle] = useState("");
   const maxChapters = 8;
 
+  // Si ya terminó de cargar el usuario y no existe, mostramos mensaje de error
+  if (!userLoading && (!user || !user.id)) {
+    return <div>No se encontró el usuario. Por favor, inicie sesión.</div>;
+  }
+
   // Obtener el total de capítulos comprados para el usuario en esta edición
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.id) return;
     const fetchPurchasedChapters = async () => {
       try {
         const userId = user.id;
@@ -54,21 +59,18 @@ export default function PurchaseChaptersPage() {
     fetchBookDetails();
   }, [editionId, bookId]);
 
-  const remainingToBuy = maxChapters - totalPurchased;
-
   const handleSelect = (chaptersToBuy: number, priceToCharge: number) => {
-    const userId = user?.id;
-    if (!userId) {
+    if (!user || !user.id) {
       console.error("UserId no encontrado en el contexto.");
       return;
     }
+    const userId = user.id;
 
-    // Asumiendo que editionId viene de useParams y está definido.
-    // Y que el componente ChapterSelection invoca onSelect con el número de capítulos.
+    // Construir el payload de checkout
     const payload = {
       userId,
-      bookTitle, // obtenido de la consulta al endpoint de Book
-      amount: (priceToCharge * 100).toString(), // En céntimos
+      bookTitle, // Obtenido de la consulta al endpoint del libro
+      amount: (priceToCharge * 100).toString(), // monto en céntimos
       metadata: {
         userId,
         editionId,
@@ -77,7 +79,7 @@ export default function PurchaseChaptersPage() {
       },
     };
 
-    console.log("Payload de checkout:", payload); // Verifica que la metadata incluya chapterCount y editionId
+    console.log("Payload de checkout:", payload);
 
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`, {
       method: "POST",

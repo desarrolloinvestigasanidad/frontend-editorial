@@ -26,8 +26,15 @@ export default function CrearLibroPage() {
 
   // Función que maneja el avance de pasos o la creación final
   const handleCreateBook = async () => {
+    // Validamos que el usuario esté autenticado
+    if (!userId) {
+      console.error("El usuario no está autenticado");
+      // Opcional: redirige al login o muestra una notificación
+      return;
+    }
+
     if (step === "normativa") {
-      // Paso 1 -> Paso 2
+      // Avanza del paso de normativa al de título
       setStep("titulo");
     } else if (step === "titulo" && titulo.trim()) {
       const amount = 99;
@@ -54,7 +61,7 @@ export default function CrearLibroPage() {
     }
   };
 
-  // Animation variants
+  // Variantes para animaciones
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

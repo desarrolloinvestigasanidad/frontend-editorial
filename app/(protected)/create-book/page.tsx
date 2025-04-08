@@ -24,6 +24,7 @@ export default function CrearLibroPage() {
         if (data && data.length > 0) {
           // Se asume que la primera edición es la actual
           setCurrentEdition(data[0]);
+          console.log(data[0]);
         }
         setLoadingEdition(false);
       })
@@ -96,49 +97,98 @@ export default function CrearLibroPage() {
                     </h2>
                     <p className='text-gray-700 mb-4'>
                       Estimado/a autor/a, te damos la bienvenida a la{" "}
-                      <strong>[Nombre de la Edición/Libro]</strong> de Investiga
-                      Sanidad. A continuación, te detallamos las normativas y
-                      fechas importantes para el envío de tus capítulos, la
-                      publicación de la edición y la descarga de los libros y
-                      certificados:
+                      <strong>
+                        {currentEdition
+                          ? currentEdition.title
+                          : "Edición del Libro"}
+                      </strong>{" "}
+                      de Investiga Sanidad. A continuación, te detallamos las
+                      normativas y fechas importantes para el envío de tus
+                      capítulos, la publicación de la edición y la descarga de
+                      los libros y certificados:
                     </p>
                     <ol className='list-decimal ml-5 space-y-2 text-gray-700'>
                       <li>
                         <strong>Envío de Capítulos:</strong> El plazo para el
-                        envío es <strong>[Fecha límite]</strong>. Cada capítulo
-                        debe ajustarse a las especificaciones requeridas; de lo
-                        contrario, se devolverá para corrección.
+                        envío es{" "}
+                        <strong>
+                          {currentEdition && currentEdition.deadlineChapters
+                            ? new Date(
+                                currentEdition.deadlineChapters
+                              ).toLocaleDateString()
+                            : "[Fecha límite]"}
+                        </strong>
+                        . Cada capítulo debe ajustarse a las especificaciones
+                        requeridas; de lo contrario, se devolverá para
+                        corrección.
                       </li>
                       <li>
                         <strong>Revisión y Publicación:</strong> Los capítulos
                         serán evaluados por nuestro equipo editorial y se
                         notificará a los autores sobre aceptación o
                         correcciones. La publicación oficial será el{" "}
-                        <strong>[Fecha de publicación]</strong>.
+                        <strong>
+                          {currentEdition && currentEdition.publishDate
+                            ? new Date(
+                                currentEdition.publishDate
+                              ).toLocaleDateString()
+                            : "[Fecha de publicación]"}
+                        </strong>
+                        .
                       </li>
                       <li>
                         <strong>Descarga de Libros y Certificados:</strong>
                         <br />
                         <em>Libro Completo:</em> Disponible en{" "}
-                        <strong>[Fecha de publicación]</strong>.
-                        <br />
+                        <strong>
+                          {currentEdition && currentEdition.publishDate
+                            ? new Date(
+                                currentEdition.publishDate
+                              ).toLocaleDateString()
+                            : "[Fecha de publicación]"}
+                        </strong>
+                        .<br />
                         <em>Certificados de Participación:</em> Disponibles
-                        desde <strong>[Fecha de publicación]</strong> hasta{" "}
-                        <strong>[Fecha límite de descarga]</strong>.
-                      </li>
-                      <li>
-                        <strong>Términos y Condiciones:</strong> Al enviar tu
-                        capítulo, cedes los derechos de publicación y aceptas la
-                        Ley de Propiedad Intelectual. No se aceptarán
-                        correcciones post-publicación.
+                        desde{" "}
+                        <strong>
+                          {currentEdition && currentEdition.publishDate
+                            ? new Date(
+                                currentEdition.publishDate
+                              ).toLocaleDateString()
+                            : "[Fecha de publicación]"}
+                        </strong>{" "}
+                        hasta{" "}
+                        <strong>
+                          {currentEdition && currentEdition.deadlineChapters
+                            ? new Date(
+                                currentEdition.deadlineChapters
+                              ).toLocaleDateString()
+                            : "[Fecha límite de descarga]"}
+                        </strong>
+                        .
                       </li>
                     </ol>
                     <p className='text-gray-700 mt-4'>
-                      Envío de capítulos: <strong>[FECHA]</strong>
+                      Envío de capítulos:{" "}
+                      <strong>
+                        {currentEdition && currentEdition.deadlineChapters
+                          ? new Date(
+                              currentEdition.deadlineChapters
+                            ).toLocaleDateString()
+                          : "[FECHA]"}
+                      </strong>
                       <br />
-                      Revisión y corrección: <strong>[FECHA]</strong>
+                      Revisión y corrección:{" "}
+                      <strong>{"[Fecha de revisión]"}</strong>
                       <br />
-                      Publicación y descarga: <strong>[FECHA]</strong>
+                      Publicación y descarga:{" "}
+                      <strong>
+                        {currentEdition && currentEdition.publishDate
+                          ? new Date(
+                              currentEdition.publishDate
+                            ).toLocaleDateString()
+                          : "[FECHA]"}
+                      </strong>
                     </p>
                     <p className='text-gray-700 mt-4'>
                       El equipo de Investiga Sanidad
@@ -190,7 +240,7 @@ export default function CrearLibroPage() {
                   </motion.div>
                 </div>
 
-                {/* Columna Derecha: Tarjeta de Precio con Información de Edición */}
+                {/* Columna Derecha: Tarjeta de Precio con Información de Edición y Cover */}
                 <div>
                   {loadingEdition ? (
                     <div>Cargando edición...</div>
@@ -203,11 +253,20 @@ export default function CrearLibroPage() {
                       <div className='absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg'>
                         Recomendado
                       </div>
-                      <div className='p-8'>
+                      {/* Se reduce el padding de la tarjeta de p-8 a p-6 para disminuir la altura */}
+                      <div className='p-6'>
+                        {/* Mostrar portada si existe */}
+                        {currentEdition && currentEdition.cover && (
+                          <img
+                            src={currentEdition.cover}
+                            alt={`Portada de ${currentEdition.title}`}
+                            className='w-full h-auto rounded-lg mb-4'
+                          />
+                        )}
                         {currentEdition && (
                           <div className='mb-4'>
                             <h4 className='text-xl font-bold text-purple-800'>
-                              Edición Actual: {currentEdition.name}
+                              Edición Actual: {currentEdition.title}
                             </h4>
                             <p className='text-gray-600'>
                               {currentEdition.description}

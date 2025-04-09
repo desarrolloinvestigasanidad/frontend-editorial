@@ -19,6 +19,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 type CertType = "CAPITULO" | "LIBRO";
 
@@ -41,39 +42,10 @@ export default function CertificatesPage() {
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Simulamos una carga de datos
+    // Simulamos una carga de datos (en una implementación real se haría un fetch a la API)
     const timer = setTimeout(() => {
-      // Aquí harías tu fetch real a la API
-      // GET /api/certificates (o /api/certificates/user/:userId)
-      // setCertificates(data);
-
-      // DEMO:
-      setCertificates([
-        {
-          id: 1,
-          title: "Certificado de Autoría de Capítulo",
-          type: "CAPITULO",
-          date: "2024-05-29",
-          editionOrBook: "Edición XXVIII Libros Electrónicos",
-          pdfUrl: "#",
-        },
-        {
-          id: 2,
-          title: "Certificado de Coautoría en Edición",
-          type: "CAPITULO",
-          date: "2024-06-10",
-          editionOrBook: "Edición XXIX Salud Pública",
-          pdfUrl: "#",
-        },
-        {
-          id: 3,
-          title: "Certificado de Libro Propio",
-          type: "LIBRO",
-          date: "2024-07-01",
-          editionOrBook: "Libro Propio: Emergencias 2024",
-          pdfUrl: "#",
-        },
-      ]);
+      // DEMO: comentar o eliminar la carga de datos si se desea que aparezca el mensaje
+      setCertificates([]);
       setLoading(false);
     }, 800);
 
@@ -100,14 +72,14 @@ export default function CertificatesPage() {
 
   // Acciones
   const handleView = (certId: number) => {
-    // Podrías abrir un modal de previsualización o redirigir a /certificates/[id]/preview
+    // Puedes abrir un modal de previsualización o redirigir a otra página
     alert(`Ver (previsualizar) Certificado ID: ${certId} (demo)`);
   };
 
   const handleDownload = (certId: number) => {
     const cert = certificates.find((c) => c.id === certId);
     if (!cert) return;
-    // O bien window.open(cert.pdfUrl, "_blank");
+    // Puedes usar window.open(cert.pdfUrl, "_blank");
     alert(`Descargar PDF del certificado ID: ${certId} (demo).`);
   };
 
@@ -121,7 +93,7 @@ export default function CertificatesPage() {
     });
   };
 
-  // Animation variants
+  // Variantes de animación
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -156,7 +128,7 @@ export default function CertificatesPage() {
 
   return (
     <div className='relative overflow-hidden py-8'>
-      {/* Background with gradient and blobs */}
+      {/* Background con degradado y blobs */}
       <div className='absolute inset-0 z-0'>
         <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
         <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
@@ -315,7 +287,9 @@ export default function CertificatesPage() {
 }
 
 /**
- * Lista de certificados con tarjetas en lugar de tabla
+ * Componente que muestra la lista de certificados.
+ * Si no existen certificados y no se está filtrando por búsqueda, se muestra
+ * un mensaje invitando al usuario a participar en ediciones o crear su libro.
  */
 function CertificateList({
   certificates,
@@ -336,7 +310,9 @@ function CertificateList({
   handleMouseEnter: (id: string) => void;
   handleMouseLeave: (id: string) => void;
 }) {
-  // Animation variants
+  const router = useRouter();
+
+  // Variantes de animación
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -356,6 +332,7 @@ function CertificateList({
     },
   };
 
+  // Si no hay certificados y no se está realizando una búsqueda, mostramos el mensaje invitando a participar.
   if (certificates.length === 0) {
     return (
       <motion.div
@@ -364,18 +341,27 @@ function CertificateList({
         transition={{ duration: 0.5 }}
         className='backdrop-blur-sm bg-white/60 p-8 rounded-xl shadow-md border border-gray-100 text-center'>
         <FileText className='h-12 w-12 mx-auto text-gray-400 mb-4' />
-        <p className='text-gray-600 mb-2'>
-          {searchTerm
-            ? `No se encontraron certificados para "${searchTerm}"`
-            : "No hay certificados disponibles en esta categoría."}
-        </p>
-        {searchTerm && (
-          <Button
-            variant='outline'
-            className='mt-4'
-            onClick={() => window.location.reload()}>
-            Limpiar búsqueda
-          </Button>
+        {searchTerm ? (
+          <p className='text-gray-600 mb-2'>
+            No se encontraron certificados para &quot;{searchTerm}&quot;
+          </p>
+        ) : (
+          <>
+            <p className='text-gray-600 mb-2'>
+              Aún no tienes certificados disponibles, si quieres participar en
+              nuestras ediciones o crear tu propio libro, pulsa aquí.
+            </p>
+            <div className='flex justify-center gap-4 mt-4'>
+              <Button
+                variant='outline'
+                onClick={() => router.push("/ediciones")}>
+                Ver Ediciones
+              </Button>
+              <Button onClick={() => router.push("/create-book")}>
+                Crear tu Libro
+              </Button>
+            </div>
+          </>
         )}
       </motion.div>
     );

@@ -129,9 +129,7 @@ export default function RegisterPage() {
     if (step === 0) {
       const { id, email, password, confirmPassword } = formData;
       if (!id || !email || !password || !confirmPassword) {
-        setMessage(
-          "Por favor, completa todos los campos requeridos en Credenciales."
-        );
+        setMessage("Por favor, completa todos los campos requeridos");
         return;
       }
       if (!validateEmail(email)) {
@@ -305,7 +303,7 @@ export default function RegisterPage() {
                 {step === 0 && (
                   <>
                     <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
-                      Paso 1: Credenciales
+                      Paso 1: DNI/NIE/Pasaporte
                     </h2>
                     {/* Identificador */}
                     <div className='space-y-2'>

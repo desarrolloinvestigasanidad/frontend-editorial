@@ -522,38 +522,6 @@ export default function RegisterPage() {
                         <option value='Otro'>Otro</option>
                       </select>
                     </div>
-                    {/* Dirección */}
-                    <div className='space-y-2'>
-                      <Label
-                        htmlFor='address'
-                        className='text-gray-700 font-medium'>
-                        Dirección
-                      </Label>
-                      <Input
-                        type='text'
-                        id='address'
-                        name='address'
-                        value={formData.address}
-                        onChange={handleChange}
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                      />
-                    </div>
-                    {/* Intereses */}
-                    <div className='space-y-2'>
-                      <Label
-                        htmlFor='interests'
-                        className='text-gray-700 font-medium'>
-                        Intereses
-                      </Label>
-                      <Input
-                        type='text'
-                        id='interests'
-                        name='interests'
-                        value={formData.interests}
-                        onChange={handleChange}
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                      />
-                    </div>
                   </>
                 )}
 

@@ -429,29 +429,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Dirección */}
-                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
-                        <div className='bg-purple-100 p-2 rounded-full'>
-                          <MapPin className='h-5 w-5 text-purple-700' />
-                        </div>
-                        <div className='flex-1'>
-                          <p className='text-xs text-gray-500'>Dirección</p>
-                          {editing ? (
-                            <Input
-                              name='address'
-                              value={editData?.address || ""}
-                              onChange={handleInputChange}
-                              placeholder='Dirección'
-                              className='mt-1'
-                            />
-                          ) : (
-                            <p className='font-medium'>
-                              {userData.address || "No especificado"}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
                       {/* Ubicación */}
                       <div className='flex items-start gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm col-span-1 md:col-span-2'>
                         <div className='bg-purple-100 p-2 rounded-full mt-1'>

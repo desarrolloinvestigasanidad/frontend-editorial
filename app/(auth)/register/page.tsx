@@ -470,6 +470,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     {/* Categoría Profesional */}
+
                     <div className='space-y-2'>
                       <Label
                         htmlFor='professionalCategory'
@@ -477,16 +478,31 @@ export default function RegisterPage() {
                         Categoría profesional{" "}
                         <span className='text-red-500'>*</span>
                       </Label>
-                      <Input
-                        type='text'
+                      <select
                         id='professionalCategory'
                         name='professionalCategory'
                         value={formData.professionalCategory}
                         onChange={handleChange}
                         required
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
-                      />
+                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 transition-all'>
+                        <option value=''>
+                          Selecciona tu categoría profesional
+                        </option>
+                        <option value='medico'>Médico</option>
+                        <option value='enfermero'>Enfermero</option>
+                        <option value='farmaceutico'>Farmacéutico</option>
+                        <option value='dentista'>Dentista</option>
+                        <option value='fisioterapeuta'>Fisioterapeuta</option>
+                        <option value='tecnico_lab'>
+                          Técnico de laboratorio
+                        </option>
+                        <option value='auxiliar_enfermeria'>
+                          Auxiliar de enfermería
+                        </option>
+                        <option value='otro'>Otro</option>
+                      </select>
                     </div>
+
                     {/* Género */}
                     <div className='space-y-2'>
                       <Label

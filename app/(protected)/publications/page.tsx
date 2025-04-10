@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { useUser } from "@/context/UserContext";
 
 type Book = {
   id: string;
@@ -40,6 +41,8 @@ type Book = {
 };
 
 export default function PublicationsPage() {
+  const { user } = useUser();
+  const userId = user?.id || null;
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,9 +51,12 @@ export default function PublicationsPage() {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/publications`
-        );
+        let url = `${process.env.NEXT_PUBLIC_BASE_URL}/publications`;
+        if (userId) {
+          // Si existe userId, lo agregamos como query parameter para obtener solo los libros del usuario
+          url += `?userId=${userId}`;
+        }
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error("Error al obtener los libros");
         }
@@ -64,7 +70,7 @@ export default function PublicationsPage() {
     };
 
     fetchBooks();
-  }, []);
+  }, [userId]);
 
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -112,13 +118,9 @@ export default function PublicationsPage() {
     book.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const editionBooks = filteredBooks.filter(
-    (book) => book.bookType.toLowerCase() === "libro edición"
-  );
-
-  const ownBooks = filteredBooks.filter(
-    (book) => book.bookType.toLowerCase() === "libro propio"
-  );
+  // Nuevo filtro según editionId
+  const ownBooks = filteredBooks.filter((book) => !book.editionId);
+  const editionBooks = filteredBooks.filter((book) => book.editionId);
 
   // Animation variants
   const containerVariants = {
@@ -152,7 +154,7 @@ export default function PublicationsPage() {
       </div>
     );
   }
-
+  console.log(books);
   return (
     <div className='relative overflow-hidden py-8'>
       {/* Background with gradient and blobs */}

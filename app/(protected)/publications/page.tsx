@@ -14,6 +14,7 @@ import {
   ArrowRight,
   BookMarked,
   Search,
+  Library,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -35,9 +36,16 @@ type Book = {
   active: number;
   price?: number;
   authorId?: string;
-  editionId?: string;
+  editionId?: string; // Si existe, es libro de edición.
   createdAt: string;
   updatedAt: string;
+};
+
+type Edition = {
+  id: string;
+  title?: string;
+  name?: string;
+  description?: string;
 };
 
 export default function PublicationsPage() {
@@ -47,13 +55,17 @@ export default function PublicationsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
+  // Estado para almacenar la información real de las ediciones, mapeado por su id.
+  const [editionsDetails, setEditionsDetails] = useState<
+    Record<string, Edition>
+  >({});
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         let url = `${process.env.NEXT_PUBLIC_BASE_URL}/publications`;
         if (userId) {
-          // Si existe userId, lo agregamos como query parameter para obtener solo los libros del usuario
+          // Si existe userId, lo agregamos como query parameter para obtener solo los libros del usuario.
           url += `?userId=${userId}`;
         }
         const response = await fetch(url);
@@ -71,6 +83,66 @@ export default function PublicationsPage() {
 
     fetchBooks();
   }, [userId]);
+
+  // Filtrar libros según el término de búsqueda.
+  const filteredBooks = books.filter((book) =>
+    book.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Determinar libros propios y de edición según la existencia de editionId.
+  const ownBooks = filteredBooks.filter((book) => !book.editionId);
+  const editionBooks = filteredBooks.filter((book) => book.editionId);
+
+  // Extraer uniqueEditionIds de los libros de edición.
+  const uniqueEditionIds = Array.from(
+    new Set(editionBooks.map((book) => book.editionId))
+  ).filter((id): id is string => Boolean(id));
+
+  // Efecto para hacer fetch de la información de cada edición usando /editions/{id}.
+  useEffect(() => {
+    if (uniqueEditionIds.length === 0) return;
+    Promise.all(
+      uniqueEditionIds.map((id) =>
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`).then(
+          (res) => {
+            if (!res.ok) {
+              throw new Error(`Error al obtener la edición ${id}`);
+            }
+            return res.json();
+          }
+        )
+      )
+    )
+      .then((editionsData: Edition[]) => {
+        // Creamos un mapa de ediciones con key = edition.id.
+        const map: Record<string, Edition> = {};
+        editionsData.forEach((edition) => {
+          map[edition.id] = edition;
+        });
+        setEditionsDetails(map);
+      })
+      .catch((error) => console.error("Error fetching editions:", error));
+  }, [uniqueEditionIds]);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5 },
+    },
+  };
 
   const handleMouseEnter = (id: string) => {
     setHoverStates((prev) => ({ ...prev, [id]: true }));
@@ -114,34 +186,6 @@ export default function PublicationsPage() {
     });
   };
 
-  const filteredBooks = books.filter((book) =>
-    book.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Nuevo filtro según editionId
-  const ownBooks = filteredBooks.filter((book) => !book.editionId);
-  const editionBooks = filteredBooks.filter((book) => book.editionId);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
-
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -154,6 +198,7 @@ export default function PublicationsPage() {
       </div>
     );
   }
+
   console.log(books);
   return (
     <div className='relative overflow-hidden py-8'>
@@ -267,18 +312,84 @@ export default function PublicationsPage() {
           </TabsContent>
 
           <TabsContent value='edition'>
-            {editionBooks.length === 0 ? (
-              <EmptyState type='edición' searchTerm={searchTerm} />
+            {/* Mostrar las tarjetas de edición */}
+            {uniqueEditionIds.length > 0 ? (
+              <motion.div
+                initial='hidden'
+                animate='visible'
+                variants={containerVariants}
+                className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                {uniqueEditionIds.map((id) => {
+                  // Utilizamos el objeto editionsDetails para obtener los datos reales
+                  const edition = editionsDetails[id];
+                  return (
+                    <motion.div
+                      key={id}
+                      variants={itemVariants}
+                      whileHover={{ y: -5 }}
+                      className='group'>
+                      <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
+                        <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
+
+                        <div className='flex items-center mb-4'>
+                          <div className='bg-purple-100 p-3 rounded-full mr-3 group-hover:bg-purple-200 transition-colors duration-300 group-hover:scale-110'>
+                            <Library className='w-5 h-5 text-purple-700' />
+                          </div>
+                          <h3 className='text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors'>
+                            {edition
+                              ? edition.title || edition.name
+                              : `Edición ${id.slice(0, 8)}`}
+                          </h3>
+                        </div>
+
+                        <p className='text-gray-600 mb-6'>
+                          {edition
+                            ? edition.description
+                            : "Haz clic para ver libros de esta edición"}
+                        </p>
+
+                        <div className='mt-auto'>
+                          <Link href={`/publications/editions/${id}`}>
+                            <Button
+                              className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
+                              onMouseEnter={() =>
+                                handleMouseEnter(`edition-${id}`)
+                              }
+                              onMouseLeave={() =>
+                                handleMouseLeave(`edition-${id}`)
+                              }>
+                              <span className='flex items-center justify-center'>
+                                Ver Libros / Mandar Capítulos
+                                <motion.span
+                                  animate={{
+                                    x: hoverStates[`edition-${id}`] ? 5 : 0,
+                                  }}
+                                  transition={{ duration: 0.2 }}>
+                                  <ArrowRight className='ml-2 h-4 w-4' />
+                                </motion.span>
+                              </span>
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
             ) : (
-              <BookGrid
-                books={editionBooks}
-                hoverStates={hoverStates}
-                handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                formatDate={formatDate}
-              />
+              <motion.div
+                variants={itemVariants}
+                className='col-span-full backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50'>
+                <div className='flex flex-col items-center justify-center text-center p-8'>
+                  <BookMarked className='w-12 h-12 text-purple-300 mb-4' />
+                  <h3 className='text-xl font-semibold text-gray-700 mb-2'>
+                    No hay ediciones disponibles
+                  </h3>
+                  <p className='text-gray-500'>
+                    Pronto se añadirán nuevas ediciones para participar
+                  </p>
+                </div>
+              </motion.div>
             )}
           </TabsContent>
         </Tabs>

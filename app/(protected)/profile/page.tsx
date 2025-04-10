@@ -188,11 +188,7 @@ export default function ProfilePage() {
   const certifiedCount = publications.filter(
     (pub) => pub.status.toLowerCase() === "certificado"
   ).length;
-  console.log(publications, "publications");
-  console.log(totalPublications, "totalPublications");
-  console.log(publishedCount, "publishedCount");
-  console.log(reviewCount, "reviewCount");
-  console.log(certifiedCount, "certifiedCount");
+
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>

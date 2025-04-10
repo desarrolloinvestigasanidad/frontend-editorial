@@ -17,6 +17,7 @@ import {
 import {
   BookOpen,
   FileBadge,
+  FileText,
   Home,
   Library,
   LogOut,
@@ -41,6 +42,7 @@ export function AppSidebar() {
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
     { title: "Mis Publicaciones", icon: BookOpen, href: "/publications" },
+    { title: "Mis Capítulos", icon: FileText, href: "/publications/chapters" },
     { title: "Biblioteca", icon: Library, href: "/library" },
     { title: "Crear Libro", icon: Plus, href: "/create-book" },
   ];

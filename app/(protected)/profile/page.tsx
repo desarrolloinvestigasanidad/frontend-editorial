@@ -176,7 +176,23 @@ export default function ProfilePage() {
   const handleCancel = () => {
     setEditing(false);
   };
-
+  const totalPublications = publications.length;
+  const publishedCount = publications.filter(
+    (pub) => pub.status.toLowerCase() === "publicado"
+  ).length;
+  const reviewCount = publications.filter(
+    (pub) =>
+      pub.status.toLowerCase() === "revision" ||
+      pub.status.toLowerCase() === "desarrollo"
+  ).length;
+  const certifiedCount = publications.filter(
+    (pub) => pub.status.toLowerCase() === "certificado"
+  ).length;
+  console.log(publications, "publications");
+  console.log(totalPublications, "totalPublications");
+  console.log(publishedCount, "publishedCount");
+  console.log(reviewCount, "reviewCount");
+  console.log(certifiedCount, "certifiedCount");
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -631,7 +647,6 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* Estadísticas */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -645,28 +660,36 @@ export default function ProfilePage() {
                 <div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3'>
                   <BookOpen className='h-5 w-5 text-purple-700' />
                 </div>
-                <h4 className='font-semibold text-gray-900 mb-1'>3</h4>
+                <h4 className='font-semibold text-gray-900 mb-1'>
+                  {totalPublications}
+                </h4>
                 <p className='text-sm text-gray-600'>Publicaciones</p>
               </div>
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3'>
                   <CheckCircle className='h-5 w-5 text-green-700' />
                 </div>
-                <h4 className='font-semibold text-gray-900 mb-1'>2</h4>
+                <h4 className='font-semibold text-gray-900 mb-1'>
+                  {publishedCount}
+                </h4>
                 <p className='text-sm text-gray-600'>Publicados</p>
               </div>
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mb-3'>
                   <Clock className='h-5 w-5 text-yellow-700' />
                 </div>
-                <h4 className='font-semibold text-gray-900 mb-1'>1</h4>
+                <h4 className='font-semibold text-gray-900 mb-1'>
+                  {reviewCount}
+                </h4>
                 <p className='text-sm text-gray-600'>En revisión</p>
               </div>
               <div className='bg-white/80 p-4 rounded-lg shadow border border-purple-50 hover:border-purple-200 transition-all duration-300 hover:shadow-md'>
                 <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3'>
                   <Award className='h-5 w-5 text-blue-700' />
                 </div>
-                <h4 className='font-semibold text-gray-900 mb-1'>2</h4>
+                <h4 className='font-semibold text-gray-900 mb-1'>
+                  {certifiedCount}
+                </h4>
                 <p className='text-sm text-gray-600'>Certificados</p>
               </div>
             </div>

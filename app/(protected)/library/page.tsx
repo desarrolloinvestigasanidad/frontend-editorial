@@ -331,7 +331,7 @@ export default function LibraryPage() {
         initial='hidden'
         animate='visible'
         variants={containerVariants}
-        className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        className='grid grid-cols-1 md:grid-cols-1 gap-6'>
         {/* Card: Biblioteca de libros (pública) */}
         <motion.div
           variants={itemVariants}
@@ -364,42 +364,6 @@ export default function LibraryPage() {
             </Button>
           </div>
         </motion.div>
-
-        {/* Card: Biblioteca de libros propios (solo si hasOwnBooks = true) */}
-        {hasOwnBooks && (
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -10 }}
-            className='group'>
-            <div
-              onClick={() => setView("ownBooks")}
-              className='cursor-pointer backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-blue-200 flex flex-col items-center justify-center'>
-              <div className='bg-blue-100 p-6 rounded-full mb-6 group-hover:bg-blue-200 transition-colors duration-300 group-hover:scale-110'>
-                <BookMarked className='h-12 w-12 text-blue-600' />
-              </div>
-              <h2 className='text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors mb-2'>
-                Biblioteca de libros propios
-              </h2>
-              <p className='text-gray-600 text-center mb-6'>
-                Accede a los libros que has creado o en los que has participado
-                como autor
-              </p>
-              <Button
-                className='mt-auto bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800'
-                onMouseEnter={() => handleMouseEnter("own")}
-                onMouseLeave={() => handleMouseLeave("own")}>
-                <span className='flex items-center justify-center'>
-                  Ver mis libros
-                  <motion.span
-                    animate={{ x: hoverStates["own"] ? 5 : 0 }}
-                    transition={{ duration: 0.2 }}>
-                    <ArrowRight className='ml-2 h-4 w-4' />
-                  </motion.span>
-                </span>
-              </Button>
-            </div>
-          </motion.div>
-        )}
       </motion.div>
     );
   }

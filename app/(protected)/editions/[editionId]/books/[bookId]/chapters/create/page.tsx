@@ -28,6 +28,38 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
 
+// Componente auxiliar para el seguimiento del número de palabras
+function WordCountProgress({
+  text,
+  min,
+  max,
+}: {
+  text: string;
+  min: number;
+  max: number;
+}) {
+  const count =
+    text.trim() === "" ? 0 : text.trim().split(/\s+/).filter(Boolean).length;
+  const percentage = Math.min(100, Math.floor((count / min) * 100));
+  return (
+    <div className='mt-1'>
+      <div className='relative h-2 bg-gray-200 rounded'>
+        <div
+          style={{ width: `${percentage}%` }}
+          className={`h-2 rounded transition-all duration-300 ${
+            percentage >= 100 ? "bg-green-500" : "bg-blue-500"
+          }`}></div>
+      </div>
+      <p className='text-xs text-gray-500 mt-1'>
+        {count} palabra{count !== 1 && "s"}{" "}
+        {count < min && `- ¡Añade ${min - count} más para alcanzar el mínimo!`}
+        {count >= min && count <= max && " - ¡Buen trabajo!"}
+        {count > max && " - Has superado el máximo recomendado"}
+      </p>
+    </div>
+  );
+}
+
 export default function CreateChapterPage() {
   const { editionId, bookId } = useParams();
   const router = useRouter();
@@ -158,7 +190,7 @@ export default function CreateChapterPage() {
     }
   };
 
-  // Si se está cargando o hay éxito, se muestran las vistas correspondientes
+  // Vistas de carga, éxito o sin créditos
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
@@ -179,7 +211,7 @@ export default function CreateChapterPage() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className='text-center p-8 max-w-md'>
+          className='text-center p-8 max-w-md bg-white rounded-xl shadow-lg'>
           <div className='mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4'>
             <CheckCircle className='h-8 w-8 text-green-600' />
           </div>
@@ -235,7 +267,7 @@ export default function CreateChapterPage() {
 
   return (
     <div className='relative overflow-hidden py-8'>
-      {/* Background */}
+      {/* Fondo de diseño moderno */}
       <div className='absolute inset-0 z-0'>
         <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
         <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
@@ -295,6 +327,7 @@ export default function CreateChapterPage() {
                   initial='hidden'
                   animate='visible'
                   variants={containerVariants}>
+                  {/* Título del capítulo */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Título del capítulo
@@ -308,6 +341,7 @@ export default function CreateChapterPage() {
                     />
                   </motion.div>
 
+                  {/* Tipo de estudio */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Tipo de estudio
@@ -331,6 +365,7 @@ export default function CreateChapterPage() {
                     </Select>
                   </motion.div>
 
+                  {/* Metodología */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Metodología
@@ -343,12 +378,13 @@ export default function CreateChapterPage() {
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
+                    <WordCountProgress text={methodology} min={30} max={100} />
                     <p className='text-xs text-gray-500 mt-1'>
-                      Describe detalladamente la metodología utilizada en tu
-                      investigación.
+                      Se recomienda entre 30 y 100 palabras.
                     </p>
                   </motion.div>
 
+                  {/* Introducción */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Introducción
@@ -357,16 +393,14 @@ export default function CreateChapterPage() {
                       value={introduction}
                       onChange={(e) => setIntroduction(e.target.value)}
                       rows={4}
-                      placeholder='Mínimo 200 caracteres / Máximo 1100 caracteres'
+                      placeholder='Mínimo 50 palabras / Máximo 150 palabras'
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
-                    <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                      <span>Mínimo 200 caracteres</span>
-                      <span>{introduction.length}/1100 caracteres</span>
-                    </div>
+                    <WordCountProgress text={introduction} min={50} max={150} />
                   </motion.div>
 
+                  {/* Objetivos */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Objetivos
@@ -375,16 +409,14 @@ export default function CreateChapterPage() {
                       value={objectives}
                       onChange={(e) => setObjectives(e.target.value)}
                       rows={4}
-                      placeholder='Mínimo 200 caracteres / Máximo 1100 caracteres'
+                      placeholder='Mínimo 50 palabras / Máximo 150 palabras'
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
-                    <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                      <span>Mínimo 200 caracteres</span>
-                      <span>{objectives.length}/1100 caracteres</span>
-                    </div>
+                    <WordCountProgress text={objectives} min={50} max={150} />
                   </motion.div>
 
+                  {/* Resultados */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Resultados
@@ -393,16 +425,14 @@ export default function CreateChapterPage() {
                       value={results}
                       onChange={(e) => setResults(e.target.value)}
                       rows={4}
-                      placeholder='Mínimo 200 caracteres / Máximo 2500 caracteres'
+                      placeholder='Mínimo 50 palabras / Máximo 250 palabras'
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
-                    <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                      <span>Mínimo 200 caracteres</span>
-                      <span>{results.length}/2500 caracteres</span>
-                    </div>
+                    <WordCountProgress text={results} min={50} max={250} />
                   </motion.div>
 
+                  {/* Discusión-Conclusión */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Discusión-Conclusión
@@ -411,16 +441,14 @@ export default function CreateChapterPage() {
                       value={discussion}
                       onChange={(e) => setDiscussion(e.target.value)}
                       rows={4}
-                      placeholder='Mínimo 100 caracteres / Máximo 1100 caracteres'
+                      placeholder='Mínimo 30 palabras / Máximo 150 palabras'
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
-                    <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                      <span>Mínimo 100 caracteres</span>
-                      <span>{discussion.length}/1100 caracteres</span>
-                    </div>
+                    <WordCountProgress text={discussion} min={30} max={150} />
                   </motion.div>
 
+                  {/* Bibliografía */}
                   <motion.div variants={itemVariants} className='mb-6'>
                     <Label className='text-gray-700 font-medium mb-1 block'>
                       Bibliografía
@@ -429,16 +457,14 @@ export default function CreateChapterPage() {
                       value={bibliography}
                       onChange={(e) => setBibliography(e.target.value)}
                       rows={4}
-                      placeholder='Mínimo 100 caracteres / Máximo 1100 caracteres'
+                      placeholder='Mínimo 30 palabras / Máximo 150 palabras'
                       required
                       className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
                     />
-                    <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                      <span>Mínimo 100 caracteres</span>
-                      <span>{bibliography.length}/1100 caracteres</span>
-                    </div>
+                    <WordCountProgress text={bibliography} min={30} max={150} />
                   </motion.div>
 
+                  {/* Botón de envío */}
                   <motion.div variants={itemVariants} className='pt-4'>
                     <Button
                       type='submit'
@@ -462,6 +488,7 @@ export default function CreateChapterPage() {
             </div>
           </motion.div>
 
+          {/* Panel lateral con consejos */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -483,7 +510,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-purple-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Sigue un orden lógico en tu exposición
+                        Sigue un orden lógico en tu exposición.
                       </span>
                     </li>
                     <li className='flex items-start gap-2'>
@@ -491,7 +518,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-purple-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Usa subtítulos para organizar el contenido
+                        Usa subtítulos para organizar el contenido.
                       </span>
                     </li>
                     <li className='flex items-start gap-2'>
@@ -499,7 +526,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-purple-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Incluye tablas o figuras si es necesario
+                        Incluye tablas o figuras si es necesario.
                       </span>
                     </li>
                   </ul>
@@ -515,7 +542,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-yellow-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Usa un lenguaje claro y preciso
+                        Usa un lenguaje claro y preciso.
                       </span>
                     </li>
                     <li className='flex items-start gap-2'>
@@ -523,7 +550,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-yellow-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Evita párrafos demasiado extensos
+                        Evita párrafos demasiado extensos.
                       </span>
                     </li>
                     <li className='flex items-start gap-2'>
@@ -531,7 +558,7 @@ export default function CreateChapterPage() {
                         <CheckCircle className='h-3 w-3 text-yellow-700' />
                       </div>
                       <span className='text-sm text-gray-700'>
-                        Cita correctamente todas las fuentes
+                        Cita correctamente todas las fuentes.
                       </span>
                     </li>
                   </ul>

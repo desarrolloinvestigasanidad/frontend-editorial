@@ -38,14 +38,14 @@ export default function MyChaptersPage() {
       {
         id: 3,
         title: "Plan de contingencia en UCI",
-        bookTitle: "Libro Propio: Emergencias",
+        bookTitle: "Libro Personalziado: Emergencias",
         status: "Pendiente",
         submissionDate: "2024-10-10",
       },
       {
         id: 4,
         title: "Síndrome post-COVID",
-        bookTitle: "Libro Propio: Emergencias",
+        bookTitle: "Libro Personalziado: Emergencias",
         status: "Rechazado",
         submissionDate: "2024-10-15",
       },

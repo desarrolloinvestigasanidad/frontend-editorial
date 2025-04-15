@@ -254,7 +254,7 @@ export default function PublicationsPage() {
             <Link href='/create-book'>
               <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
                 <BookOpen className='mr-2 h-4 w-4' />
-                Crear libro propio
+                Crear libro personalizado
               </Button>
             </Link>
           </div>
@@ -574,7 +574,7 @@ function EmptyState({ type = "", searchTerm }: EmptyStateProps) {
         <Link href='/create-book'>
           <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
             <BookOpen className='mr-2 h-4 w-4' />
-            Crear libro propio
+            Crear libro personalizado
           </Button>
         </Link>
       </div>

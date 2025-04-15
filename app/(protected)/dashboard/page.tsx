@@ -179,7 +179,7 @@ export default function DashboardPage() {
                   <BookOpen className='w-5 h-5 text-green-700' />
                 </div>
                 <h3 className='text-xl font-bold text-gray-900 group-hover:text-green-700 transition-colors'>
-                  Crear Libro Propio
+                  Crear Libro Personalizado
                 </h3>
               </div>
 

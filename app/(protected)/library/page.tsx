@@ -125,14 +125,14 @@ export default function LibraryPage() {
   const ownBooks: Book[] = [
     {
       id: 101,
-      title: "Libro Propio: Emergencias 2024",
+      title: "Libro Personalizado: Emergencias 2024",
       color: "orange",
       authors: "María García, Juan Pérez, Carlos Rodríguez",
       date: "15 de marzo de 2024",
     },
     {
       id: 102,
-      title: "Libro Propio: Salud Pública",
+      title: "Libro Personalizado: Salud Pública",
       color: "blue",
       authors: "Ana Martínez, Luis Sánchez",
       date: "22 de enero de 2024",

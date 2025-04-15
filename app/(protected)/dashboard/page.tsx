@@ -93,7 +93,6 @@ export default function DashboardPage() {
             Aquí encontrarás un resumen y acceso directo a las principales
             funcionalidades de tu plataforma
           </p>
-
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
         </motion.div>
 
@@ -102,54 +101,47 @@ export default function DashboardPage() {
           animate='visible'
           variants={containerVariants}
           className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-          {/* Lista de ediciones obtenidas desde la BBDD */}
+          {/* Card para ver ediciones abiertas */}
           {editions.length > 0 ? (
-            editions.map((edition) => (
-              <motion.div
-                key={edition.id}
-                variants={itemVariants}
-                whileHover={{ y: -5 }}
-                className='group'>
-                <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-                  <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              className='group'>
+              <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
+                <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
 
-                  <div className='flex items-center mb-4'>
-                    <div className='bg-purple-100 p-3 rounded-full mr-3 group-hover:bg-purple-200 transition-colors duration-300 group-hover:scale-110'>
-                      <Library className='w-5 h-5 text-purple-700' />
-                    </div>
-                    <h3 className='text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors'>
-                      {edition.title || edition.name}
-                    </h3>
+                <div className='flex items-center mb-4'>
+                  <div className='bg-purple-100 p-3 rounded-full mr-3 group-hover:bg-purple-200 transition-colors duration-300 group-hover:scale-110'>
+                    <Library className='w-5 h-5 text-purple-700' />
                   </div>
-
-                  <p className='text-gray-600 mb-6'>{edition.description}</p>
-
-                  <div className='mt-auto'>
-                    <Link href={`/editions/${edition.id}/books`}>
-                      <Button
-                        className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
-                        onMouseEnter={() =>
-                          handleMouseEnter(`edition-${edition.id}`)
-                        }
-                        onMouseLeave={() =>
-                          handleMouseLeave(`edition-${edition.id}`)
-                        }>
-                        <span className='flex items-center justify-center'>
-                          Ver Libros / Mandar Capítulos
-                          <motion.span
-                            animate={{
-                              x: hoverStates[`edition-${edition.id}`] ? 5 : 0,
-                            }}
-                            transition={{ duration: 0.2 }}>
-                            <ArrowRight className='ml-2 h-4 w-4' />
-                          </motion.span>
-                        </span>
-                      </Button>
-                    </Link>
-                  </div>
+                  <h3 className='text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors'>
+                    Ver ediciones abiertas
+                  </h3>
                 </div>
-              </motion.div>
-            ))
+
+                <p className='text-gray-600 mb-6'>
+                  Tienes {editions.length} ediciones abiertas.
+                </p>
+
+                <div className='mt-auto'>
+                  <Link href='/editions'>
+                    <Button
+                      className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
+                      onMouseEnter={() => handleMouseEnter("editions")}
+                      onMouseLeave={() => handleMouseLeave("editions")}>
+                      <span className='flex items-center justify-center'>
+                        Ver ediciones abiertas
+                        <motion.span
+                          animate={{ x: hoverStates["editions"] ? 5 : 0 }}
+                          transition={{ duration: 0.2 }}>
+                          <ArrowRight className='ml-2 h-4 w-4' />
+                        </motion.span>
+                      </span>
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
           ) : (
             <motion.div
               variants={itemVariants}
@@ -157,7 +149,7 @@ export default function DashboardPage() {
               <div className='flex flex-col items-center justify-center text-center p-8'>
                 <BookMarked className='w-12 h-12 text-purple-300 mb-4' />
                 <h3 className='text-xl font-semibold text-gray-700 mb-2'>
-                  No hay ediciones disponibles
+                  No hay ediciones abiertas
                 </h3>
                 <p className='text-gray-500'>
                   Pronto se añadirán nuevas ediciones para participar

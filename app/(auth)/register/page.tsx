@@ -308,7 +308,8 @@ export default function RegisterPage() {
                     {/* Identificador */}
                     <div className='space-y-2'>
                       <Label htmlFor='id' className='text-gray-700 font-medium'>
-                        Identificador <span className='text-red-500'>*</span>
+                        DNI/NIE/Pasaporte{" "}
+                        <span className='text-red-500'>*</span>
                       </Label>
                       <Input
                         type='text'

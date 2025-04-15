@@ -159,7 +159,7 @@ export default function LoginPage() {
                     type='text'
                     id='id'
                     name='id'
-                    placeholder='Introduce tu identificador'
+                    placeholder='Introduce tu DNI/NIE/Pasaporte'
                     required
                     value={formData.id}
                     onChange={handleChange}

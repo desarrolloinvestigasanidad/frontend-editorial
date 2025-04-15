@@ -7,10 +7,10 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Library,
-  PlusCircle,
   BookOpen,
   ArrowRight,
   BookMarked,
+  PlusCircle,
   Sparkles,
 } from "lucide-react";
 
@@ -18,6 +18,10 @@ export default function DashboardPage() {
   const [editions, setEditions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
+
+  // Simulación: variable que indica si el usuario tiene libros creados
+  // (reemplazar con el dato real obtenido desde la API o estado global)
+  const hasCreatedBooks = false;
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`)
@@ -158,7 +162,7 @@ export default function DashboardPage() {
             </motion.div>
           )}
 
-          {/* Card: Crear libro propio */}
+          {/* Card de Libros Personalizados */}
           <motion.div
             variants={itemVariants}
             whileHover={{ y: -5 }}
@@ -171,37 +175,51 @@ export default function DashboardPage() {
                   <BookOpen className='w-5 h-5 text-green-700' />
                 </div>
                 <h3 className='text-xl font-bold text-gray-900 group-hover:text-green-700 transition-colors'>
-                  Crear Libro Personalizado
+                  Libros Personalizados
                 </h3>
               </div>
 
               <p className='text-gray-600 mb-6'>
-                Crea tu propio libro y coordina tus capítulos. Tú eliges el
-                título y puedes invitar a otros autores.
+                Crea tu propio libro y consulta los que ya has creado.
               </p>
 
-              <div className='mt-auto'>
+              <div className='mt-auto flex gap-2'>
                 <Link href='/create-book'>
                   <Button
-                    className='w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
+                    className='flex-1 bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
                     onMouseEnter={() => handleMouseEnter("create-book")}
                     onMouseLeave={() => handleMouseLeave("create-book")}>
-                    <span className='flex items-center justify-center'>
-                      Crear tu propio libro
-                      <motion.span
-                        animate={{ x: hoverStates["create-book"] ? 5 : 0 }}
-                        transition={{ duration: 0.2 }}>
-                        <ArrowRight className='ml-2 h-4 w-4' />
-                      </motion.span>
-                    </span>
+                    Crear Libro Propio
                   </Button>
                 </Link>
+                {hasCreatedBooks ? (
+                  <Link href='/my-books'>
+                    <Button
+                      variant='outline'
+                      className='flex-1 border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300'
+                      onMouseEnter={() => handleMouseEnter("my-books")}
+                      onMouseLeave={() => handleMouseLeave("my-books")}>
+                      Ver Libros creados
+                    </Button>
+                  </Link>
+                ) : (
+                  // Si no hay libros creados, redirigimos a la creación
+                  <Link href='/create-book'>
+                    <Button
+                      variant='outline'
+                      className='flex-1 border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300'
+                      onMouseEnter={() => handleMouseEnter("my-books")}
+                      onMouseLeave={() => handleMouseLeave("my-books")}>
+                      Ver Libros creados
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Feature showcase */}
+        {/* Sección de Beneficios */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

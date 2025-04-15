@@ -15,30 +15,29 @@ import {
 } from "@/components/ui/sidebar";
 
 import {
-  BookOpen,
+  Home,
+  User,
   FileBadge,
   FileText,
-  Home,
   Library,
-  LogOut,
   Plus,
-  User,
+  LogOut,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
  * Sidebar de la aplicación.
- * - Botones más grandes
- * - Funcionalidad de colapsar/expandir mejorada
- * - Soporte para móvil
  */
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Menú principal
+  // Se reordena el menú para posicionar las opciones de "Participar en Edición" y "Crear Libro" más arriba.
   const menuItems = [
     { title: "Inicio", icon: Home, href: "/dashboard" },
+    { title: "Participar en Edición", icon: BookOpen, href: "/editions" },
+    { title: "Crear Libro", icon: Plus, href: "/create-book" },
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
     {
@@ -48,7 +47,6 @@ export function AppSidebar() {
     },
     { title: "Mis Capítulos", icon: FileText, href: "/publications/chapters" },
     { title: "Biblioteca", icon: Library, href: "/library" },
-    { title: "Crear Libro", icon: Plus, href: "/create-book" },
   ];
 
   const handleLogout = () => {

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,12 +15,258 @@ import {
   ArrowRight,
   ArrowLeft,
   UserPlus,
+  X,
+  Check,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Terminos from "@/components/terminos";
+import { cn } from "@/lib/utils";
 
-// TODAS las comunidades y provincias
-const regionsProvinces: { [key: string]: string[] } = {
+// Componente MultiSelect
+export type Option = {
+  value: string;
+  label: string;
+};
+
+type MultiSelectProps = {
+  options: Option[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  className?: string;
+  disabled?: boolean;
+};
+
+function MultiSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "Seleccionar...",
+  searchPlaceholder = "Buscar...",
+  className,
+  disabled = false,
+}: MultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Filtrar opciones basadas en el término de búsqueda
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Manejar clic fuera para cerrar el dropdown
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  // Enfocar el input de búsqueda cuando se abre el dropdown
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Alternar selección de una opción
+  const toggleOption = (optionValue: string) => {
+    if (value.includes(optionValue)) {
+      onChange(value.filter((val) => val !== optionValue));
+    } else {
+      onChange([...value, optionValue]);
+    }
+  };
+
+  // Remover una opción seleccionada
+  const removeOption = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    optionValue: string
+  ) => {
+    e.stopPropagation();
+    onChange(value.filter((val) => val !== optionValue));
+  };
+
+  // Obtener etiquetas para las opciones seleccionadas
+  const getSelectedLabels = () => {
+    return value.map(
+      (val) => options.find((option) => option.value === val)?.label || val
+    );
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative w-full font-sans",
+        disabled && "opacity-70 cursor-not-allowed",
+        className
+      )}>
+      {/* Botón principal que muestra las selecciones actuales */}
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={cn(
+          "flex min-h-10 w-full flex-wrap items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          isOpen && "ring-2 ring-purple-500 ring-offset-2",
+          disabled && "bg-gray-50 cursor-not-allowed"
+        )}>
+        <div className='flex flex-wrap gap-1.5 pe-8'>
+          {value.length > 0 ? (
+            getSelectedLabels().map((label, index) => (
+              <div
+                key={index}
+                className='flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-sm text-gray-800'>
+                <span>{label}</span>
+                <button
+                  type='button'
+                  onClick={(e) => removeOption(e, value[index])}
+                  className='ml-1 rounded-full p-0.5 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500'
+                  disabled={disabled}>
+                  <X className='h-3 w-3' />
+                </button>
+              </div>
+            ))
+          ) : (
+            <span className='text-gray-500'>{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 opacity-50 transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
+      </div>
+
+      {/* Dropdown con opciones */}
+      {isOpen && (
+        <div className='absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
+          {/* Barra de búsqueda */}
+          <div className='sticky top-0 z-20 bg-white px-2 py-1.5 border-b border-gray-100'>
+            <div className='relative'>
+              <Search className='absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500' />
+              <input
+                ref={searchInputRef}
+                type='text'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={searchPlaceholder}
+                className='h-8 w-full rounded-md border-0 bg-gray-50 pl-8 pr-2 text-sm outline-none focus:bg-gray-100'
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'>
+                  <X className='h-4 w-4' />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Lista de opciones */}
+          <div className='mt-1'>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => {
+                const isSelected = value.includes(option.value);
+                return (
+                  <div
+                    key={option.value}
+                    onClick={() => toggleOption(option.value)}
+                    className={cn(
+                      "flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-100",
+                      isSelected && "bg-purple-50"
+                    )}>
+                    <span
+                      className={cn(
+                        "text-sm",
+                        isSelected
+                          ? "text-purple-700 font-medium"
+                          : "text-gray-700"
+                      )}>
+                      {option.label}
+                    </span>
+                    {isSelected && (
+                      <Check className='h-4 w-4 text-purple-600' />
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className='px-3 py-2 text-sm text-gray-500'>
+                No se encontraron resultados
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente Terminos (placeholder)
+function Terminos() {
+  return (
+    <div className='max-h-[70vh] overflow-y-auto p-4'>
+      <h2 className='text-xl font-bold mb-4'>Términos y Condiciones</h2>
+      <div className='prose prose-sm'>
+        <p>
+          Estos Términos y Condiciones regulan la relación entre Investiga
+          Sanidad y los usuarios de la plataforma.
+        </p>
+        {/* Contenido de los términos y condiciones */}
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
+          euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis
+          aliquam nisl nunc quis nisl.
+        </p>
+        <h3>1. Registro y Cuenta</h3>
+        <p>
+          Al registrarse en nuestra plataforma, usted acepta proporcionar
+          información precisa y completa. Es responsable de mantener la
+          confidencialidad de su cuenta y contraseña.
+        </p>
+        <h3>2. Privacidad</h3>
+        <p>
+          Su privacidad es importante para nosotros. Consulte nuestra Política
+          de Privacidad para entender cómo recopilamos y utilizamos su
+          información.
+        </p>
+        <h3>3. Propiedad Intelectual</h3>
+        <p>
+          Todo el contenido disponible en la plataforma está protegido por
+          derechos de autor y otras leyes de propiedad intelectual.
+        </p>
+        <h3>4. Limitación de Responsabilidad</h3>
+        <p>
+          No seremos responsables por daños indirectos, incidentales, especiales
+          o consecuentes que resulten del uso de nuestra plataforma.
+        </p>
+        <h3>5. Modificaciones</h3>
+        <p>
+          Nos reservamos el derecho de modificar estos términos en cualquier
+          momento. Las modificaciones entrarán en vigor inmediatamente después
+          de su publicación.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// TODAS las comunidades (se usan para vincular los certificados)
+const regionsProvinces = {
   Andalucía: [
     "Almería",
     "Cádiz",
@@ -76,8 +323,11 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [infoAccepted, setInfoAccepted] = useState(false); // Consentimiento para comunicaciones
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [deviceIp, setDeviceIp] = useState("");
 
+  // Se elimina "province" ya que se solicitará en facturación
   const [formData, setFormData] = useState({
     id: "",
     password: "",
@@ -91,10 +341,19 @@ export default function RegisterPage() {
     address: "",
     interests: "",
     country: "España",
-    autonomousCommunity: "",
-    province: "",
+    // Ahora es un array para permitir la selección múltiple
+    autonomousCommunity: [] as string[],
   });
 
+  // Convertir regionsProvinces a opciones para MultiSelect
+  const communityOptions: Option[] = Object.keys(regionsProvinces).map(
+    (community) => ({
+      value: community,
+      label: community,
+    })
+  );
+
+  // Redirigir al usuario si ya está autenticado
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -102,26 +361,42 @@ export default function RegisterPage() {
     }
   }, [router]);
 
+  // Obtener la IP del dispositivo usando ipify
+  useEffect(() => {
+    fetch("https://api.ipify.org?format=json")
+      .then((res) => res.json())
+      .then((data) => setDeviceIp(data.ip))
+      .catch((err) => console.error("Error al obtener la IP:", err));
+  }, []);
+
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  interface HandleChangeEvent
+    extends React.ChangeEvent<HTMLInputElement | HTMLSelectElement> {}
+
+  const handleChange = (e: HandleChangeEvent) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === "country" && value !== "España") {
       setFormData((prev) => ({
         ...prev,
-        autonomousCommunity: "",
-        province: "",
+        autonomousCommunity: [],
       }));
     }
   };
 
-  const handleNext = (e: React.FormEvent) => {
+  // Función para manejar el cambio en el MultiSelect de comunidades
+  const handleCommunityChange = (selected: string[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      autonomousCommunity: selected,
+    }));
+  };
+
+  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setMessage("");
     setEmailError("");
@@ -152,20 +427,45 @@ export default function RegisterPage() {
     setStep((prev) => prev + 1);
   };
 
-  const handleBack = (e: React.FormEvent) => {
+  const handleBack = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setMessage("");
     setStep((prev) => prev - 1);
   };
 
-  const handleSubmitFinal = async (e: React.FormEvent) => {
+  interface HandleSubmitFinalEvent extends React.FormEvent<HTMLFormElement> {}
+
+  interface RegisterRequestBody {
+    id: string;
+    password: string;
+    confirmPassword: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    professionalCategory: string;
+    gender: string;
+    address: string;
+    interests: string;
+    country: string;
+    autonomousCommunity: string[];
+    termsAccepted: boolean;
+    infoAccepted: boolean;
+    deviceIp: string;
+  }
+
+  const handleSubmitFinal = async (e: HandleSubmitFinalEvent) => {
     e.preventDefault();
     setMessage("");
     setIsLoading(true);
 
+    // Validación: si el país es España se requiere seleccionar al menos una comunidad
     if (formData.country === "España") {
-      if (!formData.autonomousCommunity || !formData.province) {
-        setMessage("Por favor, selecciona tu comunidad y provincia.");
+      if (
+        !formData.autonomousCommunity ||
+        formData.autonomousCommunity.length === 0
+      ) {
+        setMessage("Por favor, selecciona al menos una Comunidad Autónoma.");
         setIsLoading(false);
         return;
       }
@@ -175,14 +475,14 @@ export default function RegisterPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Se envía infoAccepted igual a termsAccepted
         body: JSON.stringify({
           ...formData,
           termsAccepted,
-          infoAccepted: termsAccepted,
-        }),
+          infoAccepted,
+          deviceIp,
+        } as RegisterRequestBody),
       });
-      const data = await res.json();
+      const data: { message?: string } = await res.json();
       if (res.ok) {
         setMessage(
           "Se ha enviado un correo a tu email para verificar la cuenta."
@@ -235,36 +535,28 @@ export default function RegisterPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className='bg-white w-full max-w-5xl shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row'>
-        {/* Columna izquierda: Imagen y overlay */}
-        <div className='relative md:w-2/5 min-h-[250px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700'>
+        {/* Columna izquierda: Solo logo e información sin foto de fondo */}
+        <div className='relative md:w-2/5 min-h-[250px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700 flex flex-col items-center justify-center p-8'>
           <Image
             src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'
             alt='Investiga Sanidad'
             width={300}
             height={75}
-            className='absolute top-8 left-1/2 -translate-x-1/2 z-20 w-40 h-auto'
+            className='w-40 h-auto'
           />
-          <Image
-            src='https://images.pexels.com/photos/8376232/pexels-photo-8376232.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-            alt='Registro en congresos médicos'
-            fill
-            className='object-cover absolute inset-0 mix-blend-overlay opacity-60'
-          />
-          <div className='absolute inset-0 bg-gradient-to-br from-purple-900/90 to-purple-700/90 z-10'></div>
-          <div className='relative z-20 p-6 md:p-8 h-full flex flex-col justify-center mt-16'>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}>
-              <h2 className='text-2xl md:text-3xl font-bold text-white mb-4'>
-                Crea tu cuenta
-              </h2>
-              <p className='mb-8 text-white/90 text-sm md:text-base'>
-                Completa los pasos para crear tu cuenta y acceder a nuestras
-                publicaciones científicas.
-              </p>
-            </motion.div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className='mt-6 text-center text-white'>
+            <h2 className='text-2xl md:text-3xl font-bold mb-4'>
+              Crea tu cuenta
+            </h2>
+            <p className='mb-8 text-white/90 text-sm md:text-base'>
+              Completa los pasos para crear tu cuenta y acceder a nuestras
+              publicaciones científicas.
+            </p>
+          </motion.div>
         </div>
 
         {/* Columna derecha: Formulario */}
@@ -299,7 +591,7 @@ export default function RegisterPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}>
-              <form className='space-y-5'>
+              <form className='space-y-5' onSubmit={handleSubmitFinal}>
                 {step === 0 && (
                   <>
                     <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
@@ -441,7 +733,7 @@ export default function RegisterPage() {
                       <Label
                         htmlFor='lastName'
                         className='text-gray-700 font-medium'>
-                        Apellido <span className='text-red-500'>*</span>
+                        Apellidos <span className='text-red-500'>*</span>
                       </Label>
                       <Input
                         type='text'
@@ -471,7 +763,6 @@ export default function RegisterPage() {
                       />
                     </div>
                     {/* Categoría Profesional */}
-
                     <div className='space-y-2'>
                       <Label
                         htmlFor='professionalCategory'
@@ -503,7 +794,6 @@ export default function RegisterPage() {
                         <option value='otro'>Otro</option>
                       </select>
                     </div>
-
                     {/* Género */}
                     <div className='space-y-2'>
                       <Label
@@ -549,56 +839,22 @@ export default function RegisterPage() {
                         <option value='Otros'>Otros</option>
                       </select>
                     </div>
+                    {/* Selección múltiple de Comunidades Autónomas con MultiSelect */}
                     {formData.country === "España" && (
-                      <>
-                        <div className='space-y-2'>
-                          <Label
-                            htmlFor='autonomousCommunity'
-                            className='text-gray-700 font-medium'>
-                            Comunidad Autónoma{" "}
-                            <span className='text-red-500'>*</span>
-                          </Label>
-                          <select
-                            id='autonomousCommunity'
-                            name='autonomousCommunity'
-                            required
-                            value={formData.autonomousCommunity}
-                            onChange={handleChange}
-                            className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                            <option value=''>Selecciona una comunidad</option>
-                            {Object.keys(regionsProvinces).map((comunidad) => (
-                              <option key={comunidad} value={comunidad}>
-                                {comunidad}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        {formData.autonomousCommunity && (
-                          <div className='space-y-2'>
-                            <Label
-                              htmlFor='province'
-                              className='text-gray-700 font-medium'>
-                              Provincia <span className='text-red-500'>*</span>
-                            </Label>
-                            <select
-                              id='province'
-                              name='province'
-                              required
-                              value={formData.province}
-                              onChange={handleChange}
-                              className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
-                              <option value=''>Selecciona una provincia</option>
-                              {regionsProvinces[
-                                formData.autonomousCommunity
-                              ]?.map((prov) => (
-                                <option key={prov} value={prov}>
-                                  {prov}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </>
+                      <div className='space-y-2'>
+                        <Label
+                          htmlFor='autonomousCommunity'
+                          className='text-gray-700 font-medium'>
+                          Comunidades Autónomas (elige una o más)
+                        </Label>
+                        <MultiSelect
+                          options={communityOptions}
+                          value={formData.autonomousCommunity}
+                          onChange={handleCommunityChange}
+                          placeholder='Selecciona comunidades autónomas...'
+                          searchPlaceholder='Buscar comunidades...'
+                        />
+                      </div>
                     )}
                     {/* Términos y Condiciones */}
                     <div className='flex items-center space-x-2 mt-4'>
@@ -620,6 +876,23 @@ export default function RegisterPage() {
                           className='text-purple-600 underline'>
                           Términos y Condiciones
                         </button>
+                      </label>
+                    </div>
+                    {/* Consentimiento para comunicaciones (infoAccepted) */}
+                    <div className='flex items-center space-x-2 mt-4'>
+                      <input
+                        type='checkbox'
+                        id='infoAccepted'
+                        name='infoAccepted'
+                        checked={infoAccepted}
+                        onChange={(e) => setInfoAccepted(e.target.checked)}
+                        className='h-4 w-4'
+                      />
+                      <label
+                        htmlFor='infoAccepted'
+                        className='text-sm text-gray-700'>
+                        Acepto el envío de comunicaciones y el registro de la IP
+                        de mi dispositivo.
                       </label>
                     </div>
                   </>
@@ -654,8 +927,8 @@ export default function RegisterPage() {
                   )}
                   {step === 2 && (
                     <Button
-                      onClick={handleSubmitFinal}
-                      disabled={isLoading || !termsAccepted}
+                      type='submit'
+                      disabled={isLoading || !termsAccepted || !infoAccepted}
                       className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
                       {isLoading ? (
                         <span className='flex items-center'>
@@ -725,17 +998,19 @@ export default function RegisterPage() {
 }
 
 // Componente StepIndicator
+interface StepIndicatorProps {
+  stepNumber: number;
+  label: string;
+  active: boolean;
+  completed: boolean;
+}
+
 function StepIndicator({
   stepNumber,
   label,
   active,
   completed,
-}: {
-  stepNumber: number;
-  label: string;
-  active: boolean;
-  completed?: boolean;
-}) {
+}: StepIndicatorProps) {
   return (
     <div
       className={`flex flex-col items-center transition-all duration-300 ${

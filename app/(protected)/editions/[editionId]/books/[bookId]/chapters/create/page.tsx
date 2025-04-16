@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,39 +26,787 @@ import {
   Info,
   BookMarked,
   Lightbulb,
+  Maximize2,
+  ArrowLeft,
+  ArrowRight,
+  X,
+  Edit3,
+  CheckSquare,
+  HelpCircle,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Componente auxiliar para el seguimiento del número de palabras
+// Componente mejorado para el seguimiento de palabras
 function WordCountProgress({
   text,
   min,
   max,
+  showDetails = true,
 }: {
   text: string;
   min: number;
   max: number;
+  showDetails?: boolean;
 }) {
   const count =
     text.trim() === "" ? 0 : text.trim().split(/\s+/).filter(Boolean).length;
-  const percentage = Math.min(100, Math.floor((count / min) * 100));
+  const percentage = Math.min(Math.floor((count / max) * 100), 100);
+
+  let status: "error" | "warning" | "success" = "error";
+  if (count >= min && count <= max) {
+    status = "success";
+  } else if (count > max) {
+    status = "warning";
+  }
+
+  const statusColors = {
+    error: "text-red-500",
+    warning: "text-amber-500",
+    success: "text-green-600",
+  };
+
+  const progressColors = {
+    error: "bg-red-500",
+    warning: "bg-amber-500",
+    success: "bg-green-600",
+  };
+
   return (
-    <div className='mt-1'>
-      <div className='relative h-2 bg-gray-200 rounded'>
-        <div
-          style={{ width: `${percentage}%` }}
-          className={`h-2 rounded transition-all duration-300 ${
-            percentage >= 100 ? "bg-green-500" : "bg-blue-500"
-          }`}></div>
+    <div className='mt-2 space-y-1'>
+      <div className='flex items-center justify-between text-xs'>
+        <span className={statusColors[status]}>
+          {count} palabra{count !== 1 && "s"}
+        </span>
+        <span className='text-muted-foreground'>
+          {min}-{max} palabras
+        </span>
       </div>
-      <p className='text-xs text-gray-500 mt-1'>
-        {count} palabra{count !== 1 && "s"}{" "}
-        {count < min && `- ¡Añade ${min - count} más para alcanzar el mínimo!`}
-        {count >= min && count <= max && " - ¡Buen trabajo!"}
-        {count > max && " - Has superado el máximo recomendado"}
-      </p>
+      <Progress
+        value={percentage}
+        className='h-1.5'
+        style={
+          {
+            "--progress-background":
+              status === "success"
+                ? "var(--primary)"
+                : status === "warning"
+                ? "hsl(41, 100%, 48%)"
+                : "hsl(0, 84.2%, 60.2%)",
+          } as React.CSSProperties
+        }
+      />
+      {showDetails && (
+        <p className={`text-xs ${statusColors[status]}`}>
+          {count < min
+            ? `Necesitas ${min - count} palabra${
+                min - count !== 1 ? "s" : ""
+              } más para alcanzar el mínimo`
+            : count > max
+            ? `Has superado el máximo por ${count - max} palabra${
+                count - max !== 1 ? "s" : ""
+              }`
+            : "Dentro del rango permitido"}
+        </p>
+      )}
     </div>
+  );
+}
+
+// Modificar el componente FocusMode para quitar el borde, ampliar el ancho y añadir efectos visuales
+function FocusMode({
+  children,
+  isActive,
+  onClose,
+  title,
+  wordCount,
+  currentStep,
+  totalSteps,
+  onNext,
+  onPrev,
+}: {
+  children: React.ReactNode;
+  isActive: boolean;
+  onClose: () => void;
+  title: string;
+  wordCount: { text: string; min: number; max: number };
+  currentStep: number;
+  totalSteps: number;
+  onNext: () => void;
+  onPrev: () => void;
+}) {
+  if (!isActive) return null;
+
+  return (
+    <div className='fixed inset-0 bg-gradient-to-br from-background/95 to-background/90 backdrop-blur-md z-50 flex flex-col'>
+      <div className='bg-background/80 backdrop-blur-sm border-b border-border/30 shadow-sm flex items-center justify-between px-6 py-3 transition-all duration-300'>
+        <div className='flex items-center gap-3'>
+          <Button
+            variant='ghost'
+            size='icon'
+            onClick={onClose}
+            className='hover:bg-primary/10 transition-colors'>
+            <X className='h-4 w-4' />
+          </Button>
+          <h2 className='text-lg font-medium text-foreground/90'>{title}</h2>
+        </div>
+        <div className='flex items-center gap-3'>
+          <Badge
+            variant='outline'
+            className='gap-1 bg-background/50 backdrop-blur-sm'>
+            <Edit3 className='h-3 w-3' />
+            Paso {currentStep} de {totalSteps}
+          </Badge>
+          <div className='w-48'>
+            <WordCountProgress
+              text={wordCount.text}
+              min={wordCount.min}
+              max={wordCount.max}
+              showDetails={false}
+            />
+          </div>
+        </div>
+      </div>
+      <div className='flex-1 overflow-auto py-12 px-4 flex items-center justify-center bg-gradient-to-b from-muted/10 to-transparent'>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className='w-[60%] max-w-4xl'>
+          {/* Aplicamos estilos específicos para el modo de concentración */}
+          <div className='bg-background/60 backdrop-blur-md rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl'>
+            {/* Modificamos el contenido para aplicar estilos específicos a los elementos de entrada */}
+            {React.Children.map(children, (child) => {
+              if (React.isValidElement(child)) {
+                return React.cloneElement(child as React.ReactElement, {
+                  className: "focus-mode-content p-8",
+                });
+              }
+              return child;
+            })}
+          </div>
+        </motion.div>
+      </div>
+      <div className='bg-background/80 backdrop-blur-sm border-t border-border/30 shadow-sm flex items-center justify-between px-6 py-3 transition-all duration-300'>
+        <Button
+          variant='ghost'
+          onClick={onPrev}
+          disabled={currentStep === 1}
+          className='gap-1 hover:bg-primary/10 transition-colors'>
+          <ArrowLeft className='h-4 w-4' /> Anterior
+        </Button>
+        <div className='flex items-center gap-2'>
+          <span className='text-sm text-muted-foreground'>
+            {wordCount.text.trim() === ""
+              ? 0
+              : wordCount.text.trim().split(/\s+/).filter(Boolean).length}{" "}
+            palabras
+          </span>
+          <span className='text-xs text-muted-foreground'>
+            (Mín: {wordCount.min} / Máx: {wordCount.max})
+          </span>
+        </div>
+        <Button
+          onClick={onNext}
+          disabled={currentStep === totalSteps}
+          className='gap-1 bg-primary hover:bg-primary/90 transition-colors'>
+          Siguiente <ArrowRight className='h-4 w-4' />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Componente para la tarjeta de progreso
+function ProgressCard({
+  steps,
+  currentStep,
+  onStepClick,
+}: {
+  steps: string[];
+  currentStep: number;
+  onStepClick: (index: number) => void;
+}) {
+  return (
+    <Card className='w-full'>
+      <CardHeader className='pb-3'>
+        <CardTitle className='text-base'>Progreso del capítulo</CardTitle>
+        <CardDescription>
+          Completa todos los pasos para enviar tu capítulo
+        </CardDescription>
+      </CardHeader>
+      <CardContent className='pb-1'>
+        <div className='space-y-2'>
+          {steps.map((step, index) => (
+            <div
+              key={index}
+              className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
+                index === currentStep
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted"
+              }`}
+              onClick={() => onStepClick(index)}>
+              <div
+                className={`size-6 rounded-full flex items-center justify-center ${
+                  index < currentStep
+                    ? "bg-primary text-primary-foreground"
+                    : index === currentStep
+                    ? "border-2 border-primary text-primary"
+                    : "border border-muted-foreground text-muted-foreground"
+                }`}>
+                {index < currentStep ? (
+                  <CheckSquare className='size-3.5' />
+                ) : (
+                  <span className='text-xs'>{index + 1}</span>
+                )}
+              </div>
+              <span className='text-sm'>{step}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+      <CardFooter className='pt-3'>
+        <Progress
+          value={(currentStep / (steps.length - 1)) * 100}
+          className='h-1.5'
+        />
+      </CardFooter>
+    </Card>
+  );
+}
+
+// Modal multipaso para la estructura del capítulo (rediseñado)
+function ChapterStructureModal({
+  show,
+  onClose,
+  onSubmit,
+  studyType,
+  title,
+  introduction,
+  setIntroduction,
+  objectives,
+  setObjectives,
+  methodology,
+  setMethodology,
+  results,
+  setResults,
+  discussion,
+  setDiscussion,
+  bibliography,
+  setBibliography,
+}: {
+  show: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+  studyType: string;
+  title: string;
+  introduction: string;
+  setIntroduction: (val: string) => void;
+  objectives: string;
+  setObjectives: (val: string) => void;
+  methodology: string;
+  setMethodology: (val: string) => void;
+  results: string;
+  setResults: (val: string) => void;
+  discussion: string;
+  setDiscussion: (val: string) => void;
+  bibliography: string;
+  setBibliography: (val: string) => void;
+}) {
+  const steps = [
+    "Introducción",
+    "Objetivos",
+    "Metodología",
+    "Resultados",
+    "Discusión-Conclusión",
+    "Bibliografía",
+    "Previsualización",
+  ];
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
+
+  // Consejos dinámicos según el paso actual
+  const tips: {
+    [key: string]: { title: string; content: string; icon: React.ReactNode };
+  } = {
+    Introducción: {
+      title: "Consejos para la Introducción",
+      content:
+        "Describe el contexto y los antecedentes de tu estudio. Explica por qué es relevante y qué vacío de conocimiento pretende llenar.",
+      icon: <Info className='size-4' />,
+    },
+    Objetivos: {
+      title: "Consejos para los Objetivos",
+      content:
+        "Define claramente los objetivos del trabajo. Usa verbos en infinitivo y asegúrate de que sean medibles y alcanzables.",
+      icon: <CheckSquare className='size-4' />,
+    },
+    Metodología: {
+      title: "Consejos para la Metodología",
+      content:
+        "Explica el método y las técnicas que utilizarás. Sé específico sobre el diseño del estudio, la muestra y los instrumentos.",
+      icon: <FileText className='size-4' />,
+    },
+    Resultados: {
+      title: "Consejos para los Resultados",
+      content:
+        "Presenta los resultados esperados de forma clara y objetiva. Usa datos concretos y evita interpretaciones en esta sección.",
+      icon: <BookMarked className='size-4' />,
+    },
+    "Discusión-Conclusión": {
+      title: "Consejos para la Discusión",
+      content:
+        "Discute los hallazgos y saca conclusiones. Relaciona tus resultados con la literatura existente y explica sus implicaciones.",
+      icon: <Lightbulb className='size-4' />,
+    },
+    Bibliografía: {
+      title: "Consejos para la Bibliografía",
+      content:
+        "Incluye todas las fuentes consultadas siguiendo un formato consistente (APA, Vancouver, etc.). Asegúrate de que sean actuales y relevantes.",
+      icon: <BookOpen className='size-4' />,
+    },
+    Previsualización: {
+      title: "Revisa tu trabajo",
+      content:
+        "Revisa todo el contenido antes de enviar el capítulo. Verifica la coherencia, la ortografía y que cumplas con todos los requisitos.",
+      icon: <HelpCircle className='size-4' />,
+    },
+  };
+
+  // Funciones para navegar entre pasos
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
+  };
+
+  // Obtener el texto actual para el contador de palabras en modo de concentración
+  const getCurrentWordCount = () => {
+    const step = steps[currentStep];
+    switch (step) {
+      case "Introducción":
+        return { text: introduction, min: 50, max: 150 };
+      case "Objetivos":
+        return { text: objectives, min: 50, max: 150 };
+      case "Metodología":
+        return { text: methodology, min: 30, max: 100 };
+      case "Resultados":
+        return { text: results, min: 50, max: 250 };
+      case "Discusión-Conclusión":
+        return { text: discussion, min: 30, max: 150 };
+      case "Bibliografía":
+        return { text: bibliography, min: 30, max: 150 };
+      default:
+        return { text: "", min: 0, max: 0 };
+    }
+  };
+
+  // Renderizado condicional para cada paso
+  const renderStepContent = () => {
+    const step = steps[currentStep];
+
+    if (step === "Previsualización") {
+      return (
+        <div className='space-y-6 bg-card p-6 rounded-lg border'>
+          <div className='space-y-2'>
+            <h3 className='text-xl font-semibold text-primary'>{title}</h3>
+            <Badge>{studyType}</Badge>
+          </div>
+
+          <Tabs defaultValue='introduccion' className='w-full'>
+            <TabsList className='grid grid-cols-3 md:grid-cols-6'>
+              <TabsTrigger value='introduccion'>Intro</TabsTrigger>
+              <TabsTrigger value='objetivos'>Objetivos</TabsTrigger>
+              <TabsTrigger value='metodologia'>Método</TabsTrigger>
+              <TabsTrigger value='resultados'>Resultados</TabsTrigger>
+              <TabsTrigger value='discusion'>Discusión</TabsTrigger>
+              <TabsTrigger value='bibliografia'>Bibliografía</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value='introduccion' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Introducción</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {introduction}
+              </p>
+              <WordCountProgress text={introduction} min={50} max={150} />
+            </TabsContent>
+
+            <TabsContent value='objetivos' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Objetivos</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {objectives}
+              </p>
+              <WordCountProgress text={objectives} min={50} max={150} />
+            </TabsContent>
+
+            <TabsContent value='metodologia' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Metodología</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {methodology}
+              </p>
+              <WordCountProgress text={methodology} min={30} max={100} />
+            </TabsContent>
+
+            <TabsContent value='resultados' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Resultados</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {results}
+              </p>
+              <WordCountProgress text={results} min={50} max={250} />
+            </TabsContent>
+
+            <TabsContent value='discusion' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Discusión-Conclusión</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {discussion}
+              </p>
+              <WordCountProgress text={discussion} min={30} max={150} />
+            </TabsContent>
+
+            <TabsContent value='bibliografia' className='mt-4 space-y-2'>
+              <h4 className='font-medium'>Bibliografía</h4>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                {bibliography}
+              </p>
+              <WordCountProgress text={bibliography} min={30} max={150} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      );
+    }
+
+    // En función del paso, se muestran los Textarea correspondientes
+    // Modificamos para que en modo concentración no se muestre el contador de palabras
+    // y para que los textareas tengan un estilo especial
+    switch (step) {
+      case "Introducción":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Introducción
+            </Label>
+            <Textarea
+              value={introduction}
+              onChange={(e) => setIntroduction(e.target.value)}
+              rows={8}
+              placeholder='Describe el contexto y los antecedentes de tu estudio...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={introduction} min={50} max={150} />
+            )}
+          </>
+        );
+      case "Objetivos":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Objetivos
+            </Label>
+            <Textarea
+              value={objectives}
+              onChange={(e) => setObjectives(e.target.value)}
+              rows={8}
+              placeholder='Define claramente los objetivos del trabajo...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={objectives} min={50} max={150} />
+            )}
+          </>
+        );
+      case "Metodología":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Metodología
+            </Label>
+            <Textarea
+              value={methodology}
+              onChange={(e) => setMethodology(e.target.value)}
+              rows={8}
+              placeholder='Explica el método y las técnicas que utilizarás...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={methodology} min={30} max={100} />
+            )}
+          </>
+        );
+      case "Resultados":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Resultados
+            </Label>
+            <Textarea
+              value={results}
+              onChange={(e) => setResults(e.target.value)}
+              rows={8}
+              placeholder='Presenta los resultados esperados...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={results} min={50} max={250} />
+            )}
+          </>
+        );
+      case "Discusión-Conclusión":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Discusión-Conclusión
+            </Label>
+            <Textarea
+              value={discussion}
+              onChange={(e) => setDiscussion(e.target.value)}
+              rows={8}
+              placeholder='Discute los hallazgos y saca conclusiones...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={discussion} min={30} max={150} />
+            )}
+          </>
+        );
+      case "Bibliografía":
+        return (
+          <>
+            <Label className='text-gray-700 font-medium mb-1 block'>
+              Bibliografía
+            </Label>
+            <Textarea
+              value={bibliography}
+              onChange={(e) => setBibliography(e.target.value)}
+              rows={8}
+              placeholder='Incluye todas las fuentes consultadas...'
+              required
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+            />
+            {!focusMode && (
+              <WordCountProgress text={bibliography} min={30} max={150} />
+            )}
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Modificar el useEffect para los estilos del modo de concentración
+  useEffect(() => {
+    if (focusMode) {
+      // Añadir estilos para el modo de concentración
+      const style = document.createElement("style");
+      style.id = "focus-mode-styles";
+      style.innerHTML = `
+      .focus-mode-content {
+        transition: all 0.3s ease;
+      }
+      
+      .focus-mode-content:hover {
+        transform: translateY(-2px);
+      }
+      
+      .focus-mode-content textarea {
+        font-size: 1.35rem;
+        line-height: 1.8;
+        min-height: 350px;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: none;
+        background-color: transparent;
+        box-shadow: none;
+        transition: all 0.3s ease;
+        width: 100%;
+        resize: none;
+      }
+      
+      .focus-mode-content textarea:focus {
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+      
+      .focus-mode-content label {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        color: rgba(75, 85, 99, 0.9);
+        display: inline-block;
+        transition: all 0.3s ease;
+      }
+      
+      .focus-mode-content:hover label {
+        color: rgba(75, 85, 99, 1);
+      }
+      
+      /* Animación de cursor personalizado */
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      
+      .focus-mode-content textarea::selection {
+        background-color: rgba(124, 58, 237, 0.2);
+      }
+    `;
+      document.head.appendChild(style);
+
+      return () => {
+        // Limpiar estilos al desmontar
+        const styleElement = document.getElementById("focus-mode-styles");
+        if (styleElement) {
+          styleElement.remove();
+        }
+      };
+    }
+  }, [focusMode]);
+
+  if (!show) return null;
+
+  return (
+    <>
+      <div className='fixed inset-0 z-50 bg-black/40 backdrop-blur-sm' />
+      <div className='fixed inset-0 z-50 flex items-center justify-center overflow-auto p-4'>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className='bg-background rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col'>
+          <div className='p-6 border-b flex items-center justify-between'>
+            <div>
+              <h2 className='text-2xl font-bold text-primary'>{title}</h2>
+              <p className='text-muted-foreground'>
+                Estructura para: {studyType}
+              </p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant='outline'
+                      size='icon'
+                      onClick={() => setFocusMode(true)}>
+                      <Maximize2 className='h-4 w-4' />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Modo concentración</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Button variant='ghost' size='icon' onClick={onClose}>
+                <X className='h-4 w-4' />
+              </Button>
+            </div>
+          </div>
+
+          <div className='flex-1 overflow-auto'>
+            <div className='flex flex-col md:flex-row h-full'>
+              {/* Panel izquierdo: navegación y progreso */}
+              <div className='w-full md:w-64 p-4 border-r shrink-0'>
+                <ProgressCard
+                  steps={steps}
+                  currentStep={currentStep}
+                  onStepClick={setCurrentStep}
+                />
+
+                <div className='mt-6 p-4 bg-primary/5 rounded-lg border'>
+                  <div className='flex items-center gap-2 mb-2 text-primary'>
+                    {tips[steps[currentStep]].icon}
+                    <h3 className='font-medium text-sm'>
+                      {tips[steps[currentStep]].title}
+                    </h3>
+                  </div>
+                  <p className='text-xs text-muted-foreground'>
+                    {tips[steps[currentStep]].content}
+                  </p>
+                </div>
+              </div>
+
+              {/* Panel derecho: contenido del paso */}
+              <div className='flex-1 p-6'>
+                <div className='max-w-2xl mx-auto'>
+                  {renderStepContent()}
+
+                  <div className='mt-6 flex justify-between'>
+                    <Button
+                      variant='outline'
+                      onClick={handlePrevious}
+                      disabled={currentStep === 0}
+                      className='gap-1'>
+                      <ArrowLeft className='h-4 w-4' /> Anterior
+                    </Button>
+
+                    {currentStep === steps.length - 1 ? (
+                      <Button
+                        onClick={onSubmit}
+                        className='gap-1 bg-primary hover:bg-primary/90'>
+                        <Send className='h-4 w-4' /> Enviar Capítulo
+                      </Button>
+                    ) : (
+                      <Button onClick={handleNext} className='gap-1'>
+                        Siguiente <ArrowRight className='h-4 w-4' />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Modo de concentración */}
+      <AnimatePresence>
+        {focusMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}>
+            <FocusMode
+              isActive={focusMode}
+              onClose={() => setFocusMode(false)}
+              title={`${title} - ${steps[currentStep]}`}
+              wordCount={getCurrentWordCount()}
+              currentStep={currentStep + 1}
+              totalSteps={steps.length}
+              onNext={handleNext}
+              onPrev={handlePrevious}>
+              <div className='bg-card p-6 rounded-lg border shadow-sm'>
+                {renderStepContent()}
+              </div>
+            </FocusMode>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -64,17 +814,17 @@ export default function CreateChapterPage() {
   const { editionId, bookId } = useParams();
   const router = useRouter();
 
-  // Estados para el formulario
+  // Estados principales para el formulario
   const [title, setTitle] = useState("");
   const [studyType, setStudyType] = useState("");
-  const [methodology, setMethodology] = useState("");
   const [introduction, setIntroduction] = useState("");
   const [objectives, setObjectives] = useState("");
+  const [methodology, setMethodology] = useState("");
   const [results, setResults] = useState("");
   const [discussion, setDiscussion] = useState("");
   const [bibliography, setBibliography] = useState("");
 
-  // Estados adicionales: perfil, detalles del libro y créditos disponibles
+  // Estados para perfil, detalles del libro y créditos disponibles
   const [authorId, setAuthorId] = useState("");
   const [bookTitle, setBookTitle] = useState("");
   const { availableCredits, loadingCredits, errorCredits } =
@@ -85,7 +835,10 @@ export default function CreateChapterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Variantes de animación para framer-motion
+  // Estado para mostrar el modal multipaso
+  const [showModal, setShowModal] = useState(false);
+
+  // Animaciones para framer-motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -96,13 +849,12 @@ export default function CreateChapterPage() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
   };
 
-  // useEffect para obtener datos: perfil, detalles del libro y créditos disponibles
+  // useEffect para obtener datos: perfil y detalles del libro
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         let userId = localStorage.getItem("userId");
-        // Obtener perfil para confirmar el authorId
         if (token) {
           const profileRes = await fetch(
             `${process.env.NEXT_PUBLIC_BASE_URL}/profile`,
@@ -123,7 +875,6 @@ export default function CreateChapterPage() {
             userId = profileData.id;
           }
         }
-        // Obtener detalles del libro
         const bookRes = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`
         );
@@ -142,8 +893,8 @@ export default function CreateChapterPage() {
     fetchData();
   }, [editionId, bookId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Función para enviar el capítulo
+  const handleSubmit = async () => {
     if (!authorId) {
       setError("No se pudo obtener el perfil del autor. Intente nuevamente.");
       return;
@@ -162,7 +913,7 @@ export default function CreateChapterPage() {
         discussion,
         bibliography,
         authorId,
-        content: introduction, // Se usa la introducción como fallback para el contenido
+        content: introduction, // Se utiliza la introducción como fallback para el contenido
       };
 
       const res = await fetch(
@@ -190,14 +941,14 @@ export default function CreateChapterPage() {
     }
   };
 
-  // Vistas de carga, éxito o sin créditos
+  // Manejo condicional de vistas de carga, éxito o ausencia de créditos
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
         <div className='relative'>
-          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-primary animate-spin'></div>
           <div className='absolute inset-0 flex items-center justify-center'>
-            <BookOpen className='h-6 w-6 text-purple-500' />
+            <BookOpen className='h-6 w-6 text-primary' />
           </div>
         </div>
       </div>
@@ -211,19 +962,19 @@ export default function CreateChapterPage() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className='text-center p-8 max-w-md bg-white rounded-xl shadow-lg'>
+          className='text-center p-8 max-w-md bg-card rounded-xl shadow-lg border'>
           <div className='mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4'>
             <CheckCircle className='h-8 w-8 text-green-600' />
           </div>
-          <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+          <h2 className='text-2xl font-bold text-foreground mb-2'>
             ¡Capítulo enviado con éxito!
           </h2>
-          <p className='text-gray-600 mb-6'>
+          <p className='text-muted-foreground mb-6'>
             Tu capítulo ha sido enviado correctamente y está pendiente de
             revisión.
           </p>
           <Button
-            className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'
+            className='bg-primary hover:bg-primary/90'
             onClick={() =>
               router.push(`/editions/${editionId}/books/${bookId}/chapters`)
             }>
@@ -238,9 +989,9 @@ export default function CreateChapterPage() {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
         <div className='relative'>
-          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-primary animate-spin'></div>
           <div className='absolute inset-0 flex items-center justify-center'>
-            <BookOpen className='h-6 w-6 text-purple-500' />
+            <BookOpen className='h-6 w-6 text-primary' />
           </div>
         </div>
       </div>
@@ -249,31 +1000,48 @@ export default function CreateChapterPage() {
 
   if (availableCredits === null || availableCredits <= 0) {
     return (
-      <div className='p-4 text-center'>
-        <p className='mb-4'>
-          Para enviar un capítulo, primero debes comprar participación.
-        </p>
-        <Button
-          onClick={() =>
-            router.push(
-              `/editions/${editionId}/books/${bookId}/chapters/purchase`
-            )
-          }>
-          Comprar Participación
-        </Button>
+      <div className='flex flex-col items-center justify-center min-h-[60vh] p-4'>
+        <Card className='max-w-md w-full'>
+          <CardHeader>
+            <CardTitle>Créditos insuficientes</CardTitle>
+            <CardDescription>
+              Para enviar un capítulo, primero debes comprar participación.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert variant='default' className='mb-4'>
+              <AlertCircle className='h-4 w-4' />
+              <AlertTitle>Atención</AlertTitle>
+              <AlertDescription>
+                No tienes créditos disponibles para crear un nuevo capítulo.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+          <CardFooter>
+            <Button
+              className='w-full'
+              onClick={() =>
+                router.push(
+                  `/editions/${editionId}/books/${bookId}/chapters/purchase`
+                )
+              }>
+              Comprar Participación
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
 
+  // Vista inicial: solo se pide título y tipo de estudio; luego se abre el modal multipaso
   return (
     <div className='relative overflow-hidden py-8'>
-      {/* Fondo de diseño moderno */}
+      {/* Fondo decorativo */}
       <div className='absolute inset-0 z-0'>
         <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
         <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
         <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
       </div>
-
       <div className='container mx-auto px-4 relative z-10'>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -282,302 +1050,104 @@ export default function CreateChapterPage() {
           className='flex items-center justify-between mb-8'>
           <Button
             variant='ghost'
-            className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50'
+            className='flex items-center text-primary hover:text-primary/90 hover:bg-primary/10'
             onClick={() => router.back()}>
             <ChevronLeft className='mr-1 h-4 w-4' />
             Volver
           </Button>
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-primary/10 text-primary'>
             Nuevo Capítulo
           </div>
         </motion.div>
 
-        <div className='grid md:grid-cols-3 gap-8'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className='md:col-span-2'>
-            <div className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50'>
-              <div className='flex items-center gap-4 mb-6'>
-                <div className='bg-purple-100 p-4 rounded-full'>
-                  <FileText className='h-6 w-6 text-purple-700' />
-                </div>
-                <div>
-                  <h1 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900'>
-                    Crear Nuevo Capítulo
-                  </h1>
-                  <p className='text-gray-600'>
-                    Para el libro:{" "}
-                    <span className='font-medium'>{bookTitle}</span>
-                  </p>
-                </div>
-              </div>
-
-              {error && (
-                <Alert variant='destructive' className='mb-6'>
-                  <AlertCircle className='h-4 w-4' />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <form onSubmit={handleSubmit} className='space-y-6'>
-                <motion.div
-                  initial='hidden'
-                  animate='visible'
-                  variants={containerVariants}>
-                  {/* Título del capítulo */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Título del capítulo
-                    </Label>
-                    <Input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder='Ej: Estudio de caso: Manejo de diabetes'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-                    />
-                  </motion.div>
-
-                  {/* Tipo de estudio */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Tipo de estudio
-                    </Label>
-                    <Select onValueChange={(val) => setStudyType(val)} required>
-                      <SelectTrigger className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
-                        <SelectValue placeholder='Selecciona un tipo de estudio' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='revisión bibliográfica'>
-                          Revisión bibliográfica
-                        </SelectItem>
-                        <SelectItem value='caso clínico'>
-                          Caso clínico
-                        </SelectItem>
-                        <SelectItem value='protocolo'>Protocolo</SelectItem>
-                        <SelectItem value='otros'>
-                          Otros trabajos de investigación
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </motion.div>
-
-                  {/* Metodología */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Metodología
-                    </Label>
-                    <Textarea
-                      value={methodology}
-                      onChange={(e) => setMethodology(e.target.value)}
-                      rows={4}
-                      placeholder='Describe la metodología utilizada (obligatorio)'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={methodology} min={30} max={100} />
-                    <p className='text-xs text-gray-500 mt-1'>
-                      Se recomienda entre 30 y 100 palabras.
-                    </p>
-                  </motion.div>
-
-                  {/* Introducción */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Introducción
-                    </Label>
-                    <Textarea
-                      value={introduction}
-                      onChange={(e) => setIntroduction(e.target.value)}
-                      rows={4}
-                      placeholder='Mínimo 50 palabras / Máximo 150 palabras'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={introduction} min={50} max={150} />
-                  </motion.div>
-
-                  {/* Objetivos */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Objetivos
-                    </Label>
-                    <Textarea
-                      value={objectives}
-                      onChange={(e) => setObjectives(e.target.value)}
-                      rows={4}
-                      placeholder='Mínimo 50 palabras / Máximo 150 palabras'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={objectives} min={50} max={150} />
-                  </motion.div>
-
-                  {/* Resultados */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Resultados
-                    </Label>
-                    <Textarea
-                      value={results}
-                      onChange={(e) => setResults(e.target.value)}
-                      rows={4}
-                      placeholder='Mínimo 50 palabras / Máximo 250 palabras'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={results} min={50} max={250} />
-                  </motion.div>
-
-                  {/* Discusión-Conclusión */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Discusión-Conclusión
-                    </Label>
-                    <Textarea
-                      value={discussion}
-                      onChange={(e) => setDiscussion(e.target.value)}
-                      rows={4}
-                      placeholder='Mínimo 30 palabras / Máximo 150 palabras'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={discussion} min={30} max={150} />
-                  </motion.div>
-
-                  {/* Bibliografía */}
-                  <motion.div variants={itemVariants} className='mb-6'>
-                    <Label className='text-gray-700 font-medium mb-1 block'>
-                      Bibliografía
-                    </Label>
-                    <Textarea
-                      value={bibliography}
-                      onChange={(e) => setBibliography(e.target.value)}
-                      rows={4}
-                      placeholder='Mínimo 30 palabras / Máximo 150 palabras'
-                      required
-                      className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none'
-                    />
-                    <WordCountProgress text={bibliography} min={30} max={150} />
-                  </motion.div>
-
-                  {/* Botón de envío */}
-                  <motion.div variants={itemVariants} className='pt-4'>
-                    <Button
-                      type='submit'
-                      disabled={loading}
-                      className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 hover:shadow-lg'>
-                      {loading ? (
-                        <span className='flex items-center'>
-                          <div className='h-4 w-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2'></div>
-                          Enviando...
-                        </span>
-                      ) : (
-                        <span className='flex items-center'>
-                          <Send className='mr-2 h-4 w-4' />
-                          Enviar Capítulo
-                        </span>
-                      )}
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              </form>
+        {/* Formulario básico para título y tipo de estudio */}
+        <Card className='max-w-3xl mx-auto backdrop-blur-sm bg-white/80 border-white/50'>
+          <CardHeader>
+            <CardTitle className='text-2xl text-primary'>
+              Crear nuevo capítulo
+            </CardTitle>
+            <CardDescription>
+              Completa la información básica para comenzar a crear tu capítulo
+              para {bookTitle}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            <div>
+              <Label className='text-gray-700 font-medium mb-1 block'>
+                Título del capítulo
+              </Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder='Ej: Estudio de caso: Manejo de diabetes'
+                required
+                className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+              />
             </div>
-          </motion.div>
+            <div>
+              <Label className='text-gray-700 font-medium mb-1 block'>
+                Tipo de estudio
+              </Label>
+              <Select onValueChange={(val) => setStudyType(val)} required>
+                <SelectTrigger className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
+                  <SelectValue placeholder='Selecciona un tipo de estudio' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='revisión bibliográfica'>
+                    Revisión bibliográfica
+                  </SelectItem>
+                  <SelectItem value='caso clínico'>Caso clínico</SelectItem>
+                  <SelectItem value='protocolo'>Protocolo</SelectItem>
+                  <SelectItem value='otros'>
+                    Otros trabajos de investigación
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Panel lateral con consejos */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}>
-            <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 sticky top-4'>
-              <h2 className='text-lg font-semibold text-gray-900 mb-4 flex items-center'>
-                <Info className='h-4 w-4 mr-2 text-purple-600' />
-                Consejos para tu capítulo
-              </h2>
-              <div className='space-y-6'>
-                <div className='bg-purple-50/70 p-4 rounded-lg'>
-                  <h3 className='text-sm font-medium text-purple-800 mb-2 flex items-center'>
-                    <BookOpen className='h-4 w-4 mr-1' />
-                    Estructura recomendada
-                  </h3>
-                  <ul className='space-y-2'>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-purple-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-purple-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Sigue un orden lógico en tu exposición.
-                      </span>
-                    </li>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-purple-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-purple-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Usa subtítulos para organizar el contenido.
-                      </span>
-                    </li>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-purple-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-purple-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Incluye tablas o figuras si es necesario.
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-                <div className='bg-yellow-50/70 p-4 rounded-lg'>
-                  <h3 className='text-sm font-medium text-yellow-800 mb-2 flex items-center'>
-                    <Lightbulb className='h-4 w-4 mr-1' />
-                    Consejos de redacción
-                  </h3>
-                  <ul className='space-y-2'>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-yellow-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-yellow-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Usa un lenguaje claro y preciso.
-                      </span>
-                    </li>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-yellow-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-yellow-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Evita párrafos demasiado extensos.
-                      </span>
-                    </li>
-                    <li className='flex items-start gap-2'>
-                      <div className='bg-yellow-100 p-1 rounded-full mt-0.5'>
-                        <CheckCircle className='h-3 w-3 text-yellow-700' />
-                      </div>
-                      <span className='text-sm text-gray-700'>
-                        Cita correctamente todas las fuentes.
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-                <div className='bg-green-50/70 p-4 rounded-lg'>
-                  <h3 className='text-sm font-medium text-green-800 mb-2 flex items-center'>
-                    <BookMarked className='h-4 w-4 mr-1' />
-                    Proceso de revisión
-                  </h3>
-                  <p className='text-sm text-gray-700'>
-                    Tu capítulo será revisado por nuestro comité editorial.
-                    Recibirás comentarios y, si es necesario, se te pedirán
-                    modificaciones antes de la publicación final.
-                  </p>
-                </div>
+            <div className='bg-primary/5 p-4 rounded-lg border flex items-start gap-3'>
+              <Info className='h-5 w-5 text-primary shrink-0 mt-0.5' />
+              <div>
+                <h3 className='font-medium text-sm mb-1'>
+                  Información importante
+                </h3>
+                <p className='text-xs text-muted-foreground'>
+                  Una vez que hayas completado el título y tipo de estudio,
+                  podrás continuar con la estructura detallada de tu capítulo.
+                </p>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </CardContent>
+          <CardFooter className='flex justify-end'>
+            <Button
+              onClick={() => setShowModal(true)}
+              disabled={!title || !studyType}
+              className='bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg'>
+              Continuar con la estructura
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Renderización del Modal multipaso */}
+        <ChapterStructureModal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          studyType={studyType}
+          title={title}
+          introduction={introduction}
+          setIntroduction={setIntroduction}
+          objectives={objectives}
+          setObjectives={setObjectives}
+          methodology={methodology}
+          setMethodology={setMethodology}
+          results={results}
+          setResults={setResults}
+          discussion={discussion}
+          setDiscussion={setDiscussion}
+          bibliography={bibliography}
+          setBibliography={setBibliography}
+        />
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import CreditConsumptionHistory from "@/components/CreditConsumptionHistory";
+
 type UserData = {
   id: string;
   firstName: string;
@@ -140,6 +141,7 @@ export default function ProfilePage() {
         country: userData.country || "",
         autonomousCommunity: userData.autonomousCommunity || "",
         province: userData.province || "",
+        // No incluimos 'dni' ya que es de solo lectura
       });
     }
     setEditing(true);
@@ -176,6 +178,7 @@ export default function ProfilePage() {
   const handleCancel = () => {
     setEditing(false);
   };
+
   const totalPublications = publications.length;
   const publishedCount = publications.filter(
     (pub) => pub.status.toLowerCase() === "publicado"
@@ -232,12 +235,10 @@ export default function ProfilePage() {
           transition={{ duration: 0.5 }}
           className='flex items-center justify-between'>
           <Breadcrumb>
-            <span>Mi Perfil</span>
+            <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+              Mi Perfil
+            </span>
           </Breadcrumb>
-
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-            Mi Perfil
-          </div>
         </motion.div>
 
         <div className='max-w-4xl mx-auto'>
@@ -249,6 +250,7 @@ export default function ProfilePage() {
             <div className='flex flex-col md:flex-row items-center md:items-start gap-8'>
               {/* Avatar y nombre */}
               <div className='flex flex-col items-center'>
+                {/* Se mantiene el avatar con las iniciales */}
                 <div className='w-28 h-28 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-lg'>
                   {userData.firstName?.charAt(0)}
                   {userData.lastName?.charAt(0)}
@@ -275,7 +277,6 @@ export default function ProfilePage() {
                     <h2 className='text-2xl font-bold text-gray-900'>
                       {userData.firstName} {userData.lastName}
                     </h2>
-                    <p className='text-sm text-gray-500 mt-1'>{userData.id}</p>
                     <p className='text-sm text-gray-500 mt-1'>
                       {userData.professionalCategory}
                     </p>
@@ -291,6 +292,14 @@ export default function ProfilePage() {
                           }
                         )}
                       </p>
+                    </div>
+                    {/* Imagen del doctor debajo del bloque de información */}
+                    <div className='mt-4'>
+                      <img
+                        src='/doctor.png'
+                        alt='Doctor'
+                        className='mx-auto max-w-[300px] h-auto'
+                      />
                     </div>
                   </div>
                 )}
@@ -380,6 +389,28 @@ export default function ProfilePage() {
                           ) : (
                             <p className='font-medium'>
                               {userData.phone || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* DNI (nuevo campo de solo lectura) */}
+                      <div className='flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-gray-100 shadow-sm'>
+                        <div className='bg-purple-100 p-2 rounded-full'>
+                          <FileText className='h-5 w-5 text-purple-700' />
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-xs text-gray-500'>DNI</p>
+                          {editing ? (
+                            <Input
+                              name='dni'
+                              value={userData.id || ""}
+                              disabled
+                              className='mt-1'
+                            />
+                          ) : (
+                            <p className='font-medium'>
+                              {userData.id || "No especificado"}
                             </p>
                           )}
                         </div>

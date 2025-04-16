@@ -204,7 +204,7 @@ export default function DashboardPage() {
                   </Link>
                 ) : (
                   // Si no hay libros creados, redirigimos a la creación
-                  <Link href='/create-book'>
+                  <Link href='/publications'>
                     <Button
                       variant='outline'
                       className='flex-1 border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300'

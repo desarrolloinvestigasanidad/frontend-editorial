@@ -134,6 +134,9 @@ export default function ResetPasswordForm() {
           contraseña. Por favor, revisa tu bandeja de entrada y sigue las
           instrucciones.
         </AlertDescription>
+        <Button onClick={() => router.push("/login")} className='mt-4'>
+          Volver al inicio de sesión
+        </Button>
       </Alert>
     );
   }

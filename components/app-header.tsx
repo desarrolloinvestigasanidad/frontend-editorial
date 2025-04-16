@@ -48,16 +48,6 @@ export function AppHeader() {
 
       {/* Acciones: notificaciones + menú de usuario */}
       <div className='ml-auto flex items-center gap-6'>
-        {/* Notificaciones: ícono más grande */}
-        <Button
-          variant='ghost'
-          size='icon'
-          className='relative text-xl'
-          aria-label='Notificaciones'>
-          <Bell className='h-6 w-6' />
-          <span className='absolute top-1 right-1 h-2 w-2 rounded-full bg-purple-600' />
-        </Button>
-
         {/* Menú de usuario: ícono más grande, texto de menú más grande */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

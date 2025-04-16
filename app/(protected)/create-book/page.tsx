@@ -4,14 +4,34 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, ArrowRight, ArrowLeft, Book } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
+  Book,
+  Sparkles,
+  BookOpen,
+  X,
+} from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import Image from "next/image";
+import Terminos from "./terminos";
 
 export default function CrearLibroPage() {
   const { user } = useUser();
   const userId = user?.id;
   const [step, setStep] = useState<"normativa" | "titulo">("normativa");
   const [titulo, setTitulo] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
 
   // Estado para la edición actual
   const [currentEdition, setCurrentEdition] = useState<any>(null);
@@ -24,7 +44,6 @@ export default function CrearLibroPage() {
         if (data && data.length > 0) {
           // Se asume que la primera edición es la actual
           setCurrentEdition(data[0]);
-          console.log(data[0]);
         }
         setLoadingEdition(false);
       })
@@ -42,6 +61,10 @@ export default function CrearLibroPage() {
     }
 
     if (step === "normativa") {
+      if (!acceptedTerms) {
+        // Mostrar algún mensaje de error o feedback
+        return;
+      }
       setStep("titulo");
     } else if (step === "titulo" && titulo.trim()) {
       const amount = 9900;
@@ -73,8 +96,49 @@ export default function CrearLibroPage() {
   };
 
   return (
-    <div className='py-16 md:py-24 relative overflow-hidden bg-gradient-to-b from-white to-purple-50'>
-      <div className='container mx-auto px-4'>
+    <div className='h-screen flex flex-col relative overflow-hidden'>
+      {/* Header - Reducido en altura */}
+      <header className='pt-8 pb-16 text-center relative'>
+        {/* Floating books decoration - Reducido en tamaño */}
+        <motion.div
+          className='absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-4xl'
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}>
+          <div className='relative h-20'>
+            <div className='absolute left-10 bottom-0 transform -rotate-12'>
+              <Image
+                src='/abstract-purple-academic.png'
+                alt='Libro ejemplo'
+                width={70}
+                height={105}
+                className='rounded-md shadow-lg'
+              />
+            </div>
+            <div className='absolute left-1/2 bottom-6 transform -translate-x-1/2 rotate-3 z-10'>
+              <Image
+                src='/cosmic-matter.png'
+                alt='Libro ejemplo'
+                width={80}
+                height={120}
+                className='rounded-md shadow-xl'
+              />
+            </div>
+            <div className='absolute right-10 bottom-0 transform rotate-12'>
+              <Image
+                src='/abstract-purple-research.png'
+                alt='Libro ejemplo'
+                width={70}
+                height={105}
+                className='rounded-md shadow-lg'
+              />
+            </div>
+          </div>
+        </motion.div>
+      </header>
+
+      {/* Main Content - Flex-grow para ocupar el espacio restante */}
+      <main className='flex-grow container mx-auto px-4 py-6 relative z-10 overflow-auto'>
         <AnimatePresence mode='wait'>
           {step === "normativa" && (
             <motion.div
@@ -83,232 +147,219 @@ export default function CrearLibroPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}>
-              <div className='grid md:grid-cols-2 gap-8'>
-                {/* Columna Izquierda: Normativa */}
-                <div className='space-y-8'>
+              <div className='grid md:grid-cols-2 gap-6 items-start'>
+                {/* Columna Izquierda: Normativa - Reducido en tamaño */}
+                <div>
                   <motion.div
-                    className='bg-white p-8 rounded-xl shadow-xl border border-gray-200'
-                    initial='hidden'
-                    animate='visible'
-                    variants={itemVariants}>
-                    <h2 className='text-3xl font-bold mb-4 text-purple-800'>
-                      Normativa de Publicación - Edición de Libros de Investiga
-                      Sanidad
-                    </h2>
-                    <p className='text-gray-700 mb-4'>
-                      Estimado/a autor/a, te damos la bienvenida a la{" "}
-                      <strong>
-                        {currentEdition
-                          ? currentEdition.title
-                          : "Edición del Libro"}
-                      </strong>{" "}
-                      de Investiga Sanidad. A continuación, te detallamos las
-                      normativas y fechas importantes para el envío de tus
-                      capítulos, la publicación de la edición y la descarga de
-                      los libros y certificados:
-                    </p>
-                    <ol className='list-decimal ml-5 space-y-2 text-gray-700'>
-                      <li>
-                        <strong>Envío de Capítulos:</strong> El plazo para el
-                        envío es{" "}
-                        <strong>
-                          {currentEdition && currentEdition.deadlineChapters
-                            ? new Date(
-                                currentEdition.deadlineChapters
-                              ).toLocaleDateString()
-                            : "[Fecha límite]"}
-                        </strong>
-                        . Cada capítulo debe ajustarse a las especificaciones
-                        requeridas; de lo contrario, se devolverá para
-                        corrección.
-                      </li>
-                      <li>
-                        <strong>Revisión y Publicación:</strong> Los capítulos
-                        serán evaluados por nuestro equipo editorial y se
-                        notificará a los autores sobre aceptación o
-                        correcciones. La publicación oficial será el{" "}
-                        <strong>
-                          {currentEdition && currentEdition.publishDate
-                            ? new Date(
-                                currentEdition.publishDate
-                              ).toLocaleDateString()
-                            : "[Fecha de publicación]"}
-                        </strong>
-                        .
-                      </li>
-                      <li>
-                        <strong>Descarga de Libros y Certificados:</strong>
-                        <br />
-                        <em>Libro Completo:</em> Disponible en{" "}
-                        <strong>
-                          {currentEdition && currentEdition.publishDate
-                            ? new Date(
-                                currentEdition.publishDate
-                              ).toLocaleDateString()
-                            : "[Fecha de publicación]"}
-                        </strong>
-                        .<br />
-                        <em>Certificados de Participación:</em> Disponibles
-                        desde{" "}
-                        <strong>
-                          {currentEdition && currentEdition.publishDate
-                            ? new Date(
-                                currentEdition.publishDate
-                              ).toLocaleDateString()
-                            : "[Fecha de publicación]"}
-                        </strong>{" "}
-                        hasta{" "}
-                        <strong>
-                          {currentEdition && currentEdition.deadlineChapters
-                            ? new Date(
-                                currentEdition.deadlineChapters
-                              ).toLocaleDateString()
-                            : "[Fecha límite de descarga]"}
-                        </strong>
-                        .
-                      </li>
-                    </ol>
-                    <p className='text-gray-700 mt-4'>
-                      Envío de capítulos:{" "}
-                      <strong>
-                        {currentEdition && currentEdition.deadlineChapters
-                          ? new Date(
-                              currentEdition.deadlineChapters
-                            ).toLocaleDateString()
-                          : "[FECHA]"}
-                      </strong>
-                      <br />
-                      Revisión y corrección:{" "}
-                      <strong>{"[Fecha de revisión]"}</strong>
-                      <br />
-                      Publicación y descarga:{" "}
-                      <strong>
-                        {currentEdition && currentEdition.publishDate
-                          ? new Date(
-                              currentEdition.publishDate
-                            ).toLocaleDateString()
-                          : "[FECHA]"}
-                      </strong>
-                    </p>
-                    <p className='text-gray-700 mt-4'>
-                      El equipo de Investiga Sanidad
-                    </p>
-                  </motion.div>
-
-                  <motion.div
-                    className='bg-white p-8 rounded-xl shadow-xl border border-gray-200'
+                    className='bg-white p-5 rounded-xl shadow-lg border border-purple-100'
                     initial='hidden'
                     animate='visible'
                     variants={itemVariants}
                     transition={{ delay: 0.3 }}>
-                    <h2 className='text-3xl font-bold mb-4 text-purple-800'>
-                      Normativa de Libros Completos Antes de Pagar
-                    </h2>
-                    <p className='text-gray-700 mb-4'>
+                    <div className='flex items-center gap-3 mb-3'>
+                      <div className='bg-purple-100 p-2 rounded-full'>
+                        <Sparkles className='h-4 w-4 text-purple-700' />
+                      </div>
+                      <h2 className='text-xl md:text-2xl font-bold text-purple-800'>
+                        Normativa de Publicación
+                      </h2>
+                    </div>
+
+                    <p className='text-gray-700 mb-3 border-l-4 border-purple-200 pl-3 italic text-sm'>
                       Revisa la siguiente información antes de proceder al pago:
                     </p>
-                    <ul className='list-disc ml-5 space-y-2 text-gray-700'>
-                      <li>
-                        <strong>Añadir coautores:</strong> El autor principal
-                        debe incluir a todos los coautores con sus datos de
-                        contacto.
-                      </li>
-                      <li>
-                        <strong>Responsabilidades:</strong> Gestionar y
-                        coordinar el proceso de publicación, asegurando el envío
-                        de capítulos y correcciones.
-                      </li>
-                      <li>
-                        <strong>Participación:</strong> Los coautores colaboran
-                        en la edición, pero la responsabilidad final es del
-                        autor principal.
-                      </li>
-                      <li>
-                        <strong>Proceso:</strong> Tras añadir coautores y
-                        realizar el pago, iniciará la creación y revisión del
-                        libro.
-                      </li>
+
+                    <ul className='space-y-2 text-gray-700'>
+                      {[
+                        {
+                          title: "Añadir coautores",
+                          desc: "El autor principal debe incluir a todos los coautores con sus datos de contacto.",
+                        },
+                        {
+                          title: "Responsabilidades",
+                          desc: "Gestionar y coordinar el proceso de publicación, asegurando el envío de capítulos y correcciones.",
+                        },
+                        {
+                          title: "Participación",
+                          desc: "Los coautores colaboran en la edición, pero la responsabilidad final es del autor principal.",
+                        },
+                        {
+                          title: "Proceso",
+                          desc: "Tras añadir coautores y realizar el pago, iniciará la creación y revisión del libro.",
+                        },
+                      ].map((item, idx) => (
+                        <li
+                          key={idx}
+                          className='flex gap-2 bg-purple-50/50 p-3 rounded-lg hover:bg-purple-50 transition-colors'>
+                          <CheckCircle className='h-4 w-4 text-purple-600 mt-1 flex-shrink-0' />
+                          <div>
+                            <h3 className='font-semibold text-purple-900 text-sm'>
+                              {item.title}
+                            </h3>
+                            <p className='text-xs text-gray-600'>{item.desc}</p>
+                          </div>
+                        </li>
+                      ))}
                     </ul>
-                    <p className='text-gray-700 mt-4'>
-                      Recuerda que el cumplimiento de estas normativas es
-                      fundamental para una correcta publicación.
-                    </p>
-                    <p className='text-gray-700 mt-4'>
-                      Derechos de autor y correcciones post-publicación aplican
-                      según la Ley.
-                    </p>
+
+                    <div className='mt-4 p-3 bg-purple-50 rounded-lg border border-purple-100'>
+                      <p className='text-xs text-gray-700'>
+                        Recuerda que el cumplimiento de estas normativas es
+                        fundamental para una correcta publicación.
+                      </p>
+                    </div>
+
+                    {/* Checkbox para aceptar términos */}
+                    <div className='mt-4 flex items-start space-x-2'>
+                      <Checkbox
+                        id='terms'
+                        checked={acceptedTerms}
+                        onCheckedChange={(checked) => {
+                          setAcceptedTerms(checked === true);
+                        }}
+                        className='mt-1'
+                      />
+                      <div className='grid gap-1.5 leading-none'>
+                        <label
+                          htmlFor='terms'
+                          className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                          Acepto la normativa y los{" "}
+                          <Dialog
+                            open={termsModalOpen}
+                            onOpenChange={setTermsModalOpen}>
+                            <DialogTrigger asChild>
+                              <button className='text-purple-600 underline hover:text-purple-800'>
+                                términos y condiciones
+                              </button>
+                            </DialogTrigger>
+                            <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+                              <DialogHeader className='sticky top-0 bg-white z-10 pb-2'>
+                                <div className='flex items-center justify-between'>
+                                  <DialogTitle>
+                                    Términos y Condiciones
+                                  </DialogTitle>
+                                  <Button
+                                    variant='ghost'
+                                    size='icon'
+                                    onClick={() => setTermsModalOpen(false)}
+                                    className='h-8 w-8'>
+                                    <X className='h-4 w-4' />
+                                  </Button>
+                                </div>
+                              </DialogHeader>
+                              <Terminos />
+                            </DialogContent>
+                          </Dialog>
+                        </label>
+                        <p className='text-xs text-muted-foreground'>
+                          Debes aceptar los términos antes de continuar.
+                        </p>
+                      </div>
+                    </div>
                   </motion.div>
                 </div>
 
                 {/* Columna Derecha: Tarjeta de Precio con Información de Edición y Cover */}
                 <div>
                   {loadingEdition ? (
-                    <div>Cargando edición...</div>
+                    <div className='flex justify-center items-center h-40 bg-white/80 rounded-xl shadow-md'>
+                      <div className='animate-pulse flex space-x-4'>
+                        <div className='rounded-full bg-purple-200 h-12 w-12'></div>
+                        <div className='flex-1 space-y-4 py-1'>
+                          <div className='h-4 bg-purple-200 rounded w-3/4'></div>
+                          <div className='space-y-2'>
+                            <div className='h-4 bg-purple-200 rounded'></div>
+                            <div className='h-4 bg-purple-200 rounded w-5/6'></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <motion.div
-                      className='backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-white border-2 border-purple-500 relative'
+                      className='backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-purple-50 border border-purple-200 relative'
                       initial='hidden'
                       animate='visible'
                       variants={itemVariants}>
-                      <div className='absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 text-sm font-semibold rounded-bl-lg'>
+                      <div className='absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-purple-800 text-white px-3 py-1 text-xs font-semibold rounded-bl-lg'>
                         Recomendado
                       </div>
-                      {/* Se reduce el padding de la tarjeta de p-8 a p-6 para disminuir la altura */}
-                      <div className='p-6'>
+
+                      <div className='p-4'>
                         {/* Mostrar portada si existe */}
-                        {currentEdition && currentEdition.cover && (
-                          <img
-                            src={currentEdition.cover}
-                            alt={`Portada de ${currentEdition.title}`}
-                            className='w-full h-auto rounded-lg mb-4'
-                          />
-                        )}
-                        {currentEdition && (
-                          <div className='mb-4'>
-                            <h4 className='text-xl font-bold text-purple-800'>
+                        {currentEdition && currentEdition.cover ? (
+                          <div className='relative mb-4 overflow-hidden rounded-lg shadow-lg h-32'>
+                            <img
+                              src={currentEdition.cover || "/placeholder.svg"}
+                              alt={`Portada de ${currentEdition.title}`}
+                              className='w-full h-full object-cover transform hover:scale-105 transition-transform duration-300'
+                            />
+                            <div className='absolute inset-0 bg-gradient-to-t from-purple-900/70 to-transparent flex items-end'>
+                              <div className='p-3 text-white'>
+                                <h4 className='text-sm font-bold'>
+                                  Edición Actual: {currentEdition.title}
+                                </h4>
+                                <p className='text-xs text-white/80'>
+                                  {currentEdition.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : currentEdition ? (
+                          <div className='mb-4 bg-purple-100 p-3 rounded-lg'>
+                            <h4 className='text-sm font-bold text-purple-800'>
                               Edición Actual: {currentEdition.title}
                             </h4>
-                            <p className='text-gray-600'>
+                            <p className='text-xs text-gray-600'>
                               {currentEdition.description}
                             </p>
                           </div>
-                        )}
-                        <h3 className='text-2xl font-bold text-center mb-2'>
-                          Libro personalizado
-                        </h3>
-                        <div className='text-center mb-8'>
-                          <span className='text-5xl font-bold text-purple-700'>
-                            99€
-                          </span>
-                          <span className='text-gray-600 ml-2'>
-                            IVA incluido
-                          </span>
+                        ) : null}
+
+                        <div className='text-center mb-4'>
+                          <h3 className='text-xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900'>
+                            Libro Personalizado
+                          </h3>
+                          <div className='flex items-center justify-center'>
+                            <span className='text-4xl font-bold text-purple-700'>
+                              99€
+                            </span>
+                            <span className='text-gray-600 ml-2 text-xs'>
+                              IVA incluido
+                            </span>
+                          </div>
                         </div>
-                        <ul className='space-y-4 mb-8'>
-                          {[
-                            "Título personalizado para tu libro",
-                            "Hasta 7 autores en total",
-                            "ISBN oficial reconocido",
-                            "Certificado de autoría",
-                            "Revisión por expertos",
-                            "Publicación digital",
-                            "Difusión internacional",
-                          ].map((feature, idx) => (
-                            <li key={idx} className='flex items-center'>
-                              <CheckCircle className='h-5 w-5 text-green-500 mr-3 flex-shrink-0' />
-                              <span className='text-gray-700'>{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
+
+                        <div className='bg-white/70 backdrop-blur-sm rounded-lg p-3 mb-4 border border-purple-100'>
+                          <ul className='space-y-2 text-sm'>
+                            {[
+                              "Título personalizado para tu libro",
+                              "Hasta 7 autores en total",
+                              "ISBN oficial reconocido",
+                              "Certificado de autoría",
+                              "Revisión por expertos",
+                              "Publicación digital",
+                              "Difusión internacional",
+                            ].map((feature, idx) => (
+                              <li key={idx} className='flex items-center'>
+                                <CheckCircle className='h-4 w-4 text-green-500 mr-2 flex-shrink-0' />
+                                <span className='text-gray-700 text-xs'>
+                                  {feature}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
                         <motion.div
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.98 }}>
                           <Button
                             onClick={handleCreateBook}
-                            className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white py-6 text-lg rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'>
+                            disabled={!acceptedTerms}
+                            className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white py-5 text-base rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'>
                             <span className='flex items-center justify-center'>
-                              Aceptar Normativa y Continuar
-                              <ArrowRight className='ml-2 h-5 w-5' />
+                              Continuar
+                              <ArrowRight className='ml-2 h-4 w-4' />
                             </span>
                           </Button>
                         </motion.div>
@@ -327,22 +378,22 @@ export default function CrearLibroPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50 max-w-2xl mx-auto'>
-              <div className='flex items-center gap-3 mb-6'>
-                <div className='bg-purple-100 p-3 rounded-full'>
-                  <Book className='h-6 w-6 text-purple-700' />
+              className='backdrop-blur-sm bg-white/90 p-6 rounded-2xl shadow-lg border border-purple-100 max-w-2xl mx-auto'>
+              <div className='flex items-center gap-3 mb-4'>
+                <div className='bg-purple-100 p-2 rounded-full'>
+                  <Book className='h-5 w-5 text-purple-700' />
                 </div>
                 <div>
-                  <h1 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900'>
+                  <h1 className='text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900'>
                     Nuevo libro
                   </h1>
-                  <p className='text-gray-600'>
+                  <p className='text-sm text-gray-600'>
                     Introduce el título de tu nuevo libro
                   </p>
                 </div>
               </div>
 
-              <div className='bg-white/90 p-6 rounded-xl border border-gray-100 shadow-sm mb-8'>
+              <div className='bg-white p-4 rounded-xl border border-purple-100 shadow-sm mb-6'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
                   Título del libro
                 </label>
@@ -350,9 +401,9 @@ export default function CrearLibroPage() {
                   placeholder='Introduce el título del nuevo libro'
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
-                  className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 text-lg py-6'
+                  className='border-purple-200 focus:border-purple-400 focus:ring-purple-200 text-base py-5'
                 />
-                <p className='text-sm text-gray-500 mt-2'>
+                <p className='text-xs text-gray-500 mt-2'>
                   El título debe ser descriptivo y representativo del contenido
                   del libro.
                 </p>
@@ -362,7 +413,7 @@ export default function CrearLibroPage() {
                 <Button
                   variant='outline'
                   onClick={() => setStep("normativa")}
-                  className='border-gray-200 hover:bg-gray-50 hover:text-gray-700'>
+                  className='border-purple-200 hover:bg-purple-50 hover:text-purple-700'>
                   <ArrowLeft className='mr-2 h-4 w-4' />
                   Volver
                 </Button>
@@ -373,7 +424,7 @@ export default function CrearLibroPage() {
                   <Button
                     onClick={handleCreateBook}
                     disabled={!titulo.trim()}
-                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 hover:shadow-lg px-8'>
+                    className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 hover:shadow-lg px-6'>
                     <span className='flex items-center'>
                       Crear libro
                       <ArrowRight className='ml-2 h-4 w-4' />
@@ -384,7 +435,7 @@ export default function CrearLibroPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </main>
     </div>
   );
 }

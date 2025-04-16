@@ -507,7 +507,7 @@ function BookGrid({
             </div>
 
             <div className='mt-auto pt-4'>
-              <Link href={`/publications/${book.id}`}>
+              <Link href={`/books/${book.id}`}>
                 <Button
                   className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
                   onMouseEnter={() => handleMouseEnter(`book-${book.id}`)}

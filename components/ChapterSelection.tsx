@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { CheckCircle } from "lucide-react";
 
 // Tabla de precios (en euros) para la compra de capítulos
 const priceTable: { [key: number]: number } = {
@@ -21,7 +20,8 @@ const priceTable: { [key: number]: number } = {
 interface ChapterSelectionProps {
   // Cantidad de capítulos ya comprados (o total comprados)
   purchasedChapters: number;
-  // Callback que se invoca al confirmar la compra, enviando la cantidad de capítulos a comprar y el precio a cobrar
+  // Callback que se invoca al confirmar la compra,
+  // enviando la cantidad de capítulos a comprar y el precio a cobrar
   onSelect: (chaptersToBuy: number, priceToCharge: number) => void;
 }
 
@@ -32,38 +32,44 @@ export default function ChapterSelection({
   const maxChapters = 8;
   const remaining = maxChapters - purchasedChapters;
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [hoveredOption, setHoveredOption] = useState<number | null>(null);
 
-  // Opciones disponibles: de 1 hasta "remaining"
+  // Opciones disponibles: de 1 hasta el número "remaining"
   const options = Array.from({ length: remaining }, (_, i) => i + 1);
 
   // Calcula el precio a cobrar para una opción:
-  // Precio acumulado para (purchasedChapters + option) menos el precio ya pagado (para purchasedChapters)
+  // Precio acumulado de (purchasedChapters + option)
+  // menos el precio ya pagado para purchasedChapters
   const calculatePrice = (option: number): number => {
-    const cumulative = purchasedChapters + option;
-    const cumulativePrice = priceTable[cumulative];
+    const totalCount = purchasedChapters + option;
+    const cumulativePrice = priceTable[totalCount] ?? 0;
     const previousPrice =
-      purchasedChapters > 0 ? priceTable[purchasedChapters] : 0;
+      purchasedChapters > 0 ? priceTable[purchasedChapters] ?? 0 : 0;
     return cumulativePrice - previousPrice;
   };
 
-  // Calcula el ahorro si se compran en pack versus comprar individualmente
+  // Calcula el ahorro si se compra un pack vs capítulos sueltos
   const calculateSavings = (option: number): number => {
     if (option <= 1) return 0;
     const price = calculatePrice(option);
-    const individualPrice = option * calculatePrice(1);
+    // Suponiendo que comprar 1 capítulo adicional siempre vale
+    // `priceTable[purchasedChapters + 1] - priceTable[purchasedChapters]`
+    const singleChapterPrice = calculatePrice(1);
+    const individualPrice = singleChapterPrice * option;
     return individualPrice - price;
   };
 
-  // Variantes de animación
+  // Animaciones de framer-motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
-
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4 },
+    },
   };
 
   return (
@@ -91,6 +97,7 @@ export default function ChapterSelection({
           </p>
         </motion.div>
 
+        {/* Contenedor de tarjetas */}
         <motion.div
           variants={containerVariants}
           initial='hidden'
@@ -100,55 +107,63 @@ export default function ChapterSelection({
             const price = calculatePrice(option);
             const savings = calculateSavings(option);
             const isSelected = selectedOption === option;
-            const isHovered = hoveredOption === option;
 
             return (
               <motion.div
                 key={option}
                 variants={cardVariants}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className={`relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-md border transition-all duration-300 ${
+                className={`relative bg-white p-6 rounded-2xl shadow hover:shadow-md transition-all border ${
                   isSelected
-                    ? "border-purple-400 shadow-lg ring-2 ring-purple-200"
-                    : "border-white/50 hover:border-purple-200 hover:shadow-lg"
-                }`}
-                onMouseEnter={() => setHoveredOption(option)}
-                onMouseLeave={() => setHoveredOption(null)}
-                onClick={() => setSelectedOption(option)}
-                style={{ cursor: "pointer" }}>
-                {option > 1 && savings > 0 && (
-                  <div className='absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full'>
-                    ¡Ahorra {savings}€
+                    ? "border-purple-600"
+                    : "border-transparent hover:border-purple-100"
+                }`}>
+                {/* Ahorro (si existe) */}
+                {savings > 0 && (
+                  <div className='absolute top-3 right-3 text-xs font-bold bg-green-500 text-white py-1 px-2 rounded-full'>
+                    Ahorra {savings}€
                   </div>
                 )}
-                <div className='flex flex-col items-center text-center'>
-                  <div
-                    className={`p-3 rounded-full mb-4 transition-all duration-300 ${
-                      isSelected || isHovered
-                        ? "bg-purple-200 scale-110"
-                        : "bg-purple-100"
-                    }`}>
-                    <Package className='h-6 w-6 text-purple-700' />
-                  </div>
-                  <h3 className='text-xl font-bold text-gray-900 mb-1'>
-                    {option} {option === 1 ? "Capítulo" : "Capítulos"}
-                  </h3>
-                  <div className='flex items-center justify-center gap-2 mb-4'>
-                    <span className='text-2xl font-bold text-purple-700'>
-                      {price}€
-                    </span>
-                    {option > 1 && (
-                      <span className='text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full'>
-                        {(price / option).toFixed(2)}€/capítulo
-                      </span>
-                    )}
-                  </div>
-                </div>
+
+                {/* Título + Precio */}
+                <h3 className='text-lg font-bold text-gray-900 mb-1'>
+                  {option} {option === 1 ? "Capítulo" : "Capítulos"}
+                </h3>
+                <p className='text-3xl font-extrabold text-purple-600 mb-4'>
+                  {price} €
+                </p>
+
+                {/* Lista de características */}
+                <ul className='space-y-2 text-gray-700 text-sm mb-6'>
+                  <li className='flex items-center'>
+                    <CheckCircle className='mr-2 h-4 w-4 text-green-500' />
+                    Participación como autor/coautor
+                  </li>
+                  <li className='flex items-center'>
+                    <CheckCircle className='mr-2 h-4 w-4 text-green-500' />
+                    Revisión por expertos
+                  </li>
+                  <li className='flex items-center'>
+                    <CheckCircle className='mr-2 h-4 w-4 text-green-500' />
+                    Certificado oficial
+                  </li>
+                  <li className='flex items-center'>
+                    <CheckCircle className='mr-2 h-4 w-4 text-green-500' />
+                    ISBN individual
+                  </li>
+                </ul>
+
+                {/* Botón de selección */}
+                <Button
+                  onClick={() => setSelectedOption(option)}
+                  className='w-full bg-purple-600 hover:bg-purple-700'>
+                  Seleccionar
+                </Button>
               </motion.div>
             );
           })}
         </motion.div>
 
+        {/* Resumen de la selección y botón final */}
         {selectedOption !== null && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -156,17 +171,19 @@ export default function ChapterSelection({
             transition={{ duration: 0.5 }}
             className='mt-8 text-center'>
             <p className='text-lg font-semibold text-gray-800 mb-4'>
-              Has seleccionado {selectedOption}{" "}
+              Has seleccionado{" "}
+              <span className='font-bold'>{selectedOption}</span>{" "}
               {selectedOption === 1 ? "capítulo" : "capítulos"} por un total de{" "}
               <span className='font-bold text-purple-700'>
                 {calculatePrice(selectedOption)}€
               </span>
               {calculateSavings(selectedOption) > 0 && (
                 <span className='text-green-600 ml-2'>
-                  (Ahorras {calculateSavings(selectedOption)}€)
+                  (Ahorro: {calculateSavings(selectedOption)}€)
                 </span>
               )}
             </p>
+
             <Button
               onClick={() =>
                 onSelect(selectedOption, calculatePrice(selectedOption))

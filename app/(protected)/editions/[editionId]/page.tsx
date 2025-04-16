@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   FileText,
@@ -25,7 +26,6 @@ import { useAvailableCredits } from "@/hooks/useAvailableCredits";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 
 export default function EditionDetailPage() {
   const { editionId } = useParams();
@@ -331,6 +331,40 @@ export default function EditionDetailPage() {
                   </CardFooter>
                 </Card>
               </motion.div>
+
+              {/* Tarjeta de Ver Libros */}
+              <motion.div variants={itemVariants}>
+                <Card className='h-full bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
+                  <CardHeader className='pb-2'>
+                    <div className='w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-2'>
+                      <BookOpen className='h-6 w-6 text-amber-600' />
+                    </div>
+                    <CardTitle className='text-xl text-amber-700'>
+                      Ver Libros
+                    </CardTitle>
+                    <CardDescription>
+                      Consulta los libros disponibles en la edición
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='text-sm text-gray-600'>
+                    <p>
+                      Explora todos los libros que forman parte de esta edición
+                      y accede a sus detalles y contenido publicado.
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      variant='outline'
+                      className='w-full border-amber-200 text-amber-700 hover:bg-amber-50'
+                      onClick={() =>
+                        router.push(`/editions/${editionId}/books`)
+                      }>
+                      Ver libros
+                      <ChevronRight className='ml-2 h-4 w-4' />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             </motion.div>
           </TabsContent>
 
@@ -480,6 +514,16 @@ export default function EditionDetailPage() {
                     }
                     className='bg-purple-600 hover:bg-purple-700'>
                     Crear mi propio libro
+                  </Button>
+                </div>
+              )}
+              {books.length > 0 && (
+                <div className='flex justify-center mt-6'>
+                  <Button
+                    onClick={() => router.push(`/editions/${editionId}/books`)}
+                    className='bg-purple-600 hover:bg-purple-700 transition-all duration-300'>
+                    Ver todos los libros
+                    <ChevronRight className='ml-2 h-4 w-4' />
                   </Button>
                 </div>
               )}

@@ -270,7 +270,7 @@ export default function PublicationsPage() {
             <TabsTrigger
               value='own'
               className='data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800'>
-              Libros propios
+              Libros personalizados
             </TabsTrigger>
             <TabsTrigger
               value='edition'

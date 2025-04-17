@@ -22,7 +22,7 @@ export default function MisPublicaciones() {
       <Tabs defaultValue='capitulos'>
         <TabsList>
           <TabsTrigger value='capitulos'>Capítulos de libro</TabsTrigger>
-          <TabsTrigger value='libros'>Libros propios</TabsTrigger>
+          <TabsTrigger value='libros'>Libros personalizados</TabsTrigger>
         </TabsList>
         <TabsContent value='capitulos'>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>

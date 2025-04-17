@@ -33,6 +33,7 @@ import {
   Edit3,
   CheckSquare,
   HelpCircle,
+  Target,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
@@ -130,7 +131,251 @@ function WordCountProgress({
   );
 }
 
-// Modificar el componente FocusMode para quitar el borde, ampliar el ancho y añadir efectos visuales
+// Modificar el componente StepsNavigation para que sea más visual e intuitivo
+function StepsNavigation({
+  steps,
+  currentStep,
+  onStepClick,
+}: {
+  steps: string[];
+  currentStep: number;
+  onStepClick: (index: number) => void;
+}) {
+  return (
+    <div className='w-full overflow-x-auto pb-2'>
+      <div className='flex space-x-2 min-w-max'>
+        {steps.map((step, index) => {
+          // Determinar el estado del paso (completado, actual, pendiente)
+          const isCompleted = index < currentStep;
+          const isCurrent = index === currentStep;
+
+          return (
+            <button
+              key={index}
+              onClick={() => onStepClick(index)}
+              className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${
+                isCurrent
+                  ? "bg-primary text-primary-foreground"
+                  : isCompleted
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted"
+              }`}>
+              <div
+                className={`flex items-center justify-center size-7 rounded-full mr-2 ${
+                  isCurrent
+                    ? "bg-primary-foreground text-primary"
+                    : isCompleted
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                {isCompleted ? (
+                  <CheckSquare className='h-3.5 w-3.5' />
+                ) : (
+                  <span className='text-xs font-medium'>{index + 1}</span>
+                )}
+              </div>
+              {isCurrent && <span className='text-sm font-medium'>{step}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Componente para la navegación horizontal de pasos
+// Componente para mostrar los objetivos en el panel lateral derecho
+function ObjectivesPanel({
+  objectives,
+  setObjectives,
+}: {
+  objectives: string;
+  setObjectives: (val: string) => void;
+}) {
+  return (
+    <div className='bg-white p-4 rounded-xl border shadow-sm'>
+      <div className='flex items-center gap-2 mb-3 text-primary'>
+        <Target className='h-5 w-5' />
+        <h3 className='font-medium'>Objetivos del capítulo</h3>
+      </div>
+
+      <div className='space-y-3'>
+        <p className='text-sm text-muted-foreground'>
+          Define claramente qué pretendes conseguir con este capítulo. Los
+          objetivos deben ser:
+        </p>
+
+        <div className='space-y-2'>
+          <div className='flex items-start gap-2'>
+            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
+            <p className='text-sm'>Específicos y concretos</p>
+          </div>
+          <div className='flex items-start gap-2'>
+            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
+            <p className='text-sm'>Medibles y verificables</p>
+          </div>
+          <div className='flex items-start gap-2'>
+            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
+            <p className='text-sm'>Alcanzables y realistas</p>
+          </div>
+          <div className='flex items-start gap-2'>
+            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
+            <p className='text-sm'>Relevantes para el tema</p>
+          </div>
+          <div className='flex items-start gap-2'>
+            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
+            <p className='text-sm'>Acotados en el tiempo</p>
+          </div>
+        </div>
+
+        <div className='pt-3'>
+          <Label className='text-gray-700 font-medium mb-2 block'>
+            Editar objetivos
+          </Label>
+          <Textarea
+            value={objectives}
+            onChange={(e) => setObjectives(e.target.value)}
+            rows={6}
+            placeholder='Define claramente los objetivos del trabajo...'
+            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none text-sm'
+          />
+          <WordCountProgress text={objectives} min={50} max={150} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente para mostrar consejos específicos para cada paso con iconos más visuales
+function StepTipsPanel({ step, tips }: { step: string; tips: any }) {
+  const currentTip = tips[step];
+
+  // Iconos específicos para cada tipo de consejo
+  const tipIcons = {
+    Introducción: <Info className='h-5 w-5 text-blue-500' />,
+    Objetivos: <Target className='h-5 w-5 text-green-500' />,
+    Metodología: <FileText className='h-5 w-5 text-purple-500' />,
+    Resultados: <BookMarked className='h-5 w-5 text-amber-500' />,
+    "Discusión-Conclusión": <Lightbulb className='h-5 w-5 text-orange-500' />,
+    Bibliografía: <BookOpen className='h-5 w-5 text-red-500' />,
+    Previsualización: <HelpCircle className='h-5 w-5 text-gray-500' />,
+  };
+
+  return (
+    <div className='bg-white p-4 rounded-xl border shadow-sm'>
+      <div className='flex items-center gap-2 mb-3'>
+        {tipIcons[step as keyof typeof tipIcons] || currentTip.icon}
+        <h3 className='font-medium text-primary'>{currentTip.title}</h3>
+      </div>
+
+      <div className='space-y-3'>
+        <p className='text-sm text-muted-foreground'>{currentTip.content}</p>
+
+        {step === "Introducción" && (
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-start gap-2'>
+              <Info className='h-4 w-4 text-blue-500 mt-0.5' />
+              <p className='text-sm'>
+                Proporciona contexto y antecedentes relevantes
+              </p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <Info className='h-4 w-4 text-blue-500 mt-0.5' />
+              <p className='text-sm'>Explica la importancia del tema</p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <Info className='h-4 w-4 text-blue-500 mt-0.5' />
+              <p className='text-sm'>Identifica el vacío de conocimiento</p>
+            </div>
+          </div>
+        )}
+
+        {step === "Metodología" && (
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-start gap-2'>
+              <FileText className='h-4 w-4 text-purple-500 mt-0.5' />
+              <p className='text-sm'>Describe el diseño del estudio</p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <FileText className='h-4 w-4 text-purple-500 mt-0.5' />
+              <p className='text-sm'>
+                Detalla la muestra y criterios de selección
+              </p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <FileText className='h-4 w-4 text-purple-500 mt-0.5' />
+              <p className='text-sm'>
+                Explica los instrumentos y técnicas utilizadas
+              </p>
+            </div>
+          </div>
+        )}
+
+        {step === "Resultados" && (
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-start gap-2'>
+              <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
+              <p className='text-sm'>Presenta datos de forma objetiva</p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
+              <p className='text-sm'>
+                Utiliza tablas o gráficos si es necesario
+              </p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
+              <p className='text-sm'>Evita interpretaciones en esta sección</p>
+            </div>
+          </div>
+        )}
+
+        {step === "Discusión-Conclusión" && (
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-start gap-2'>
+              <Lightbulb className='h-4 w-4 text-orange-500 mt-0.5' />
+              <p className='text-sm'>Interpreta los resultados obtenidos</p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <Lightbulb className='h-4 w-4 text-orange-500 mt-0.5' />
+              <p className='text-sm'>Compara con estudios previos</p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <Lightbulb className='h-4 w-4 text-orange-500 mt-0.5' />
+              <p className='text-sm'>Menciona limitaciones y futuras líneas</p>
+            </div>
+          </div>
+        )}
+
+        {step === "Bibliografía" && (
+          <div className='space-y-2 pt-2'>
+            <div className='flex items-start gap-2'>
+              <BookOpen className='h-4 w-4 text-red-500 mt-0.5' />
+              <p className='text-sm'>
+                Usa un formato consistente (APA, Vancouver)
+              </p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <BookOpen className='h-4 w-4 text-red-500 mt-0.5' />
+              <p className='text-sm'>
+                Incluye fuentes actualizadas y relevantes
+              </p>
+            </div>
+            <div className='flex items-start gap-2'>
+              <BookOpen className='h-4 w-4 text-red-500 mt-0.5' />
+              <p className='text-sm'>
+                Verifica que todas las citas estén referenciadas
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Modificar la parte del renderizado del formulario detallado
+// Componente para la navegación horizontal de pasos
 function FocusMode({
   children,
   isActive,
@@ -234,102 +479,36 @@ function FocusMode({
   );
 }
 
-// Componente para la tarjeta de progreso
-function ProgressCard({
-  steps,
-  currentStep,
-  onStepClick,
-}: {
-  steps: string[];
-  currentStep: number;
-  onStepClick: (index: number) => void;
-}) {
-  return (
-    <Card className='w-full'>
-      <CardHeader className='pb-3'>
-        <CardTitle className='text-base'>Progreso del capítulo</CardTitle>
-        <CardDescription>
-          Completa todos los pasos para enviar tu capítulo
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='pb-1'>
-        <div className='space-y-2'>
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
-                index === currentStep
-                  ? "bg-primary/10 text-primary"
-                  : "hover:bg-muted"
-              }`}
-              onClick={() => onStepClick(index)}>
-              <div
-                className={`size-6 rounded-full flex items-center justify-center ${
-                  index < currentStep
-                    ? "bg-primary text-primary-foreground"
-                    : index === currentStep
-                    ? "border-2 border-primary text-primary"
-                    : "border border-muted-foreground text-muted-foreground"
-                }`}>
-                {index < currentStep ? (
-                  <CheckSquare className='size-3.5' />
-                ) : (
-                  <span className='text-xs'>{index + 1}</span>
-                )}
-              </div>
-              <span className='text-sm'>{step}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className='pt-3'>
-        <Progress
-          value={(currentStep / (steps.length - 1)) * 100}
-          className='h-1.5'
-        />
-      </CardFooter>
-    </Card>
-  );
-}
+export default function CreateChapterPage() {
+  const { editionId, bookId } = useParams();
+  const router = useRouter();
 
-// Modal multipaso para la estructura del capítulo (rediseñado)
-function ChapterStructureModal({
-  show,
-  onClose,
-  onSubmit,
-  studyType,
-  title,
-  introduction,
-  setIntroduction,
-  objectives,
-  setObjectives,
-  methodology,
-  setMethodology,
-  results,
-  setResults,
-  discussion,
-  setDiscussion,
-  bibliography,
-  setBibliography,
-}: {
-  show: boolean;
-  onClose: () => void;
-  onSubmit: () => void;
-  studyType: string;
-  title: string;
-  introduction: string;
-  setIntroduction: (val: string) => void;
-  objectives: string;
-  setObjectives: (val: string) => void;
-  methodology: string;
-  setMethodology: (val: string) => void;
-  results: string;
-  setResults: (val: string) => void;
-  discussion: string;
-  setDiscussion: (val: string) => void;
-  bibliography: string;
-  setBibliography: (val: string) => void;
-}) {
+  // Estados principales para el formulario
+  const [title, setTitle] = useState("");
+  const [studyType, setStudyType] = useState("");
+  const [introduction, setIntroduction] = useState("");
+  const [objectives, setObjectives] = useState("");
+  const [methodology, setMethodology] = useState("");
+  const [results, setResults] = useState("");
+  const [discussion, setDiscussion] = useState("");
+  const [bibliography, setBibliography] = useState("");
+
+  // Estados para perfil, detalles del libro y créditos disponibles
+  const [authorId, setAuthorId] = useState("");
+  const [bookTitle, setBookTitle] = useState("");
+  const { availableCredits, loadingCredits, errorCredits } =
+    useAvailableCredits(editionId as string);
+
+  // Estados de UI
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+
+  // Estado para controlar la fase del formulario (inicial o detallada)
+  const [formPhase, setFormPhase] = useState<"initial" | "detailed">("initial");
+
+  // Definición de pasos
   const steps = [
     "Introducción",
     "Objetivos",
@@ -341,7 +520,6 @@ function ChapterStructureModal({
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [focusMode, setFocusMode] = useState(false);
 
   // Consejos dinámicos según el paso actual
   const tips: {
@@ -687,168 +865,6 @@ function ChapterStructureModal({
     }
   }, [focusMode]);
 
-  if (!show) return null;
-
-  return (
-    <>
-      <div className='fixed inset-0 z-50 bg-black/40 backdrop-blur-sm' />
-      <div className='fixed inset-0 z-50 flex items-center justify-center overflow-auto p-4'>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className='bg-background rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col'>
-          <div className='p-6 border-b flex items-center justify-between'>
-            <div>
-              <h2 className='text-2xl font-bold text-primary'>{title}</h2>
-              <p className='text-muted-foreground'>
-                Estructura para: {studyType}
-              </p>
-            </div>
-            <div className='flex items-center gap-2'>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant='outline'
-                      size='icon'
-                      onClick={() => setFocusMode(true)}>
-                      <Maximize2 className='h-4 w-4' />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Modo concentración</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Button variant='ghost' size='icon' onClick={onClose}>
-                <X className='h-4 w-4' />
-              </Button>
-            </div>
-          </div>
-
-          <div className='flex-1 overflow-auto'>
-            <div className='flex flex-col md:flex-row h-full'>
-              {/* Panel izquierdo: navegación y progreso */}
-              <div className='w-full md:w-64 p-4 border-r shrink-0'>
-                <ProgressCard
-                  steps={steps}
-                  currentStep={currentStep}
-                  onStepClick={setCurrentStep}
-                />
-
-                <div className='mt-6 p-4 bg-primary/5 rounded-lg border'>
-                  <div className='flex items-center gap-2 mb-2 text-primary'>
-                    {tips[steps[currentStep]].icon}
-                    <h3 className='font-medium text-sm'>
-                      {tips[steps[currentStep]].title}
-                    </h3>
-                  </div>
-                  <p className='text-xs text-muted-foreground'>
-                    {tips[steps[currentStep]].content}
-                  </p>
-                </div>
-              </div>
-
-              {/* Panel derecho: contenido del paso */}
-              <div className='flex-1 p-6'>
-                <div className='max-w-2xl mx-auto'>
-                  {renderStepContent()}
-
-                  <div className='mt-6 flex justify-between'>
-                    <Button
-                      variant='outline'
-                      onClick={handlePrevious}
-                      disabled={currentStep === 0}
-                      className='gap-1'>
-                      <ArrowLeft className='h-4 w-4' /> Anterior
-                    </Button>
-
-                    {currentStep === steps.length - 1 ? (
-                      <Button
-                        onClick={onSubmit}
-                        className='gap-1 bg-primary hover:bg-primary/90'>
-                        <Send className='h-4 w-4' /> Enviar Capítulo
-                      </Button>
-                    ) : (
-                      <Button onClick={handleNext} className='gap-1'>
-                        Siguiente <ArrowRight className='h-4 w-4' />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Modo de concentración */}
-      <AnimatePresence>
-        {focusMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
-            <FocusMode
-              isActive={focusMode}
-              onClose={() => setFocusMode(false)}
-              title={`${title} - ${steps[currentStep]}`}
-              wordCount={getCurrentWordCount()}
-              currentStep={currentStep + 1}
-              totalSteps={steps.length}
-              onNext={handleNext}
-              onPrev={handlePrevious}>
-              <div className='bg-card p-6 rounded-lg border shadow-sm'>
-                {renderStepContent()}
-              </div>
-            </FocusMode>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-
-export default function CreateChapterPage() {
-  const { editionId, bookId } = useParams();
-  const router = useRouter();
-
-  // Estados principales para el formulario
-  const [title, setTitle] = useState("");
-  const [studyType, setStudyType] = useState("");
-  const [introduction, setIntroduction] = useState("");
-  const [objectives, setObjectives] = useState("");
-  const [methodology, setMethodology] = useState("");
-  const [results, setResults] = useState("");
-  const [discussion, setDiscussion] = useState("");
-  const [bibliography, setBibliography] = useState("");
-
-  // Estados para perfil, detalles del libro y créditos disponibles
-  const [authorId, setAuthorId] = useState("");
-  const [bookTitle, setBookTitle] = useState("");
-  const { availableCredits, loadingCredits, errorCredits } =
-    useAvailableCredits(editionId as string);
-
-  // Estados de UI
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  // Estado para mostrar el modal multipaso
-  const [showModal, setShowModal] = useState(false);
-
-  // Animaciones para framer-motion
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
-
   // useEffect para obtener datos: perfil y detalles del libro
   useEffect(() => {
     const fetchData = async () => {
@@ -1033,7 +1049,6 @@ export default function CreateChapterPage() {
     );
   }
 
-  // Vista inicial: solo se pide título y tipo de estudio; luego se abre el modal multipaso
   return (
     <div className='relative overflow-hidden py-8'>
       {/* Fondo decorativo */}
@@ -1060,95 +1075,206 @@ export default function CreateChapterPage() {
           </div>
         </motion.div>
 
-        {/* Formulario básico para título y tipo de estudio */}
-        <Card className='max-w-3xl mx-auto backdrop-blur-sm bg-white/80 border-white/50'>
-          <CardHeader>
-            <CardTitle className='text-2xl text-primary'>
-              Crear nuevo capítulo
-            </CardTitle>
-            <CardDescription>
-              Completa la información básica para comenzar a crear tu capítulo
-              para {bookTitle}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div>
-              <Label className='text-gray-700 font-medium mb-1 block'>
-                Título del capítulo
-              </Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder='Ej: Estudio de caso: Manejo de diabetes'
-                required
-                className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+        {/* Formulario inicial o detallado según la fase */}
+        {formPhase === "initial" ? (
+          <Card className='max-w-3xl mx-auto backdrop-blur-sm bg-white/80 border-white/50'>
+            <CardHeader>
+              <CardTitle className='text-2xl text-primary'>
+                Crear nuevo capítulo
+              </CardTitle>
+              <CardDescription>
+                Completa la información básica para comenzar a crear tu capítulo
+                para {bookTitle}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div>
+                <Label className='text-gray-700 font-medium mb-1 block'>
+                  Título del capítulo
+                </Label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder='Ej: Estudio de caso: Manejo de diabetes'
+                  required
+                  className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+                />
+              </div>
+              <div>
+                <Label className='text-gray-700 font-medium mb-1 block'>
+                  Tipo de estudio
+                </Label>
+                <Select onValueChange={(val) => setStudyType(val)} required>
+                  <SelectTrigger className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
+                    <SelectValue placeholder='Selecciona un tipo de estudio' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='revisión bibliográfica'>
+                      Revisión bibliográfica
+                    </SelectItem>
+                    <SelectItem value='caso clínico'>Caso clínico</SelectItem>
+                    <SelectItem value='protocolo'>Protocolo</SelectItem>
+                    <SelectItem value='otros'>
+                      Otros trabajos de investigación
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='bg-primary/5 p-4 rounded-lg border flex items-start gap-3'>
+                <Info className='h-5 w-5 text-primary shrink-0 mt-0.5' />
+                <div>
+                  <h3 className='font-medium text-sm mb-1'>
+                    Información importante
+                  </h3>
+                  <p className='text-xs text-muted-foreground'>
+                    Una vez que hayas completado el título y tipo de estudio,
+                    podrás continuar con la estructura detallada de tu capítulo.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className='flex justify-end'>
+              <Button
+                onClick={() => setFormPhase("detailed")}
+                disabled={!title || !studyType}
+                className='bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg'>
+                Continuar con la estructura
+              </Button>
+            </CardFooter>
+          </Card>
+        ) : (
+          <div className='max-w-6xl mx-auto'>
+            {/* Cabecera con título y navegación de pasos */}
+            <div className='bg-white rounded-xl shadow-sm border p-4 mb-6'>
+              <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
+                <div>
+                  <h2 className='text-2xl font-bold text-primary'>{title}</h2>
+                  <p className='text-muted-foreground'>
+                    Estructura para: {studyType}
+                  </p>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          onClick={() => setFocusMode(true)}>
+                          <Maximize2 className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Modo concentración</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              {/* Navegación de pasos horizontal mejorada */}
+              <StepsNavigation
+                steps={steps}
+                currentStep={currentStep}
+                onStepClick={setCurrentStep}
               />
             </div>
-            <div>
-              <Label className='text-gray-700 font-medium mb-1 block'>
-                Tipo de estudio
-              </Label>
-              <Select onValueChange={(val) => setStudyType(val)} required>
-                <SelectTrigger className='border-gray-200 focus:border-purple-300 focus:ring-purple-200'>
-                  <SelectValue placeholder='Selecciona un tipo de estudio' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='revisión bibliográfica'>
-                    Revisión bibliográfica
-                  </SelectItem>
-                  <SelectItem value='caso clínico'>Caso clínico</SelectItem>
-                  <SelectItem value='protocolo'>Protocolo</SelectItem>
-                  <SelectItem value='otros'>
-                    Otros trabajos de investigación
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className='bg-primary/5 p-4 rounded-lg border flex items-start gap-3'>
-              <Info className='h-5 w-5 text-primary shrink-0 mt-0.5' />
-              <div>
-                <h3 className='font-medium text-sm mb-1'>
-                  Información importante
-                </h3>
-                <p className='text-xs text-muted-foreground'>
-                  Una vez que hayas completado el título y tipo de estudio,
-                  podrás continuar con la estructura detallada de tu capítulo.
-                </p>
+            {/* Contenido principal con layout mejorado */}
+            <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
+              {/* Panel central con contenido del paso */}
+              <div className='md:col-span-9 '>
+                <div className='bg-white p-6 rounded-xl border shadow-sm'>
+                  {currentStep !== 1 ? (
+                    renderStepContent()
+                  ) : (
+                    <div className='md:hidden'>
+                      <Label className='text-gray-700 font-medium mb-1 block'>
+                        Objetivos
+                      </Label>
+                      <Textarea
+                        value={objectives}
+                        onChange={(e) => setObjectives(e.target.value)}
+                        rows={8}
+                        placeholder='Define claramente los objetivos del trabajo...'
+                        required
+                        className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+                      />
+                      <WordCountProgress text={objectives} min={50} max={150} />
+                    </div>
+                  )}
+
+                  <div className='mt-6 flex justify-between'>
+                    <Button
+                      variant='outline'
+                      onClick={handlePrevious}
+                      disabled={currentStep === 0}
+                      className='gap-1'>
+                      <ArrowLeft className='h-4 w-4' /> Anterior
+                    </Button>
+
+                    {currentStep === steps.length - 1 ? (
+                      <Button
+                        onClick={handleSubmit}
+                        className='gap-1 bg-primary hover:bg-primary/90'>
+                        <Send className='h-4 w-4' /> Enviar Capítulo
+                      </Button>
+                    ) : (
+                      <Button onClick={handleNext} className='gap-1'>
+                        Siguiente <ArrowRight className='h-4 w-4' />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Panel izquierdo con consejos */}
+              <div className='md:col-span-3'>
+                <StepTipsPanel step={steps[currentStep]} tips={tips} />
+
+                {/* Progreso */}
+                <div className='mt-4 bg-white p-4 rounded-xl border shadow-sm'>
+                  <h3 className='font-medium text-sm mb-2 flex items-center gap-2'>
+                    <Edit3 className='h-4 w-4 text-primary' />
+                    Progreso
+                  </h3>
+                  <Progress
+                    value={(currentStep / (steps.length - 1)) * 100}
+                    className='h-1.5 mb-2'
+                  />
+                  <p className='text-xs text-muted-foreground'>
+                    Paso {currentStep + 1} de {steps.length}
+                  </p>
+                </div>
               </div>
             </div>
-          </CardContent>
-          <CardFooter className='flex justify-end'>
-            <Button
-              onClick={() => setShowModal(true)}
-              disabled={!title || !studyType}
-              className='bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg'>
-              Continuar con la estructura
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Renderización del Modal multipaso */}
-        <ChapterStructureModal
-          show={showModal}
-          onClose={() => setShowModal(false)}
-          onSubmit={handleSubmit}
-          studyType={studyType}
-          title={title}
-          introduction={introduction}
-          setIntroduction={setIntroduction}
-          objectives={objectives}
-          setObjectives={setObjectives}
-          methodology={methodology}
-          setMethodology={setMethodology}
-          results={results}
-          setResults={setResults}
-          discussion={discussion}
-          setDiscussion={setDiscussion}
-          bibliography={bibliography}
-          setBibliography={setBibliography}
-        />
+          </div>
+        )}
       </div>
+
+      {/* Modo de concentración */}
+      <AnimatePresence>
+        {focusMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}>
+            <FocusMode
+              isActive={focusMode}
+              onClose={() => setFocusMode(false)}
+              title={`${title} - ${steps[currentStep]}`}
+              wordCount={getCurrentWordCount()}
+              currentStep={currentStep + 1}
+              totalSteps={steps.length}
+              onNext={handleNext}
+              onPrev={handlePrevious}>
+              <div className='bg-card p-6 rounded-lg border shadow-sm'>
+                {renderStepContent()}
+              </div>
+            </FocusMode>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

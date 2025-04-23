@@ -1186,24 +1186,7 @@ export default function CreateChapterPage() {
               {/* Panel central con contenido del paso */}
               <div className='md:col-span-9 '>
                 <div className='bg-white p-6 rounded-xl border shadow-sm'>
-                  {currentStep !== 1 ? (
-                    renderStepContent()
-                  ) : (
-                    <div className='md:hidden'>
-                      <Label className='text-gray-700 font-medium mb-1 block'>
-                        Objetivos
-                      </Label>
-                      <Textarea
-                        value={objectives}
-                        onChange={(e) => setObjectives(e.target.value)}
-                        rows={8}
-                        placeholder='Define claramente los objetivos del trabajo...'
-                        required
-                        className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
-                      />
-                      <WordCountProgress text={objectives} min={50} max={150} />
-                    </div>
-                  )}
+                  {renderStepContent()}
 
                   <div className='mt-6 flex justify-between'>
                     <Button

@@ -1,21 +1,11 @@
-"use client";
+// app/impersonate/page.tsx   ← **no** "use client"
+import ImpersonateReceiver from "./ImpersonateReceiver";
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
-export default function ImpersonateReceiver() {
-  const router = useRouter();
-  const params = useSearchParams();
-
-  useEffect(() => {
-    const token = params.get("token");
-    if (token) {
-      localStorage.setItem("token", token); // ya queda en este dominio
-      router.replace("/dashboard"); // home del cliente
-    } else {
-      router.replace("/login");
-    }
-  }, [params, router]);
-
-  return <p>Cargando…</p>;
+export default function ImpersonatePage({
+  searchParams,
+}: {
+  searchParams: { token?: string };
+}) {
+  // `searchParams` is available at build time, no Suspense needed here.
+  return <ImpersonateReceiver token={searchParams.token} />;
 }

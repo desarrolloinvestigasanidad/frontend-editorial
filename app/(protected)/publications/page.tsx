@@ -1,25 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Breadcrumb } from "@/components/breadcrumb";
 import {
   BookOpen,
-  Calendar,
+  Search,
   Clock,
+  Calendar,
   AlertCircle,
   CheckCircle,
   ArrowRight,
-  BookMarked,
-  Search,
-  Library,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/context/UserContext";
+
+/* ------------------------------------------------------------------ */
+/*                                TYPES                               */
+/* ------------------------------------------------------------------ */
 
 type Book = {
   id: string;
@@ -36,124 +37,82 @@ type Book = {
   active: number;
   price?: number;
   authorId?: string;
-  editionId?: string; // Si existe, es libro de edición.
+  editionId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-type Edition = {
-  id: string;
-  title?: string;
-  name?: string;
-  description?: string;
-};
+/* ------------------------------------------------------------------ */
+/*                       MAIN COMPONENT                               */
+/* ------------------------------------------------------------------ */
 
 export default function PublicationsPage() {
   const { user } = useUser();
-  const userId = user?.id || null;
+  const userId = user?.id ?? null;
+
+  /* ------------------------------ state ---------------------------- */
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
-  // Estado para almacenar la información real de las ediciones, mapeado por su id.
-  const [editionsDetails, setEditionsDetails] = useState<
-    Record<string, Edition>
-  >({});
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "publicado" | "en proceso" | "desarrollo"
+  >("all");
 
+  /* ----------------------------- fetch ----------------------------- */
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         let url = `${process.env.NEXT_PUBLIC_BASE_URL}/publications`;
-        if (userId) {
-          // Si existe userId, lo agregamos como query parameter para obtener solo los libros del usuario.
-          url += `?userId=${userId}`;
-        }
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error("Error al obtener los libros");
-        }
-        const data = await response.json();
+        if (userId) url += `?userId=${userId}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Error al obtener los libros");
+        const data: Book[] = await res.json();
         setBooks(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching books:", error);
+      } catch (err) {
+        console.error(err);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchBooks();
   }, [userId]);
 
-  // Filtrar libros según el término de búsqueda.
-  const filteredBooks = books.filter((book) =>
-    book.title.toLowerCase().includes(searchTerm.toLowerCase())
+  /* --------------------------- filters ----------------------------- */
+  // 1. Solo libros propios (sin editionId)
+  const ownBooks = useMemo(
+    () =>
+      books.filter(
+        (b) =>
+          !b.editionId &&
+          (b.bookType?.toLowerCase() === "libro propio" || !b.bookType)
+      ),
+    [books]
   );
 
-  // Determinar libros propios y de edición según la existencia de editionId.
-  const ownBooks = filteredBooks.filter((book) => !book.editionId);
-  const editionBooks = filteredBooks.filter((book) => book.editionId);
-
-  // Extraer uniqueEditionIds de los libros de edición.
-  const uniqueEditionIds = Array.from(
-    new Set(editionBooks.map((book) => book.editionId))
-  ).filter((id): id is string => Boolean(id));
-
-  // Efecto para hacer fetch de la información de cada edición usando /editions/{id}.
-  useEffect(() => {
-    if (uniqueEditionIds.length === 0) return;
-    Promise.all(
-      uniqueEditionIds.map((id) =>
-        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`).then(
-          (res) => {
-            if (!res.ok) {
-              throw new Error(`Error al obtener la edición ${id}`);
-            }
-            return res.json();
-          }
-        )
+  // 2. Filtro por estado + búsqueda
+  const filteredBooks = useMemo(() => {
+    return ownBooks
+      .filter(
+        (b) =>
+          (statusFilter === "all" ||
+            b.status?.toLowerCase() === statusFilter) &&
+          b.title.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    )
-      .then((editionsData: Edition[]) => {
-        // Creamos un mapa de ediciones con key = edition.id.
-        const map: Record<string, Edition> = {};
-        editionsData.forEach((edition) => {
-          map[edition.id] = edition;
-        });
-        setEditionsDetails(map);
-      })
-      .catch((error) => console.error("Error fetching editions:", error));
-  }, [uniqueEditionIds]);
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+  }, [ownBooks, statusFilter, searchTerm]);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  /* --------------------------- helpers ----------------------------- */
+  const handleMouseEnter = (id: string) =>
+    setHoverStates((s) => ({ ...s, [id]: true }));
+  const handleMouseLeave = (id: string) =>
+    setHoverStates((s) => ({ ...s, [id]: false }));
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const handleMouseEnter = (id: string) => {
-    setHoverStates((prev) => ({ ...prev, [id]: true }));
-  };
-
-  const handleMouseLeave = (id: string) => {
-    setHoverStates((prev) => ({ ...prev, [id]: false }));
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
+  const getStatusIcon = (s: string) => {
+    switch (s?.toLowerCase()) {
       case "publicado":
         return <CheckCircle className='h-5 w-5 text-green-500' />;
       case "desarrollo":
@@ -163,9 +122,8 @@ export default function PublicationsPage() {
         return <AlertCircle className='h-5 w-5 text-gray-400' />;
     }
   };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
+  const getStatusColor = (s: string) => {
+    switch (s?.toLowerCase()) {
       case "publicado":
         return "bg-green-100 text-green-800";
       case "desarrollo":
@@ -175,17 +133,16 @@ export default function PublicationsPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
+  const formatDate = (d?: string) =>
+    d
+      ? new Date(d).toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "No disponible";
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "No disponible";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
+  /* ---------------------------- render ----------------------------- */
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -199,204 +156,164 @@ export default function PublicationsPage() {
     );
   }
 
-  console.log(books);
   return (
     <div className='relative overflow-hidden py-8'>
-      {/* Background with gradient and blobs */}
-      <div className='absolute inset-0 z-0'>
-        <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
-        <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
-        <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
-      </div>
+      {/* Fondo decorativo */}
+      <BackgroundBlobs />
 
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className='flex items-center justify-between'>
-          <Breadcrumb />
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-            Mis Publicaciones
-          </div>
-        </motion.div>
+        {/* Cabecera */}
+        <HeaderSection />
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className='text-center mb-8'>
-          <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
-            Mis Publicaciones
-          </h2>
-          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mb-4'></div>
-          <p className='text-gray-600 max-w-2xl mx-auto'>
-            Gestiona tus libros propios y participa en libros de edición
-          </p>
-        </motion.div>
+        {/* Título y subtítulo */}
+        <TitleSection />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className='flex flex-col md:flex-row justify-between items-center gap-4 mb-6'>
-          <div className='relative w-full md:w-auto flex-1 max-w-md'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
-            <Input
-              placeholder='Buscar publicaciones...'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className='pl-10 border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-            />
-          </div>
+        {/* Buscador + botón crear */}
+        <SearchAndCreate
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
 
-          <div className='flex gap-2 w-full md:w-auto'>
-            <Link href='/create-book'>
-              <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
-                <BookOpen className='mr-2 h-4 w-4' />
-                Crear libro personalizado
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+        {/* Botonera de filtros por estado */}
+        <StatusFilterButtons
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
 
-        <Tabs defaultValue='all' className='w-full'>
-          <TabsList className='mb-6 bg-white/50 backdrop-blur-sm border border-gray-100 p-1 rounded-lg'>
-            <TabsTrigger
-              value='all'
-              className='data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800'>
-              Todos los libros
-            </TabsTrigger>
-            <TabsTrigger
-              value='own'
-              className='data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800'>
-              Libros personalizados
-            </TabsTrigger>
-            <TabsTrigger
-              value='edition'
-              className='data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800'>
-              Libros de edición
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value='all'>
-            {filteredBooks.length === 0 ? (
-              <EmptyState searchTerm={searchTerm} />
-            ) : (
-              <BookGrid
-                books={filteredBooks}
-                hoverStates={hoverStates}
-                handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                formatDate={formatDate}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value='own'>
-            {ownBooks.length === 0 ? (
-              <EmptyState type='propios' searchTerm={searchTerm} />
-            ) : (
-              <BookGrid
-                books={ownBooks}
-                hoverStates={hoverStates}
-                handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                getStatusIcon={getStatusIcon}
-                getStatusColor={getStatusColor}
-                formatDate={formatDate}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value='edition'>
-            {/* Mostrar las tarjetas de edición */}
-            {uniqueEditionIds.length > 0 ? (
-              <motion.div
-                initial='hidden'
-                animate='visible'
-                variants={containerVariants}
-                className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-                {uniqueEditionIds.map((id) => {
-                  // Utilizamos el objeto editionsDetails para obtener los datos reales
-                  const edition = editionsDetails[id];
-                  return (
-                    <motion.div
-                      key={id}
-                      variants={itemVariants}
-                      whileHover={{ y: -5 }}
-                      className='group'>
-                      <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-                        <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
-
-                        <div className='flex items-center mb-4'>
-                          <div className='bg-purple-100 p-3 rounded-full mr-3 group-hover:bg-purple-200 transition-colors duration-300 group-hover:scale-110'>
-                            <Library className='w-5 h-5 text-purple-700' />
-                          </div>
-                          <h3 className='text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors'>
-                            {edition
-                              ? edition.title || edition.name
-                              : `Edición ${id.slice(0, 8)}`}
-                          </h3>
-                        </div>
-
-                        <p className='text-gray-600 mb-6'>
-                          {edition
-                            ? edition.description
-                            : "Haz clic para ver libros de esta edición"}
-                        </p>
-
-                        <div className='mt-auto'>
-                          <Link href={`/publications/editions/${id}`}>
-                            <Button
-                              className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
-                              onMouseEnter={() =>
-                                handleMouseEnter(`edition-${id}`)
-                              }
-                              onMouseLeave={() =>
-                                handleMouseLeave(`edition-${id}`)
-                              }>
-                              <span className='flex items-center justify-center'>
-                                Ver Libros / Mandar Capítulos
-                                <motion.span
-                                  animate={{
-                                    x: hoverStates[`edition-${id}`] ? 5 : 0,
-                                  }}
-                                  transition={{ duration: 0.2 }}>
-                                  <ArrowRight className='ml-2 h-4 w-4' />
-                                </motion.span>
-                              </span>
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            ) : (
-              <motion.div
-                variants={itemVariants}
-                className='col-span-full backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50'>
-                <div className='flex flex-col items-center justify-center text-center p-8'>
-                  <BookMarked className='w-12 h-12 text-purple-300 mb-4' />
-                  <h3 className='text-xl font-semibold text-gray-700 mb-2'>
-                    No hay ediciones disponibles
-                  </h3>
-                  <p className='text-gray-500'>
-                    Pronto se añadirán nuevas ediciones para participar
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Grid de libros o estado vacío */}
+        {filteredBooks.length ? (
+          <BookGrid
+            books={filteredBooks}
+            hoverStates={hoverStates}
+            handleMouseEnter={handleMouseEnter}
+            handleMouseLeave={handleMouseLeave}
+            getStatusIcon={getStatusIcon}
+            getStatusColor={getStatusColor}
+            formatDate={formatDate}
+          />
+        ) : (
+          <EmptyState searchTerm={searchTerm} />
+        )}
       </div>
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*             COMPONENTES AUXILIARES SEPARADOS                       */
+/* ------------------------------------------------------------------ */
+
+function BackgroundBlobs() {
+  return (
+    <div className='absolute inset-0 z-0'>
+      <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
+      <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
+      <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
+    </div>
+  );
+}
+
+const HeaderSection = () => (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className='flex items-center justify-between'>
+    <Breadcrumb />
+    <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+      Mis Publicaciones
+    </span>
+  </motion.div>
+);
+
+const TitleSection = () => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay: 0.1 }}
+    className='text-center mb-8'>
+    <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
+      Mis Libros Personalizados
+    </h2>
+    <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mb-4'></div>
+    <p className='text-gray-600 max-w-2xl mx-auto'>
+      Gestiona aquí los libros que has creado
+    </p>
+  </motion.div>
+);
+
+function SearchAndCreate({
+  searchTerm,
+  setSearchTerm,
+}: {
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className='flex flex-col md:flex-row justify-between items-center gap-4 mb-6'>
+      <div className='relative w-full md:w-auto flex-1 max-w-md'>
+        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+        <Input
+          placeholder='Buscar publicaciones...'
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className='pl-10 border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+        />
+      </div>
+
+      <Link href='/create-book'>
+        <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900'>
+          <BookOpen className='mr-2 h-4 w-4' />
+          Crear libro
+        </Button>
+      </Link>
+    </motion.div>
+  );
+}
+
+function StatusFilterButtons({
+  statusFilter,
+  setStatusFilter,
+}: {
+  statusFilter: string;
+  setStatusFilter: (
+    v: "all" | "publicado" | "en proceso" | "desarrollo"
+  ) => void;
+}) {
+  const btnClass = (active: boolean) =>
+    `text-sm px-3 py-1 rounded-full border transition
+     ${
+       active
+         ? "bg-purple-600 text-white border-purple-600"
+         : "bg-white/70 text-gray-600 border-gray-200 hover:bg-purple-50"
+     }`;
+
+  return (
+    <div className='flex flex-wrap gap-2 mb-4'>
+      {[
+        { key: "all", label: "Todos" },
+        { key: "publicado", label: "Publicado" },
+        { key: "en proceso", label: "En proceso" },
+        { key: "desarrollo", label: "Desarrollo" },
+      ].map(({ key, label }) => (
+        <button
+          key={key}
+          className={btnClass(statusFilter === key)}
+          onClick={() => setStatusFilter(key as any)}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*              GRID DE LIBROS Y ESTADO VACÍO                          */
+/* ------------------------------------------------------------------ */
 
 interface BookGridProps {
   books: Book[];
@@ -421,19 +338,12 @@ function BookGrid({
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
+      transition: { staggerChildren: 0.1 },
     },
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
   return (
@@ -449,9 +359,7 @@ function BookGrid({
           whileHover={{ y: -5 }}
           className='group'>
           <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-            <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
-
-            {/* Badge para tipo de libro */}
+            {/* Badge tipo libro */}
             <Badge
               className={`absolute top-4 right-4 ${
                 book.bookType.toLowerCase() === "libro propio"
@@ -532,6 +440,8 @@ function BookGrid({
   );
 }
 
+/* ------------------------------ Empty ----------------------------- */
+
 interface EmptyStateProps {
   type?: string;
   searchTerm: string;
@@ -545,7 +455,7 @@ function EmptyState({ type = "", searchTerm }: EmptyStateProps) {
       transition={{ duration: 0.5 }}
       className='backdrop-blur-sm bg-white/80 p-8 rounded-2xl shadow-lg border border-white/50 text-center'>
       <div className='flex flex-col items-center justify-center p-8'>
-        <BookMarked className='w-16 h-16 text-purple-300 mb-4' />
+        <BookOpen className='w-16 h-16 text-purple-300 mb-4' />
         {searchTerm ? (
           <>
             <h3 className='text-xl font-semibold text-gray-700 mb-2'>
@@ -558,23 +468,17 @@ function EmptyState({ type = "", searchTerm }: EmptyStateProps) {
         ) : (
           <>
             <h3 className='text-xl font-semibold text-gray-700 mb-2'>
-              {type
-                ? `No tienes libros ${type} todavía`
-                : "No tienes libros todavía"}
+              {type ? `No tienes libros ${type} todavía` : "No tienes libros"}
             </h3>
             <p className='text-gray-500 mb-6'>
-              {type === "propios"
-                ? "Crea tu primer libro personalizado"
-                : type === "edición"
-                ? "Participa en una edición para ver libros aquí"
-                : "Comienza creando un libro o participando en una edición"}
+              Comienza creando tu primer libro personalizado
             </p>
           </>
         )}
         <Link href='/create-book'>
           <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
             <BookOpen className='mr-2 h-4 w-4' />
-            Crear libro personalizado
+            Crear libro
           </Button>
         </Link>
       </div>

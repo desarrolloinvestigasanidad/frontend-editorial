@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/context/UserContext";
 import { User } from "lucide-react";
+import ImpersonationBar from "@/components/ImpersonationBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className='flex flex-col min-h-screen'>
           <main className='flex-grow'>
-            <UserProvider>{children}</UserProvider>
+            <UserProvider>
+              <ImpersonationBar />
+              {children}
+            </UserProvider>
           </main>
         </div>
       </body>

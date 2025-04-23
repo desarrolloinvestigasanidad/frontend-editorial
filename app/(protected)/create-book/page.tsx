@@ -288,11 +288,6 @@ export default function CrearLibroPage() {
                         {/* Mostrar portada si existe */}
                         {currentEdition && currentEdition.cover ? (
                           <div className='relative mb-4 overflow-hidden rounded-lg shadow-lg h-32'>
-                            <img
-                              src={currentEdition.cover || "/placeholder.svg"}
-                              alt={`Portada de ${currentEdition.title}`}
-                              className='w-full h-full object-cover transform hover:scale-105 transition-transform duration-300'
-                            />
                             <div className='absolute inset-0 bg-gradient-to-t from-purple-900/70 to-transparent flex items-end'>
                               <div className='p-3 text-white'>
                                 <h4 className='text-sm font-bold'>

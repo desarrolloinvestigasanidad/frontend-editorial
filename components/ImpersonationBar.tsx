@@ -15,7 +15,7 @@ export default function ImpersonationBar() {
   if (typeof window === "undefined") return null; // SSR-safe
 
   const router = useRouter();
-  const token = localStorage.getItem("token"); // (o sessionStorage)
+  const token = localStorage.getItem("token");
   if (!token) return null;
 
   let payload: Payload;

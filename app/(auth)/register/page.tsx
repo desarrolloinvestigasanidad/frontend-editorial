@@ -217,48 +217,116 @@ function MultiSelect({
 }
 
 // Componente Terminos (placeholder)
-function Terminos() {
+export function Terminos() {
   return (
     <div className='max-h-[70vh] overflow-y-auto p-4'>
-      <h2 className='text-xl font-bold mb-4'>Términos y Condiciones</h2>
+      <h2 className='text-xl font-bold mb-4'>TÉRMINOS Y CONDICIONES</h2>
       <div className='prose prose-sm'>
-        <p>
-          Estos Términos y Condiciones regulan la relación entre Investiga
-          Sanidad y los usuarios de la plataforma.
-        </p>
-        {/* Contenido de los términos y condiciones */}
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
-          euismod, nisl eget aliquam ultricies, nunc nisl aliquet nunc, quis
-          aliquam nisl nunc quis nisl.
-        </p>
-        <h3>1. Registro y Cuenta</h3>
-        <p>
-          Al registrarse en nuestra plataforma, usted acepta proporcionar
-          información precisa y completa. Es responsable de mantener la
-          confidencialidad de su cuenta y contraseña.
-        </p>
-        <h3>2. Privacidad</h3>
-        <p>
-          Su privacidad es importante para nosotros. Consulte nuestra Política
-          de Privacidad para entender cómo recopilamos y utilizamos su
-          información.
-        </p>
-        <h3>3. Propiedad Intelectual</h3>
-        <p>
-          Todo el contenido disponible en la plataforma está protegido por
-          derechos de autor y otras leyes de propiedad intelectual.
-        </p>
-        <h3>4. Limitación de Responsabilidad</h3>
-        <p>
-          No seremos responsables por daños indirectos, incidentales, especiales
-          o consecuentes que resulten del uso de nuestra plataforma.
-        </p>
-        <h3>5. Modificaciones</h3>
-        <p>
-          Nos reservamos el derecho de modificar estos términos en cualquier
-          momento. Las modificaciones entrarán en vigor inmediatamente después
-          de su publicación.
+        <ol className='list-decimal list-inside space-y-4'>
+          <li>
+            <strong>Objeto</strong>
+            <p>
+              El presente documento regula el acceso y uso del sitio web{" "}
+              <a
+                href='https://www.investigasanidad.es'
+                target='_blank'
+                rel='noopener noreferrer'>
+                www.investigasanidad.es
+              </a>
+              , titularidad de SANIMARON S.L., así como la contratación de los
+              servicios ofrecidos en la plataforma.
+            </p>
+          </li>
+          <li>
+            <strong>Condiciones de Uso</strong>
+            <p>
+              El acceso al portal es gratuito, salvo en los casos en que se
+              especifique lo contrario. Los usuarios se comprometen a:
+            </p>
+            <ul className='list-disc list-inside ml-4'>
+              <li>
+                Hacer un uso adecuado de los contenidos y servicios de la web.
+              </li>
+              <li>
+                No realizar actividades ilícitas, fraudulentas o que puedan
+                dañar el funcionamiento del sitio.
+              </li>
+              <li>
+                No introducir virus u otros elementos que puedan alterar o dañar
+                sistemas informáticos.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Propiedad Intelectual</strong>
+            <p>
+              Todos los contenidos de la web, incluyendo textos, imágenes,
+              logotipos, diseños y software, son propiedad de SANIMARON S.L. o
+              de terceros licenciantes. Queda prohibida la reproducción,
+              distribución, modificación o uso sin autorización expresa.
+            </p>
+          </li>
+          <li>
+            <strong>Exclusión de Responsabilidad</strong>
+            <p>
+              SANIMARON S.L. no garantiza la disponibilidad continua del sitio
+              web ni se hace responsable de:
+            </p>
+            <ul className='list-disc list-inside ml-4'>
+              <li>
+                Fallos técnicos, interrupciones del servicio o errores en el
+                contenido.
+              </li>
+              <li>
+                Daños o perjuicios derivados del uso de la información contenida
+                en la web.
+              </li>
+              <li>
+                Enlaces a terceros, cuyo contenido es ajeno a nuestra
+                responsabilidad.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Contratación de Servicios</strong>
+            <p>
+              La contratación de servicios a través de la web está sujeta a las
+              siguientes condiciones:
+            </p>
+            <ul className='list-disc list-inside ml-4'>
+              <li>
+                El usuario debe ser mayor de edad y proporcionar datos veraces.
+              </li>
+              <li>
+                Los precios y condiciones de los servicios se detallan antes de
+                la contratación.
+              </li>
+              <li>Se podrá requerir pago previo para ciertos servicios.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Modificación de Condiciones</strong>
+            <p>
+              SANIMARON S.L. se reserva el derecho de modificar estos términos y
+              condiciones en cualquier momento. La utilización del sitio tras
+              dichas modificaciones implica la aceptación de los nuevos
+              términos.
+            </p>
+          </li>
+          <li>
+            <strong>Legislación Aplicable y Jurisdicción</strong>
+            <p>
+              Estas condiciones se rigen por la legislación española. Cualquier
+              disputa será resuelta en los tribunales de Murcia.
+            </p>
+          </li>
+        </ol>
+        <p className='mt-6'>
+          Para cualquier consulta, puede contactarnos a través de{" "}
+          <a href='mailto:protecciondedatos@totaldata.es'>
+            protecciondedatos@totaldata.es
+          </a>
+          .
         </p>
       </div>
     </div>
@@ -750,7 +818,7 @@ export default function RegisterPage() {
                       <Label
                         htmlFor='phone'
                         className='text-gray-700 font-medium'>
-                        Teléfono <span className='text-red-500'>*</span>
+                        Teléfono (+34) <span className='text-red-500'>*</span>
                       </Label>
                       <Input
                         type='text'
@@ -758,6 +826,7 @@ export default function RegisterPage() {
                         name='phone'
                         value={formData.phone}
                         onChange={handleChange}
+                        placeholder='6XX XXX XXX'
                         required
                         className='bg-white border-gray-200 focus:border-purple-500 transition-all'
                       />
@@ -845,7 +914,8 @@ export default function RegisterPage() {
                         <Label
                           htmlFor='autonomousCommunity'
                           className='text-gray-700 font-medium'>
-                          Comunidades Autónomas (elige una o más)
+                          Comunidades Autónomas (elige en las que quieras
+                          publicar)
                         </Label>
                         <MultiSelect
                           options={communityOptions}
@@ -891,8 +961,7 @@ export default function RegisterPage() {
                       <label
                         htmlFor='infoAccepted'
                         className='text-sm text-gray-700'>
-                        Acepto el envío de comunicaciones y el registro de la IP
-                        de mi dispositivo.
+                        Acepto el envío de comunicaciones.
                       </label>
                     </div>
                   </>
@@ -928,7 +997,7 @@ export default function RegisterPage() {
                   {step === 2 && (
                     <Button
                       type='submit'
-                      disabled={isLoading || !termsAccepted || !infoAccepted}
+                      disabled={isLoading || !termsAccepted}
                       className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
                       {isLoading ? (
                         <span className='flex items-center'>

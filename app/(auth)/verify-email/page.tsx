@@ -32,11 +32,12 @@ function VerifyEmailContent() {
         return res.json();
       })
       .then((data) => {
-        if (data.token) {
-          localStorage.setItem("token", data.token);
+        if (data.message) {
           setStatus("success");
-          setMessage("Tu correo electrónico ha sido verificado correctamente.");
-          setTimeout(() => router.push("/profile"), 3000);
+          setMessage(
+            "Tu correo electrónico ha sido verificado correctamente. Serás redirigido al inicio de sesión."
+          );
+          setTimeout(() => router.push("/login"), 3000);
         } else {
           setStatus("error");
           setMessage(data.message || "La verificación ha fallado.");
@@ -81,19 +82,13 @@ function VerifyEmailContent() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
               className='flex flex-col items-center'>
-              <div className='w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4'>
-                <CheckCircle className='w-12 h-12 text-green-600' />
-              </div>
-              <h2 className='text-2xl font-bold text-gray-800 mb-2'>
-                ¡Verificación exitosa!
-              </h2>
               <p className='text-gray-600 mb-6'>{message}</p>
               <p className='text-gray-500 text-sm mb-6'>
-                Serás redirigido a tu perfil en unos segundos...
+                Serás redirigido al inicio de sesión en unos segundos...
               </p>
-              <Link href='/profile'>
+              <Link href='/login'>
                 <Button className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
-                  Ir a mi perfil
+                  Ir a iniciar sesión
                 </Button>
               </Link>
             </motion.div>

@@ -1,4 +1,10 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const regions = [
   "Andalucía",
@@ -18,13 +24,18 @@ const regions = [
   "Murcia",
   "Navarra",
   "País Vasco",
-]
+];
 
-export default function RegionSelect({ value, onChange }) {
+interface RegionSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export default function RegionSelect({ value, onChange }: RegionSelectProps) {
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger>
-        <SelectValue placeholder="Selecciona una comunidad autónoma" />
+        <SelectValue placeholder='Selecciona una comunidad autónoma' />
       </SelectTrigger>
       <SelectContent>
         {regions.map((region) => (
@@ -34,6 +45,5 @@ export default function RegionSelect({ value, onChange }) {
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }
-

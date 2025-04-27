@@ -1,36 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 
-export default function ResetPasswordForm() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const token = searchParams.get("token");
+interface Props {
+  onSuccess: () => void;
+}
 
-  // Estados para el paso de recuperación (enviar email)
+export default function RecuperarContrasenaForm({ onSuccess }: Props) {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
+
+  // Estado de envío de correo
   const [identifier, setIdentifier] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para el paso de restablecimiento (nuevo password)
+  // Estado de restablecer
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Obtén la URL base del .env
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-
-  // Manejo del formulario de recuperación (envío de correo)
+  // 1) Solo envío de correo
   const handleRecoverySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
     try {
       const res = await fetch(`${baseUrl}/password-reset`, {
         method: "POST",
@@ -38,26 +38,23 @@ export default function ResetPasswordForm() {
         body: JSON.stringify({ id: identifier }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error(data.message || "Error al solicitar recuperación.");
-      }
       setIsSubmitted(true);
+      // **No** llamamos a onSuccess aquí, porque aún no hemos cambiado contraseña
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // Manejo del formulario para restablecer la contraseña
+  // 2) Restablecimiento de contraseña
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    // Verifica que ambas contraseñas coincidan
     if (newPassword !== confirmNewPassword) {
       setError("Las contraseñas no coinciden");
       return;
     }
-
     try {
       const res = await fetch(`${baseUrl}/password-reset`, {
         method: "POST",
@@ -65,16 +62,16 @@ export default function ResetPasswordForm() {
         body: JSON.stringify({ token, newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error(data.message || "Error al restablecer la contraseña.");
-      }
       setSuccess(true);
+      onSuccess(); // <-- aquí sí disparamos el botón
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // Si existe un token en la URL, mostramos el formulario para restablecer la contraseña
+  // Si tenemos token, mostramos el flow de restablecer
   if (token) {
     if (success) {
       return (
@@ -88,42 +85,38 @@ export default function ResetPasswordForm() {
         </Alert>
       );
     }
+
     return (
-      <div className='max-w-md mx-auto'>
-        <h2 className='text-2xl font-bold mb-6'>Restablecer Contraseña</h2>
-        {error && <p className='text-red-600 mb-4'>{error}</p>}
-        <form onSubmit={handleResetSubmit} className='space-y-4'>
-          <div>
-            <Label htmlFor='newPassword'>Nueva Contraseña</Label>
-            <Input
-              type='password'
-              id='newPassword'
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor='confirmNewPassword'>
-              Confirmar Nueva Contraseña
-            </Label>
-            <Input
-              type='password'
-              id='confirmNewPassword'
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type='submit' className='w-full'>
-            Restablecer
-          </Button>
-        </form>
-      </div>
+      <form onSubmit={handleResetSubmit} className='space-y-4 max-w-md mx-auto'>
+        {error && <p className='text-red-600'>{error}</p>}
+        <div>
+          <Label htmlFor='newPassword'>Nueva Contraseña</Label>
+          <Input
+            type='password'
+            id='newPassword'
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor='confirmNewPassword'>Confirmar Nueva Contraseña</Label>
+          <Input
+            type='password'
+            id='confirmNewPassword'
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+            required
+          />
+        </div>
+        <Button type='submit' className='w-full'>
+          Restablecer
+        </Button>
+      </form>
     );
   }
 
-  // Si no hay token, mostramos el formulario para enviar el correo de recuperación
+  // Si ya enviamos el correo, mostramos alerta pero sin disparar onSuccess
   if (isSubmitted) {
     return (
       <Alert>
@@ -131,35 +124,31 @@ export default function ResetPasswordForm() {
         <AlertTitle>Correo enviado</AlertTitle>
         <AlertDescription>
           Se ha enviado un correo con las instrucciones para recuperar tu
-          contraseña. Por favor, revisa tu bandeja de entrada y sigue las
-          instrucciones.
+          contraseña. Revisa tu bandeja de entrada.
         </AlertDescription>
-        <Button onClick={() => router.push("/login")} className='mt-4'>
-          Volver al inicio de sesión
-        </Button>
       </Alert>
     );
   }
 
+  // Paso inicial: pedir identificador
   return (
-    <div className='max-w-md mx-auto'>
-      <h2 className='text-2xl font-bold mb-6'>Recuperar Contraseña</h2>
-      {error && <p className='text-red-600 mb-4'>{error}</p>}
-      <form onSubmit={handleRecoverySubmit} className='space-y-4'>
-        <div>
-          <Label htmlFor='identifier'>DNI/PASAPORTE/NIE</Label>
-          <Input
-            type='text'
-            id='identifier'
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            required
-          />
-        </div>
-        <Button type='submit' className='w-full'>
-          Enviar correo de recuperación
-        </Button>
-      </form>
-    </div>
+    <form
+      onSubmit={handleRecoverySubmit}
+      className='space-y-4 max-w-md mx-auto'>
+      {error && <p className='text-red-600'>{error}</p>}
+      <div>
+        <Label htmlFor='identifier'>DNI/PASAPORTE/NIE</Label>
+        <Input
+          type='text'
+          id='identifier'
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          required
+        />
+      </div>
+      <Button type='submit' className='w-full'>
+        Enviar correo de recuperación
+      </Button>
+    </form>
   );
 }

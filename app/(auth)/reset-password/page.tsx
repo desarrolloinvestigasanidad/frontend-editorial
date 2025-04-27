@@ -1,11 +1,15 @@
 "use client";
 
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import Link from "next/link";
 
-const RecuperarContrasenaForm = dynamic(
+interface RecuperarContrasenaFormProps {
+  onSuccess: () => void;
+}
+const RecuperarContrasenaForm = dynamic<RecuperarContrasenaFormProps>(
   () => import("@/components/recuperar-contrasena-form"),
   {
     ssr: false,
@@ -18,13 +22,14 @@ const RecuperarContrasenaForm = dynamic(
 );
 
 export default function RecuperarContrasenaPage() {
+  const [resetDone, setResetDone] = useState(false);
   return (
     <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className='bg-white w-full max-w-4xl shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row'>
+        className='bg-white w-full min-h-[60vh] max-w-4xl shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row'>
         {/* Columna izquierda con imagen y overlay */}
         <div className='relative md:w-1/2 min-h-[300px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700'>
           <Image
@@ -70,16 +75,18 @@ export default function RecuperarContrasenaPage() {
             <p className='text-gray-600 text-sm md:text-base'>
               Introduce tu email para recibir instrucciones
             </p>
-          </motion.div>
+            <RecuperarContrasenaForm onSuccess={() => setResetDone(true)} />
 
-          <Suspense
-            fallback={
-              <div className='flex justify-center items-center min-h-[200px]'>
-                <div className='w-12 h-12 border-4 border-t-purple-500 border-b-purple-500/40 border-l-purple-300 border-r-purple-300/40 rounded-full animate-spin'></div>
+            {resetDone && (
+              <div className='mt-6 text-center'>
+                <Link
+                  href='/login'
+                  className='inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition'>
+                  Ir al login
+                </Link>
               </div>
-            }>
-            <RecuperarContrasenaForm />
-          </Suspense>
+            )}
+          </motion.div>
         </div>
       </motion.div>
     </div>

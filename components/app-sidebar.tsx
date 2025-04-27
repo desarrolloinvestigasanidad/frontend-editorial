@@ -1,5 +1,4 @@
-"use client";
-
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -33,7 +32,10 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Se reordena el menú para posicionar las opciones de "Participar en Edición" y "Crear Libro" más arriba.
+  // Estado para saber si el usuario tiene pagos
+  const [hasPayments, setHasPayments] = useState(false);
+
+  // Lista base de elementos de menú
   const menuItems = [
     { title: "Inicio", icon: Home, href: "/dashboard" },
     { title: "Participar en Edición", icon: BookOpen, href: "/editions" },
@@ -48,6 +50,43 @@ export function AppSidebar() {
     { title: "Mis Capítulos", icon: FileText, href: "/publications/chapters" },
     { title: "Biblioteca", icon: Library, href: "/library" },
   ];
+
+  // Filtrar elementos según si el usuario tiene pagos
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (
+      !hasPayments &&
+      ["/publications", "/publications/chapters"].includes(item.href)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  // Obtener pagos del usuario al montar
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const userId = payload.sub || payload.id;
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/payments`)
+        .then((res) => res.json())
+        .then((data) => {
+          const payments = Array.isArray(data.payments) ? data.payments : data;
+          console.log(payments);
+          type Payment = { userId: string }; // Define the Payment type
+          const userPayments = (payments as Payment[]).filter(
+            (p) => p.userId === userId
+          );
+          setHasPayments(userPayments.length > 0);
+        })
+        .catch(() => {
+          setHasPayments(false);
+        });
+    } catch {
+      setHasPayments(false);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -82,7 +121,7 @@ export function AppSidebar() {
 
       <SidebarContent className='px-2 py-4'>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild

@@ -103,9 +103,6 @@ export default function PurchaseChaptersPage() {
 
   return (
     <div>
-      <h1 className='text-2xl font-bold text-center my-4'>
-        Compra de Capítulos
-      </h1>
       <ChapterSelection
         purchasedChapters={totalPurchased}
         onSelect={handleSelect}

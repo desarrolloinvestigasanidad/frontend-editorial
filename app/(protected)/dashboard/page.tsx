@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -9,33 +9,15 @@ import {
   Library,
   BookOpen,
   ArrowRight,
-  BookMarked,
   PlusCircle,
   Sparkles,
   CheckCircle,
 } from "lucide-react";
 
 export default function DashboardPage() {
-  const [editions, setEditions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
-  // Simulación: variable que indica si el usuario tiene libros creados
-  // (reemplazar con el dato real obtenido desde la API o estado global)
   const hasCreatedBooks = false;
-
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/editions`)
-      .then((res) => res.json())
-      .then((data) => {
-        setEditions(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching editions:", error);
-        setLoading(false);
-      });
-  }, []);
 
   // Animation variants
   const containerVariants = {

@@ -174,7 +174,7 @@ export default function EditionDetailPage() {
                   variant='outline'
                   className='bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center gap-1.5 py-1.5'>
                   <BookMarked className='h-3.5 w-3.5' />
-                  {availableCredits} créditos disponibles
+                  {availableCredits} participaciones disponibles
                 </Badge>
               )}
             </div>
@@ -195,12 +195,13 @@ export default function EditionDetailPage() {
         </motion.div>
 
         <Tabs defaultValue='opciones' className='mb-8'>
-          <TabsList className='bg-white/80 backdrop-blur-sm border border-gray-100 p-1 mb-6'>
-            <TabsTrigger value='opciones'>
+          <TabsList className='bg-white/80 backdrop-blur-sm border border-gray-100 p-1 mb-6 min-h-[80px]'>
+            <TabsTrigger value='opciones' className='h-full '>
               Opciones de participación
             </TabsTrigger>
-            <TabsTrigger value='mis-capitulos'>Mis capítulos</TabsTrigger>
-            <TabsTrigger value='libros'>Libros disponibles</TabsTrigger>
+            <TabsTrigger value='mis-capitulos' className='h-full'>
+              Mis capítulos enviados
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value='opciones'>
@@ -279,7 +280,7 @@ export default function EditionDetailPage() {
                           );
                         }
                       }}>
-                      Comprar créditos
+                      Abonar la tasa
                       <ChevronRight className='ml-2 h-4 w-4' />
                     </Button>
                   </CardFooter>
@@ -309,10 +310,11 @@ export default function EditionDetailPage() {
                       <Alert variant='destructive' className='mt-2 py-2'>
                         <AlertCircle className='h-4 w-4' />
                         <AlertTitle className='text-xs'>
-                          Sin créditos
+                          Sin participaciones disponibles
                         </AlertTitle>
                         <AlertDescription className='text-xs'>
-                          Necesitas comprar créditos para enviar capítulos.
+                          Necesitas comprar participaciones para enviar
+                          capítulos.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -326,40 +328,6 @@ export default function EditionDetailPage() {
                       }
                       disabled={availableCredits === 0 && !loadingCredits}>
                       Seleccionar libro
-                      <ChevronRight className='ml-2 h-4 w-4' />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-
-              {/* Tarjeta de Ver Libros */}
-              <motion.div variants={itemVariants}>
-                <Card className='h-full bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
-                  <CardHeader className='pb-2'>
-                    <div className='w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-2'>
-                      <BookOpen className='h-6 w-6 text-amber-600' />
-                    </div>
-                    <CardTitle className='text-xl text-amber-700'>
-                      Ver Libros
-                    </CardTitle>
-                    <CardDescription>
-                      Consulta los libros disponibles en la edición
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='text-sm text-gray-600'>
-                    <p>
-                      Explora todos los libros que forman parte de esta edición
-                      y accede a sus detalles y contenido publicado.
-                    </p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      variant='outline'
-                      className='w-full border-amber-200 text-amber-700 hover:bg-amber-50'
-                      onClick={() =>
-                        router.push(`/editions/${editionId}/books`)
-                      }>
-                      Ver libros
                       <ChevronRight className='ml-2 h-4 w-4' />
                     </Button>
                   </CardFooter>
@@ -448,82 +416,6 @@ export default function EditionDetailPage() {
                     onClick={() => router.push(`/editions/${editionId}/books`)}
                     className='bg-purple-600 hover:bg-purple-700'>
                     Enviar mi primer capítulo
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value='libros'>
-            <div className='bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-6'>
-              <h2 className='text-xl font-bold text-purple-800 mb-4'>
-                Libros Disponibles
-              </h2>
-
-              {loadingBooks ? (
-                <div className='flex justify-center py-8'>
-                  <div className='relative'>
-                    <div className='h-10 w-10 rounded-full border-t-2 border-b-2 border-purple-600 animate-spin'></div>
-                  </div>
-                </div>
-              ) : books.length > 0 ? (
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                  {books.map((book) => (
-                    <div
-                      key={book.id}
-                      className='bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all'>
-                      <h3 className='font-medium text-gray-800 mb-2'>
-                        {book.title}
-                      </h3>
-                      <p className='text-sm text-gray-600 mb-3 line-clamp-2'>
-                        {book.description || "Sin descripción"}
-                      </p>
-                      <div className='flex justify-between items-center'>
-                        <Badge className='bg-purple-100 text-purple-800 border-purple-200'>
-                          {book.chapterCount || 0} capítulos
-                        </Badge>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          className='text-purple-600 border-purple-200 hover:bg-purple-50'
-                          onClick={() =>
-                            router.push(
-                              `/editions/${editionId}/books/${book.id}`
-                            )
-                          }>
-                          Ver libro
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className='text-center py-8'>
-                  <div className='mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4'>
-                    <BookOpen className='h-8 w-8 text-gray-400' />
-                  </div>
-                  <h3 className='text-lg font-medium text-gray-700 mb-2'>
-                    No hay libros disponibles
-                  </h3>
-                  <p className='text-gray-500 mb-6'>
-                    Aún no se han creado libros para esta edición.
-                  </p>
-                  <Button
-                    onClick={() =>
-                      router.push(`/editions/${editionId}/crear-libro`)
-                    }
-                    className='bg-purple-600 hover:bg-purple-700'>
-                    Crear mi propio libro
-                  </Button>
-                </div>
-              )}
-              {books.length > 0 && (
-                <div className='flex justify-center mt-6'>
-                  <Button
-                    onClick={() => router.push(`/editions/${editionId}/books`)}
-                    className='bg-purple-600 hover:bg-purple-700 transition-all duration-300'>
-                    Ver todos los libros
-                    <ChevronRight className='ml-2 h-4 w-4' />
                   </Button>
                 </div>
               )}

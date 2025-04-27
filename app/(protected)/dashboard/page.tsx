@@ -174,7 +174,7 @@ export default function DashboardPage() {
                     className='flex-1 bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
                     onMouseEnter={() => handleMouseEnter("create-book")}
                     onMouseLeave={() => handleMouseLeave("create-book")}>
-                    Crear Libro Propio
+                    Crear Libro Personalizado
                   </Button>
                 </Link>
                 {hasCreatedBooks ? (
@@ -199,48 +199,6 @@ export default function DashboardPage() {
                     </Button>
                   </Link>
                 )}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* NUEVA TARJETA: Crear Libro -> /create-book */}
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5 }}
-            className='group'>
-            <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-pink-200'>
-              <div className='absolute top-0 right-0 w-24 h-24 bg-pink-100 rounded-bl-full -z-10 group-hover:bg-pink-200 transition-colors duration-300'></div>
-
-              <div className='flex items-center mb-4'>
-                <div className='bg-pink-100 p-3 rounded-full mr-3 group-hover:bg-pink-200 transition-colors duration-300 group-hover:scale-110'>
-                  <PlusCircle className='w-5 h-5 text-pink-700' />
-                </div>
-                <h3 className='text-xl font-bold text-gray-900 group-hover:text-pink-700 transition-colors'>
-                  Crear Libro
-                </h3>
-              </div>
-
-              <p className='text-gray-600 mb-6'>
-                Diseña y registra tu propio libro para difundir tu
-                investigación.
-              </p>
-
-              <div className='mt-auto'>
-                <Link href='/create-book'>
-                  <Button
-                    className='w-full bg-gradient-to-r from-pink-500 to-pink-700 hover:from-pink-600 hover:to-pink-800 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
-                    onMouseEnter={() => handleMouseEnter("crear-libro")}
-                    onMouseLeave={() => handleMouseLeave("crear-libro")}>
-                    <span className='flex items-center justify-center'>
-                      Crear
-                      <motion.span
-                        animate={{ x: hoverStates["crear-libro"] ? 5 : 0 }}
-                        transition={{ duration: 0.2 }}>
-                        <ArrowRight className='ml-2 h-4 w-4' />
-                      </motion.span>
-                    </span>
-                  </Button>
-                </Link>
               </div>
             </div>
           </motion.div>
@@ -290,7 +248,8 @@ export default function DashboardPage() {
                 Revisión por expertos
               </h4>
               <p className='text-sm text-gray-600'>
-                Comité científico especializado y revisión por pares.
+                Revisión por expertos. Comité Científico especializado y
+                revisión de contenido y de plagio.
               </p>
             </div>
           </div>

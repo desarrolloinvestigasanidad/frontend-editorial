@@ -354,7 +354,7 @@ function CertificateList({
             <div className='flex justify-center gap-4 mt-4'>
               <Button
                 variant='outline'
-                onClick={() => router.push("/ediciones")}>
+                onClick={() => router.push("/editions")}>
                 Ver Ediciones
               </Button>
               <Button onClick={() => router.push("/create-book")}>

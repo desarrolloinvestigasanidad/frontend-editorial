@@ -20,6 +20,7 @@ const priceTable: { [key: number]: number } = {
 interface ChapterSelectionProps {
   purchasedChapters: number; // ya comprados
   onSelect: (chaptersToBuy: number, priceToCharge: number) => void;
+  disabled?: boolean;
 }
 
 export default function ChapterSelection({

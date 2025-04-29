@@ -34,6 +34,8 @@ import {
   CheckSquare,
   HelpCircle,
   Target,
+  Download,
+  Eye,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
@@ -54,6 +56,15 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { PDFViewer } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 // Componente mejorado para el seguimiento de palabras
 function WordCountProgress({
@@ -386,6 +397,7 @@ function FocusMode({
   totalSteps,
   onNext,
   onPrev,
+  objectives,
 }: {
   children: React.ReactNode;
   isActive: boolean;
@@ -396,6 +408,7 @@ function FocusMode({
   totalSteps: number;
   onNext: () => void;
   onPrev: () => void;
+  objectives: string;
 }) {
   if (!isActive) return null;
 
@@ -427,21 +440,45 @@ function FocusMode({
               showDetails={false}
             />
           </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant='ghost' size='icon' className='ml-2'>
+                  <Info className='h-4 w-4 text-primary' />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side='left' className='w-80 p-4'>
+                <h4 className='font-medium mb-2'>Objetivos del capítulo</h4>
+                <p className='text-sm'>
+                  {objectives || "No has definido objetivos aún."}
+                </p>
+                {objectives && (
+                  <WordCountProgress
+                    text={objectives}
+                    min={50}
+                    max={150}
+                    showDetails={false}
+                  />
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
-      <div className='flex-1 overflow-auto py-12 px-4 flex items-center justify-center bg-gradient-to-b from-muted/10 to-transparent'>
+      <div className='flex-1 overflow-auto py-6 px-4 flex items-center justify-center bg-gradient-to-b from-muted/10 to-transparent'>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className='w-[60%] max-w-4xl'>
+          className='w-[80%] max-w-5xl' // Increased from 60% to 80%
+        >
           {/* Aplicamos estilos específicos para el modo de concentración */}
           <div className='bg-background/60 backdrop-blur-md rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl'>
             {/* Modificamos el contenido para aplicar estilos específicos a los elementos de entrada */}
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return React.cloneElement(child as React.ReactElement, {
-                  className: "focus-mode-content p-8",
+                  className: "focus-mode-content p-10", // Increased padding from p-8 to p-10
                 });
               }
               return child;
@@ -613,62 +650,207 @@ export default function CreateChapterPage() {
 
           <Tabs defaultValue='introduccion' className='w-full'>
             <TabsList className='grid grid-cols-3 md:grid-cols-6'>
-              <TabsTrigger value='introduccion'>Intro</TabsTrigger>
-              <TabsTrigger value='objetivos'>Objetivos</TabsTrigger>
-              <TabsTrigger value='metodologia'>Método</TabsTrigger>
-              <TabsTrigger value='resultados'>Resultados</TabsTrigger>
-              <TabsTrigger value='discusion'>Discusión</TabsTrigger>
-              <TabsTrigger value='bibliografia'>Bibliografía</TabsTrigger>
+              <TabsTrigger
+                value='introduccion'
+                className={!introduction.trim() ? "border-red-500 border" : ""}>
+                Intro
+              </TabsTrigger>
+              <TabsTrigger
+                value='objetivos'
+                className={!objectives.trim() ? "border-red-500 border" : ""}>
+                Objetivos
+              </TabsTrigger>
+              <TabsTrigger
+                value='metodologia'
+                className={!methodology.trim() ? "border-red-500 border" : ""}>
+                Método
+              </TabsTrigger>
+              <TabsTrigger
+                value='resultados'
+                className={!results.trim() ? "border-red-500 border" : ""}>
+                Resultados
+              </TabsTrigger>
+              <TabsTrigger
+                value='discusion'
+                className={!discussion.trim() ? "border-red-500 border" : ""}>
+                Discusión
+              </TabsTrigger>
+              <TabsTrigger
+                value='bibliografia'
+                className={!bibliography.trim() ? "border-red-500 border" : ""}>
+                Bibliografía
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value='introduccion' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Introducción</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {introduction}
-              </p>
+              {introduction.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {introduction}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={introduction} min={50} max={150} />
             </TabsContent>
 
             <TabsContent value='objetivos' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Objetivos</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {objectives}
-              </p>
+              {objectives.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {objectives}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={objectives} min={50} max={150} />
             </TabsContent>
 
             <TabsContent value='metodologia' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Metodología</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {methodology}
-              </p>
+              {methodology.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {methodology}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={methodology} min={30} max={100} />
             </TabsContent>
 
             <TabsContent value='resultados' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Resultados</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {results}
-              </p>
+              {results.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {results}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={results} min={50} max={250} />
             </TabsContent>
 
             <TabsContent value='discusion' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Discusión-Conclusión</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {discussion}
-              </p>
+              {discussion.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {discussion}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={discussion} min={30} max={150} />
             </TabsContent>
 
             <TabsContent value='bibliografia' className='mt-4 space-y-2'>
               <h4 className='font-medium'>Bibliografía</h4>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                {bibliography}
-              </p>
+              {bibliography.trim() ? (
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {bibliography}
+                </p>
+              ) : (
+                <Alert variant='destructive'>
+                  <AlertCircle className='h-4 w-4' />
+                  <AlertTitle>Sección vacía</AlertTitle>
+                  <AlertDescription>
+                    Esta sección es obligatoria. Por favor, complétala antes de
+                    enviar.
+                  </AlertDescription>
+                </Alert>
+              )}
               <WordCountProgress text={bibliography} min={30} max={150} />
             </TabsContent>
           </Tabs>
+
+          {/* Add a summary of missing sections */}
+          {(!introduction.trim() ||
+            !objectives.trim() ||
+            !methodology.trim() ||
+            !results.trim() ||
+            !discussion.trim() ||
+            !bibliography.trim()) && (
+            <Alert variant='destructive' className='mt-4'>
+              <AlertCircle className='h-4 w-4' />
+              <AlertTitle>Secciones incompletas</AlertTitle>
+              <AlertDescription>
+                Para poder enviar el capítulo, debes completar todas las
+                secciones obligatorias.
+                <ul className='mt-2 list-disc pl-5'>
+                  {!introduction.trim() && <li>Introducción</li>}
+                  {!objectives.trim() && <li>Objetivos</li>}
+                  {!methodology.trim() && <li>Metodología</li>}
+                  {!results.trim() && <li>Resultados</li>}
+                  {!discussion.trim() && <li>Discusión-Conclusión</li>}
+                  {!bibliography.trim() && <li>Bibliografía</li>}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className='mt-6 flex justify-center'>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant='outline' className='gap-2'>
+                  <Eye className='h-4 w-4' /> Previsualizar como PDF
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh]'>
+                <DialogHeader>
+                  <DialogTitle>Vista previa en formato PDF</DialogTitle>
+                </DialogHeader>
+                <div className='flex-1 h-[calc(95vh-120px)] overflow-hidden'>
+                  <PDFPreview
+                    title={title}
+                    studyType={studyType}
+                    introduction={introduction}
+                    objectives={objectives}
+                    methodology={methodology}
+                    results={results}
+                    discussion={discussion}
+                    bibliography={bibliography}
+                  />
+                </div>
+                <Button className='mt-4 gap-2'>
+                  <Download className='h-4 w-4' /> Descargar PDF
+                </Button>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       );
     }
@@ -909,12 +1091,35 @@ export default function CreateChapterPage() {
     fetchData();
   }, [editionId, bookId]);
 
-  // Función para enviar el capítulo
+  // Modify the handleSubmit function to check for empty fields
   const handleSubmit = async () => {
     if (!authorId) {
       setError("No se pudo obtener el perfil del autor. Intente nuevamente.");
       return;
     }
+
+    // Check for empty required fields
+    const emptyFields = [];
+    if (!introduction.trim()) emptyFields.push("Introducción");
+    if (!objectives.trim()) emptyFields.push("Objetivos");
+    if (!methodology.trim()) emptyFields.push("Metodología");
+    if (!results.trim()) emptyFields.push("Resultados");
+    if (!discussion.trim()) emptyFields.push("Discusión-Conclusión");
+    if (!bibliography.trim()) emptyFields.push("Bibliografía");
+
+    if (emptyFields.length > 0) {
+      setError(
+        `Por favor completa los siguientes campos obligatorios: ${emptyFields.join(
+          ", "
+        )}`
+      );
+      // Show error alert
+      document
+        .getElementById("error-alert")
+        ?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -930,6 +1135,7 @@ export default function CreateChapterPage() {
         bibliography,
         authorId,
         content: introduction, // Se utiliza la introducción como fallback para el contenido
+        status: "pendiente", // Change status to pending instead of draft
       };
 
       const res = await fetch(
@@ -1118,6 +1324,28 @@ export default function CreateChapterPage() {
                       Otros trabajos de investigación
                     </SelectItem>
                   </SelectContent>
+                  <div className='mt-2 bg-primary/5 p-4 rounded-lg border'>
+                    <div className='flex items-start gap-3'>
+                      <FileText className='h-5 w-5 text-primary shrink-0 mt-0.5' />
+                      <div>
+                        <h3 className='font-medium text-sm mb-1'>
+                          Sobre el tipo de estudio
+                        </h3>
+                        <p className='text-xs text-muted-foreground'>
+                          {studyType === "revisión bibliográfica" &&
+                            "La revisión bibliográfica consiste en analizar, evaluar e interpretar investigaciones previas relacionadas con un área temática. Estructura: Introducción, Metodología de búsqueda, Resultados de la revisión, Discusión y Conclusiones."}
+                          {studyType === "caso clínico" &&
+                            "El caso clínico presenta la experiencia con un paciente específico, detallando el diagnóstico, tratamiento y evolución. Estructura: Introducción, Presentación del caso, Discusión clínica, Conclusiones."}
+                          {studyType === "protocolo" &&
+                            "El protocolo describe detalladamente los procedimientos a seguir en una investigación. Estructura: Justificación, Objetivos, Metodología detallada, Consideraciones éticas, Cronograma."}
+                          {studyType === "otros" &&
+                            "Otros trabajos de investigación pueden incluir estudios experimentales, observacionales o cualitativos. Estructura: Introducción, Metodología, Resultados, Discusión, Conclusiones."}
+                          {!studyType &&
+                            "Selecciona un tipo de estudio para ver su descripción y estructura recomendada."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </Select>
               </div>
 
@@ -1185,6 +1413,16 @@ export default function CreateChapterPage() {
             <div className='grid grid-cols-1 md:grid-cols-12 gap-6'>
               {/* Panel central con contenido del paso */}
               <div className='md:col-span-9 '>
+                {error && (
+                  <Alert
+                    variant='destructive'
+                    className='mb-6'
+                    id='error-alert'>
+                    <AlertCircle className='h-4 w-4' />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
                 <div className='bg-white p-6 rounded-xl border shadow-sm'>
                   {renderStepContent()}
 
@@ -1250,7 +1488,8 @@ export default function CreateChapterPage() {
               currentStep={currentStep + 1}
               totalSteps={steps.length}
               onNext={handleNext}
-              onPrev={handlePrevious}>
+              onPrev={handlePrevious}
+              objectives={objectives}>
               <div className='bg-card p-6 rounded-lg border shadow-sm'>
                 {renderStepContent()}
               </div>
@@ -1259,5 +1498,122 @@ export default function CreateChapterPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// PDF Preview Component
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontFamily: "Helvetica",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+    color: "#7c3aed",
+  },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 5,
+    fontWeight: "bold",
+    color: "#4b5563",
+  },
+  studyType: {
+    fontSize: 12,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#6b7280",
+  },
+  section: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#7c3aed",
+  },
+  text: {
+    fontSize: 12,
+    lineHeight: 1.5,
+    textAlign: "justify",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+    right: 30,
+    textAlign: "center",
+    fontSize: 10,
+    color: "#9ca3af",
+  },
+});
+
+function PDFPreview({
+  title,
+  studyType,
+  introduction,
+  objectives,
+  methodology,
+  results,
+  discussion,
+  bibliography,
+}: {
+  title: string;
+  studyType: string;
+  introduction: string;
+  objectives: string;
+  methodology: string;
+  results: string;
+  discussion: string;
+  bibliography: string;
+}) {
+  return (
+    <PDFViewer style={{ width: "100%", height: "100%" }}>
+      <Document>
+        <Page size='A4' style={styles.page}>
+          <View>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.studyType}>Tipo de estudio: {studyType}</Text>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Introducción</Text>
+              <Text style={styles.text}>{introduction}</Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Objetivos</Text>
+              <Text style={styles.text}>{objectives}</Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Metodología</Text>
+              <Text style={styles.text}>{methodology}</Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Resultados</Text>
+              <Text style={styles.text}>{results}</Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Discusión y Conclusiones</Text>
+              <Text style={styles.text}>{discussion}</Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Bibliografía</Text>
+              <Text style={styles.text}>{bibliography}</Text>
+            </View>
+
+            <Text style={styles.footer}>
+              Este documento es una vista previa y puede estar sujeto a cambios.
+            </Text>
+          </View>
+        </Page>
+      </Document>
+    </PDFViewer>
   );
 }

@@ -71,7 +71,7 @@ export default function CrearLibroPage() {
       const amount = 9900;
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

@@ -86,7 +86,7 @@ export default function PurchaseChaptersPage() {
         bookTitle,
       },
     };
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/create-checkout-session`, {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

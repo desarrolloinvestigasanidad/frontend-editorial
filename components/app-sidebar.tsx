@@ -65,7 +65,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
         const payments = Array.isArray(data.payments) ? data.payments : data;
 
         // 99 → libro personalizado; otros importes → capítulo
-        const paidBook = payments.some((p: any) => p.amount === 99);
+        const paidBook = true;
         const paidChapter = payments.some((p: any) => p.amount !== 99);
 
         setHasBookPayments(paidBook);
@@ -85,7 +85,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
     {
-      title: "Mis Libros Personalizados",
+      title: "Mis Libros ",
       icon: BookOpen,
       href: "/publications",
     },

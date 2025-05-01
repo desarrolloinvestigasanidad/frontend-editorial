@@ -71,14 +71,22 @@ export default function EditionDetailPage() {
 
   // Obtener capítulos del usuario
   useEffect(() => {
+    const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
-    if (!userId) {
+    if (!token || !userId) {
       setLoadingChapters(false);
       return;
     }
 
     fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/users/${userId}/chapters?editionId=${editionId}`
+      `${process.env.NEXT_PUBLIC_BASE_URL}/users/${userId}/chapters?editionId=${editionId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
     )
       .then((res) => res.json())
       .then((data) => {

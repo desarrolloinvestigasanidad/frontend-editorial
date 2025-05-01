@@ -328,12 +328,7 @@ function StepTipsPanel({ step, tips }: { step: string; tips: any }) {
               <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
               <p className='text-sm'>Presenta datos de forma objetiva</p>
             </div>
-            <div className='flex items-start gap-2'>
-              <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
-              <p className='text-sm'>
-                Utiliza tablas o gráficos si es necesario
-              </p>
-            </div>
+
             <div className='flex items-start gap-2'>
               <BookMarked className='h-4 w-4 text-amber-500 mt-0.5' />
               <p className='text-sm'>Evita interpretaciones en esta sección</p>

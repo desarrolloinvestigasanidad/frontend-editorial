@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "react";
+// frontend-editorial/components/AppSidebar.tsx
+
+"use client";
+
+import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -23,16 +27,49 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAvailableCredits } from "@/hooks/useAvailableCredits"; // 1) Importa el hook
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  editionId: string; // Asegúrate de pasar este prop desde donde montas el sidebar
+}
+
+export function AppSidebar({ editionId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Dos estados independientes
-  const [hasBookPayments, setHasBookPayments] = useState(false);
-  const [hasChapterPurchases, setHasChapterPurchases] = useState(false);
+  // 2) Llama al hook para obtener los créditos de la edición
+  const { availableCredits, loadingCredits, errorCredits } =
+    useAvailableCredits(editionId);
 
-  // Lista base de menú
+  // 3) Decide si mostrar “Mis Capítulos” cuando haya > 0 créditos
+  const hasChapterPurchases = !loadingCredits && (availableCredits || 0) > 0;
+
+  // Si lo deseas, mantén el estado para pagos de libros personalizados
+  const [hasBookPayments, setHasBookPayments] = React.useState(false);
+  React.useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    let payload: any;
+    try {
+      payload = JSON.parse(atob(token.split(".")[1]));
+    } catch {
+      return;
+    }
+    const userId = payload.sub || payload.id;
+    const base = process.env.NEXT_PUBLIC_BASE_URL;
+
+    fetch(`${base}/payments`)
+      .then((res) => res.json())
+      .then((data) => {
+        const payments = Array.isArray(data.payments) ? data.payments : data;
+        setHasBookPayments(
+          (payments as { userId: string }[]).some((p) => p.userId === userId)
+        );
+      })
+      .catch(() => setHasBookPayments(false));
+  }, []);
+
   const menuItems = [
     { title: "Inicio", icon: Home, href: "/dashboard" },
     { title: "Participar en Edición", icon: BookOpen, href: "/editions" },
@@ -48,53 +85,12 @@ export function AppSidebar() {
     { title: "Biblioteca", icon: Library, href: "/library" },
   ];
 
-  // Filtrado según cada estado
   const filteredMenuItems = menuItems.filter((item) => {
     if (item.href === "/publications" && !hasBookPayments) return false;
     if (item.href === "/publications/chapters" && !hasChapterPurchases)
       return false;
     return true;
   });
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    let payload: any;
-    try {
-      payload = JSON.parse(atob(token.split(".")[1]));
-    } catch {
-      return;
-    }
-    const userId = payload.sub || payload.id;
-    const base = process.env.NEXT_PUBLIC_BASE_URL;
-
-    // 1) Pagos generales (libros personalizados)
-    fetch(`${base}/payments`)
-      .then((res) => res.json())
-      .then((data) => {
-        const payments = Array.isArray(data.payments) ? data.payments : data;
-        setHasBookPayments(
-          (payments as { userId: string }[]).some((p) => p.userId === userId)
-        );
-      })
-      .catch(() => setHasBookPayments(false));
-
-    // 2) Compras de capítulos
-    fetch(`${base}/chapter_purchases?userId=${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const purchases = Array.isArray(data.chapter_purchases)
-          ? data.chapter_purchases
-          : data;
-        setHasChapterPurchases(
-          (purchases as { chapterCount: number }[]).some(
-            (p) => p.chapterCount > 0
-          )
-        );
-      })
-      .catch(() => setHasChapterPurchases(false));
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -106,7 +102,6 @@ export function AppSidebar() {
       <SidebarHeader className='border-b border-border'>
         <div className='flex items-center justify-center px-4 py-4'>
           <Link href='/dashboard' className='flex items-center justify-center'>
-            {/* Logo principal (visible en sidebar abierto) */}
             <Image
               src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'
               alt='Investiga Sanidad'
@@ -114,7 +109,6 @@ export function AppSidebar() {
               height={100}
               className='h-50 w-auto group-data-[collapsible=icon]:hidden'
             />
-            {/* Logo pequeño (sidebar colapsado) */}
             <div className='hidden group-data-[collapsible=icon]:block'>
               <Image
                 src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'

@@ -1,5 +1,3 @@
-// frontend-editorial/components/AppSidebar.tsx
-
 "use client";
 
 import React from "react";
@@ -27,25 +25,19 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAvailableCredits } from "@/hooks/useAvailableCredits"; // 1) Importa el hook
 
 interface AppSidebarProps {
-  editionId: string; // Asegúrate de pasar este prop desde donde montas el sidebar
+  editionId: string;
 }
 
 export function AppSidebar({ editionId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // 2) Llama al hook para obtener los créditos de la edición
-  const { availableCredits, loadingCredits, errorCredits } =
-    useAvailableCredits(editionId);
-
-  // 3) Decide si mostrar “Mis Capítulos” cuando haya > 0 créditos
-  const hasChapterPurchases = !loadingCredits && (availableCredits || 0) > 0;
-
-  // Si lo deseas, mantén el estado para pagos de libros personalizados
+  // Estado para pagos de libro y de capítulo
   const [hasBookPayments, setHasBookPayments] = React.useState(false);
+  const [hasChapterPayments, setHasChapterPayments] = React.useState(false);
+
   React.useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -59,15 +51,31 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
     const userId = payload.sub || payload.id;
     const base = process.env.NEXT_PUBLIC_BASE_URL;
 
-    fetch(`${base}/payments`)
-      .then((res) => res.json())
+    fetch(`${base}/payments?userId=${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al obtener los pagos");
+        return res.json();
+      })
       .then((data) => {
         const payments = Array.isArray(data.payments) ? data.payments : data;
-        setHasBookPayments(
-          (payments as { userId: string }[]).some((p) => p.userId === userId)
-        );
+
+        // 99 → libro personalizado; otros importes → capítulo
+        const paidBook = payments.some((p: any) => p.amount === 99);
+        const paidChapter = payments.some((p: any) => p.amount !== 99);
+
+        setHasBookPayments(paidBook);
+        setHasChapterPayments(paidChapter);
       })
-      .catch(() => setHasBookPayments(false));
+      .catch((err) => {
+        console.error("Error fetching payments:", err);
+        setHasBookPayments(false);
+        setHasChapterPayments(false);
+      });
   }, []);
 
   const menuItems = [
@@ -87,7 +95,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (item.href === "/publications" && !hasBookPayments) return false;
-    if (item.href === "/publications/chapters" && !hasChapterPurchases)
+    if (item.href === "/publications/chapters" && !hasChapterPayments)
       return false;
     return true;
   });
@@ -121,7 +129,6 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           </Link>
         </div>
       </SidebarHeader>
-
       <SidebarContent className='px-2 py-4'>
         <SidebarMenu>
           {filteredMenuItems.map((item) => (
@@ -151,7 +158,6 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           ))}
         </SidebarMenu>
       </SidebarContent>
-
       <SidebarFooter className='mt-auto border-t border-border p-4'>
         <Button
           variant='ghost'
@@ -163,7 +169,6 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           </span>
         </Button>
       </SidebarFooter>
-
       <SidebarRail />
     </Sidebar>
   );

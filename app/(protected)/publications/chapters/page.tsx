@@ -146,7 +146,9 @@ export default function OwnChaptersPage() {
         </div>
 
         <div className='text-center mb-8'>
-          <h2 className='text-2xl md:text-3xl font-bold'>Capítulos Propios</h2>
+          <h2 className='text-2xl md:text-3xl font-bold'>
+            Capítulos en libros Personalizados
+          </h2>
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mt-2'></div>
         </div>
 

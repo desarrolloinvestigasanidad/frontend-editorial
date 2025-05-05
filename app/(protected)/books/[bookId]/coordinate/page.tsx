@@ -78,6 +78,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [newLastname, setNewLastname] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [bookStatus, setBookStatus] = useState<
+    "Borrador" | "Revisión" | "Publicado"
+  >("Borrador");
 
   // Carga inicial: libro, autores y capítulos
   useEffect(() => {
@@ -94,7 +97,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
         if (!resBook.ok) throw new Error("Error al obtener el libro");
         const book = await resBook.json();
         setBookTitle(book.title);
-
+        setBookStatus(book.status);
         // 2. Obtener autores
         const resAuthors = await fetch(`${baseUrl}/books/${bookId}/authors`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -223,16 +226,28 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   // =============================
   //  Lógica Cerrar libro
   // =============================
-  const handleCloseBook = () => {
-    // TODO: check si hay capítulos pendientes de revisión
-    const confirmClose = window.confirm(
-      "Al cerrar el libro, no podrás hacer más cambios. ¿Continuar?"
-    );
-    if (confirmClose) {
-      // PUT /api/books/\:bookId/close
-      alert(
-        "Libro cerrado (demo). Queda 'Pendiente de revisión' en administración."
-      );
+  const handleCloseBook = async () => {
+    if (
+      !confirm("Al cerrar el libro, no podrás hacer más cambios. ¿Continuar?")
+    )
+      return;
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${baseUrl}/books/${bookId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "Revisión" }),
+      });
+      if (!res.ok) throw new Error("Error al cerrar el libro");
+      setBookStatus("Revisión");
+      alert("El libro ha sido enviado a revisión.");
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo cerrar el libro.");
     }
   };
 
@@ -267,6 +282,24 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
       </div>
 
       <div className='container mx-auto px-4 relative z-10'>
+        {bookStatus === "Revisión" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className='mb-6'>
+            <Alert className='bg-yellow-50 border-yellow-200'>
+              <AlertCircle className='h-4 w-4 text-yellow-600' />
+              <AlertTitle className='text-yellow-800'>
+                Libro en revisión
+              </AlertTitle>
+              <AlertDescription className='text-yellow-700'>
+                Este libro está actualmente en revisión. No se pueden modificar
+                autores, capítulos ni el título hasta que finalice el proceso.
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -437,10 +470,16 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             className='border-purple-200 focus:border-purple-300 focus:ring-purple-200'
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
+            disabled={bookStatus === "Revisión"}
           />
           <Button
             onClick={handleSaveTitle}
-            className='bg-purple-600 hover:bg-purple-700 mt-2'>
+            disabled={bookStatus === "Revisión"}
+            className={`bg-purple-600 ${
+              bookStatus === "Revisión"
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-purple-700"
+            } mt-2`}>
             <Save className='h-4 w-4 mr-2' />
             Guardar título
           </Button>
@@ -458,7 +497,12 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             <Button
               variant='outline'
               onClick={openAddAuthorModal}
-              className='border-purple-200 text-purple-700 hover:bg-purple-50'>
+              disabled={bookStatus === "Revisión"}
+              className={`border-purple-200 text-purple-700 ${
+                bookStatus === "Revisión"
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-50"
+              }`}>
               <UserPlus className='h-4 w-4 mr-2' />
               Añadir autor
             </Button>
@@ -499,11 +543,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   </Badge>
                 </div>
                 <div className='col-span-1 p-3 flex justify-center'>
-                  <button
-                    onClick={() => handleDeleteAuthor(author.id)}
-                    className='text-red-500 hover:text-red-700 transition-colors'>
-                    <Trash className='h-4 w-4' />
-                  </button>
+                  {bookStatus !== "Revisión" && (
+                    <button
+                      onClick={() => handleDeleteAuthor(author.id)}
+                      className='text-red-500 hover:text-red-700 transition-colors'>
+                      <Trash className='h-4 w-4' />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -596,22 +642,26 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                         <Eye className='h-3 w-3 mr-1' />
                         Ver
                       </Button>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        className='h-8 px-2 text-xs border-purple-200 text-purple-700 hover:bg-purple-50'
-                        onClick={() => handleEditChapter(chapter.id)}>
-                        <Edit className='h-3 w-3 mr-1' />
-                        Editar
-                      </Button>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        className='h-8 px-2 text-xs border-red-200 text-red-700 hover:bg-red-50'
-                        onClick={() => handleDeleteChapter(chapter.id)}>
-                        <Trash className='h-3 w-3 mr-1' />
-                        Eliminar
-                      </Button>
+                      {bookStatus !== "Revisión" && (
+                        <>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            className='h-8 px-2 text-xs border-purple-200 text-purple-700 hover:bg-purple-50'
+                            onClick={() => handleEditChapter(chapter.id)}>
+                            <Edit className='h-3 w-3 mr-1' />
+                            Editar
+                          </Button>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            className='h-8 px-2 text-xs border-red-200 text-red-700 hover:bg-red-50'
+                            onClick={() => handleDeleteChapter(chapter.id)}>
+                            <Trash className='h-3 w-3 mr-1' />
+                            Eliminar
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -619,7 +669,12 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
 
               <Button
                 onClick={() => alert("Ir a pantalla de 'Enviar capítulo'...")}
-                className='bg-purple-600 hover:bg-purple-700'>
+                disabled={bookStatus === "Revisión"}
+                className={`bg-purple-600 ${
+                  bookStatus === "Revisión"
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-purple-700"
+                }`}>
                 Enviar nuevo capítulo
               </Button>
             </>

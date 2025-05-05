@@ -25,6 +25,7 @@ interface BookDetailsProps {
 export default function BookDetailsPage({ params }: BookDetailsProps) {
   const { bookId } = params;
   const [isCreator, setIsCreator] = useState(false);
+  const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,9 +48,10 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
         });
         if (!res.ok) throw new Error("Error al cargar el libro");
 
-        const book: Book = await res.json();
+        const fetched: Book = await res.json();
+        setBook(fetched);
 
-        const amAuthor = book.authorId === userId;
+        const amAuthor = fetched.authorId === userId;
 
         setIsCreator(amAuthor);
       } catch (err) {
@@ -125,7 +127,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           transition={{ duration: 0.5, delay: 0.1 }}
           className='text-center mb-8'>
           <h1 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
-            {}
+            {book?.title ?? "—"}
           </h1>
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
         </motion.div>
@@ -235,43 +237,45 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           </motion.div>
 
           {/* Envío de capítulo - Visible para todos */}
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5 }}
-            className='group'>
-            <Link href={`/books/${bookId}/submit-chapter`}>
-              <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-                <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
-                <div className='flex flex-col items-center text-center'>
-                  <div className='bg-amber-100 p-4 rounded-full mb-4 group-hover:bg-amber-200 transition-colors duration-300 group-hover:scale-110'>
-                    <FileEdit className='h-8 w-8 text-amber-700' />
-                  </div>
-                  <h2 className='text-xl font-bold text-gray-900 group-hover:text-amber-700 transition-colors mb-2'>
-                    Envío de capítulo
-                  </h2>
-                  <p className='text-gray-600 mb-4'>
-                    Envía un nuevo capítulo para su revisión y publicación
-                  </p>
-                  <div className='mt-auto pt-2'>
-                    <Button
-                      variant='outline'
-                      className='border-amber-200 text-amber-700 hover:bg-amber-50'>
-                      Crear capítulo
-                      <ChevronRight className='ml-2 h-4 w-4' />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-
-          {/* Cerrar libro - Solo visible para el creador */}
-          {isCreator && (
+          {book?.status === "desarrollo" && (
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}
               className='group'>
-              <Link href={`/books/${bookId}/close`}>
+              <Link href={`/books/${bookId}/submit-chapter`}>
+                <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
+                  <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
+                  <div className='flex flex-col items-center text-center'>
+                    <div className='bg-amber-100 p-4 rounded-full mb-4 group-hover:bg-amber-200 transition-colors duration-300 group-hover:scale-110'>
+                      <FileEdit className='h-8 w-8 text-amber-700' />
+                    </div>
+                    <h2 className='text-xl font-bold text-gray-900 group-hover:text-amber-700 transition-colors mb-2'>
+                      Envío de capítulo
+                    </h2>
+                    <p className='text-gray-600 mb-4'>
+                      Envía un nuevo capítulo para su revisión y publicación
+                    </p>
+                    <div className='mt-auto pt-2'>
+                      <Button
+                        variant='outline'
+                        className='border-amber-200 text-amber-700 hover:bg-amber-50'>
+                        Crear capítulo
+                        <ChevronRight className='ml-2 h-4 w-4' />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          )}
+
+          {/* Cerrar libro - Solo visible para el creador */}
+          {isCreator && book?.status === "desarrollo" && (
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              className='group'>
+              <Link href={`/books/${bookId}/coordinate?section=close`}>
                 <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
                   <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
                   <div className='flex flex-col items-center text-center'>

@@ -593,11 +593,11 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
               <p className='text-gray-500 mb-6'>
                 Aún no se han enviado capítulos para este libro.
               </p>
-              <Button
-                onClick={() => alert("Ir a pantalla de 'Enviar capítulo'...")}
+              <Link
+                href={`/books/${bookId}/submit-chapter`}
                 className='bg-purple-600 hover:bg-purple-700'>
                 Enviar mi primer capítulo
-              </Button>
+              </Link>
             </div>
           ) : (
             <>
@@ -667,16 +667,17 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 ))}
               </div>
 
-              <Button
-                onClick={() => alert("Ir a pantalla de 'Enviar capítulo'...")}
-                disabled={bookStatus === "Revisión"}
-                className={`bg-purple-600 ${
-                  bookStatus === "Revisión"
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-purple-700"
-                }`}>
-                Enviar nuevo capítulo
-              </Button>
+              {bookStatus === "Revisión" ? (
+                <Button className='bg-purple-600 opacity-50 cursor-not-allowed inline-block px-4 py-2 rounded text-white'>
+                  Enviar nuevo capítulo
+                </Button>
+              ) : (
+                <Link
+                  href={`/books/${bookId}/submit-chapter`}
+                  className='bg-purple-600 hover:bg-purple-700 inline-block px-4 py-2 rounded text-white'>
+                  Enviar nuevo capítulo
+                </Link>
+              )}
             </>
           )}
         </div>

@@ -379,7 +379,8 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             onAuthorAdded={() => {
               closeAddAuthorModal();
               // Refresh authors list
-              fetch(`/books/${bookId}/authors`)
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+              fetch(`${baseUrl}/books/${bookId}/authors`)
                 .then((res) => res.json())
                 .then((data) => {
                   setAuthors(

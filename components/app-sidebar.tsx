@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -34,14 +34,14 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [hasBookPayments, setHasBookPayments] = React.useState(false);
-  const [hasChapterPayments, setHasChapterPayments] = React.useState(false);
+  const [hasBookPayments, setHasBookPayments] = useState(false);
+  const [hasChapterPayments, setHasChapterPayments] = useState(false);
+  const [hasParticipatingBooks, setHasParticipatingBooks] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Extraer userId del JWT
     let payload: any;
     try {
       payload = JSON.parse(atob(token.split(".")[1]));
@@ -53,6 +53,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
 
     const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
 
+    // 1️⃣ Fetch de pagos
     fetch(`${base}/payments?userId=${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -64,7 +65,6 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
         return res.json();
       })
       .then((data: any) => {
-        // Puede venir { payments: [...] } o directamente [...]
         const paymentsArray: Array<{ amount: string | number }> = Array.isArray(
           data.payments
         )
@@ -73,22 +73,31 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           ? data
           : [];
 
-        // Parsear siempre a número
         const amounts = paymentsArray.map((p) => parseFloat(String(p.amount)));
-
-        // Libro personalizado => importe EXACTO 99
-        const paidBook = amounts.some((amt) => amt === 99);
-
-        // Capítulo => cualquier otro importe distinto de 99
-        const paidChapter = amounts.some((amt) => amt !== 99);
-
-        setHasBookPayments(paidBook);
-        setHasChapterPayments(paidChapter);
+        setHasBookPayments(amounts.some((amt) => amt === 99));
+        setHasChapterPayments(amounts.some((amt) => amt !== 99));
       })
       .catch((err) => {
         console.error("Error fetching payments:", err);
         setHasBookPayments(false);
         setHasChapterPayments(false);
+      });
+
+    // 2️⃣ Fetch de libros donde eres coautor
+    fetch(`${base}/books/coauthor?userId=${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al obtener libros de coautor");
+        return res.json();
+      })
+      .then((books: any[]) => {
+        console.log("Libros de coautor:", books);
+        setHasParticipatingBooks(books.length > 0);
+      })
+      .catch((err) => {
+        console.error("Error fetching coauthored books:", err);
+        setHasParticipatingBooks(false);
       });
   }, []);
 
@@ -104,7 +113,11 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
   ];
 
   const filteredMenuItems = menuItems.filter((item) => {
-    if (item.href === "/publications" && !hasBookPayments) return false;
+    if (
+      item.href === "/publications" &&
+      !(hasBookPayments || hasParticipatingBooks)
+    )
+      return false;
     if (item.href === "/publications/chapters" && !hasChapterPayments)
       return false;
     return true;

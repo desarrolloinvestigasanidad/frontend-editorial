@@ -62,19 +62,41 @@ export default function PublicationsPage() {
   /* ----------------------------- fetch ----------------------------- */
   useEffect(() => {
     const fetchBooks = async () => {
+      setLoading(true);
       try {
-        let url = `${process.env.NEXT_PUBLIC_BASE_URL}/publications`;
-        if (userId) url += `?userId=${userId}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Error al obtener los libros");
-        const data: Book[] = await res.json();
-        setBooks(data);
+        const token = localStorage.getItem("token");
+        if (!token || !userId) throw new Error("No token o userId");
+
+        const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
+        const headers = { Authorization: `Bearer ${token}` };
+
+        // 1️⃣ Libros propios
+        const ownRes = await fetch(`${base}/books?userId=${userId}`, {
+          headers,
+        });
+        if (!ownRes.ok) throw new Error("Error al obtener libros propios");
+        const ownData: Book[] = await ownRes.json();
+
+        // 2️⃣ Libros como coautor
+        const coRes = await fetch(`${base}/books/coauthor?userId=${userId}`, {
+          headers,
+        });
+        if (!coRes.ok) throw new Error("Error al obtener libros de coautor");
+        const coData: Book[] = await coRes.json();
+
+        // 3️⃣ Unir sin duplicados
+        const allBooksMap = new Map<string, Book>();
+        ownData.forEach((b) => allBooksMap.set(b.id, b));
+        coData.forEach((b) => allBooksMap.set(b.id, b));
+
+        setBooks(Array.from(allBooksMap.values()));
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchBooks();
   }, [userId]);
 

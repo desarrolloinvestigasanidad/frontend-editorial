@@ -961,7 +961,8 @@ export default function RegisterPage() {
                       <label
                         htmlFor='infoAccepted'
                         className='text-sm text-gray-700'>
-                        Acepto el envío de comunicaciones.
+                        Acepto el envío de comunicaciones y promociones por
+                        parte de Investiga Sanida
                       </label>
                     </div>
                   </>

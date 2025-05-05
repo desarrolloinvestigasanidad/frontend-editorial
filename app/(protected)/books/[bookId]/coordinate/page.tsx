@@ -42,7 +42,8 @@ import AuthorInvitation from "./author-invitation";
 interface Author {
   id: number;
   dni: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   status: "Validado" | "Pendiente" | "Rechazado";
 }
@@ -172,7 +173,8 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
     const newAuthor: Author = {
       id: Date.now(),
       dni: newDni.toUpperCase(),
-      fullName,
+      firstName: newName,
+      lastName: newLastname,
       email: newEmail,
       status: "Pendiente",
     };
@@ -462,22 +464,28 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
           </div>
 
           <div className='bg-white rounded-lg border border-gray-200 overflow-hidden'>
+            {/* Cabecera */}
             <div className='grid grid-cols-12 bg-purple-50 text-purple-800 font-medium text-sm'>
-              <div className='col-span-3 p-3 border-r'>DNI/NIE/Pasaporte</div>
-              <div className='col-span-5 p-3 border-r'>Nombre y apellidos</div>
-              <div className='col-span-3 p-3 border-r'>Estado</div>
+              <div className='col-span-2 p-3 border-r'>DNI</div>
+              <div className='col-span-4 p-3 border-r'>Nombre y apellidos</div>
+              <div className='col-span-3 p-3 border-r'>Email</div>
+              <div className='col-span-2 p-3 border-r'>Estado</div>
               <div className='col-span-1 p-3'></div>
             </div>
 
-            {authors.map((author, index) => (
+            {/* Filas */}
+            {authors.map((author, idx) => (
               <div
                 key={author.id}
                 className={`grid grid-cols-12 text-sm ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-purple-50 transition-colors`}>
-                <div className='col-span-3 p-3 border-r'>{author.dni}</div>
-                <div className='col-span-5 p-3 border-r'>{author.fullName}</div>
-                <div className='col-span-3 p-3 border-r'>
+                <div className='col-span-2 p-3 border-r'>{author.id}</div>
+                <div className='col-span-4 p-3 border-r'>
+                  {author.firstName + " " + author.lastName}
+                </div>
+                <div className='col-span-3 p-3 border-r'>{author.email}</div>
+                <div className='col-span-2 p-3 border-r'>
                   <Badge
                     className={
                       author.status === "Validado"

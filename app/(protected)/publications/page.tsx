@@ -359,16 +359,6 @@ function BookGrid({
           whileHover={{ y: -5 }}
           className='group'>
           <div className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-            {/* Badge tipo libro */}
-            <Badge
-              className={`absolute top-4 right-4 ${
-                book.bookType.toLowerCase() === "libro propio"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-blue-100 text-blue-800"
-              }`}>
-              {book.bookType}
-            </Badge>
-
             <div className='flex items-center mb-4'>
               <div className='bg-purple-100 p-3 rounded-full mr-3 group-hover:bg-purple-200 transition-colors duration-300 group-hover:scale-110'>
                 <BookOpen className='w-5 h-5 text-purple-700' />

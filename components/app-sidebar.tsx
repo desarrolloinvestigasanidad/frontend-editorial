@@ -27,14 +27,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface AppSidebarProps {
-  editionId: string;
+  editionId?: string;
 }
 
 export function AppSidebar({ editionId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Estado para pagos de libro y de capítulo
   const [hasBookPayments, setHasBookPayments] = React.useState(false);
   const [hasChapterPayments, setHasChapterPayments] = React.useState(false);
 
@@ -42,6 +41,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    // Extraer userId del JWT
     let payload: any;
     try {
       payload = JSON.parse(atob(token.split(".")[1]));
@@ -49,7 +49,9 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
       return;
     }
     const userId = payload.sub || payload.id;
-    const base = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!userId) return;
+
+    const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
 
     fetch(`${base}/payments?userId=${userId}`, {
       headers: {
@@ -61,12 +63,24 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
         if (!res.ok) throw new Error("Error al obtener los pagos");
         return res.json();
       })
-      .then((data) => {
-        const payments = Array.isArray(data.payments) ? data.payments : data;
+      .then((data: any) => {
+        // Puede venir { payments: [...] } o directamente [...]
+        const paymentsArray: Array<{ amount: string | number }> = Array.isArray(
+          data.payments
+        )
+          ? data.payments
+          : Array.isArray(data)
+          ? data
+          : [];
 
-        // 99 → libro personalizado; otros importes → capítulo
-        const paidBook = true;
-        const paidChapter = payments.some((p: any) => p.amount !== 99);
+        // Parsear siempre a número
+        const amounts = paymentsArray.map((p) => parseFloat(String(p.amount)));
+
+        // Libro personalizado => importe EXACTO 99
+        const paidBook = amounts.some((amt) => amt === 99);
+
+        // Capítulo => cualquier otro importe distinto de 99
+        const paidChapter = amounts.some((amt) => amt !== 99);
 
         setHasBookPayments(paidBook);
         setHasChapterPayments(paidChapter);
@@ -84,11 +98,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
     { title: "Crear Libro", icon: Plus, href: "/create-book" },
     { title: "Mi Perfil", icon: User, href: "/profile" },
     { title: "Certificados", icon: FileBadge, href: "/certificates" },
-    {
-      title: "Mis Libros ",
-      icon: BookOpen,
-      href: "/publications",
-    },
+    { title: "Mis Libros", icon: BookOpen, href: "/publications" },
     { title: "Mis Capítulos", icon: FileText, href: "/publications/chapters" },
     { title: "Biblioteca", icon: Library, href: "/library" },
   ];
@@ -129,6 +139,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           </Link>
         </div>
       </SidebarHeader>
+
       <SidebarContent className='px-2 py-4'>
         <SidebarMenu>
           {filteredMenuItems.map((item) => (
@@ -158,6 +169,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           ))}
         </SidebarMenu>
       </SidebarContent>
+
       <SidebarFooter className='mt-auto border-t border-border p-4'>
         <Button
           variant='ghost'
@@ -169,6 +181,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
           </span>
         </Button>
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

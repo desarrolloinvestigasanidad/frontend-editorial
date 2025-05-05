@@ -125,8 +125,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           transition={{ duration: 0.5, delay: 0.1 }}
           className='text-center mb-8'>
           <h1 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
-            Auxiliar Administrativo de Centros Hospitalarios: Optimización de
-            Recursos y Gestión Eficaz
+            {}
           </h1>
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto'></div>
         </motion.div>

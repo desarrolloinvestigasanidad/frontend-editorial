@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft,
   UserPlus,
   Trash,
   BookOpen,
@@ -21,7 +20,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -32,11 +30,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import AuthorInvitation from "./author-invitation";
 
 // ==============================
 // Tipos y modelos de ejemplo
@@ -66,76 +64,94 @@ interface CoordinatePageProps {
 export default function CoordinatePage({ params }: CoordinatePageProps) {
   const { bookId } = params;
 
-  // Estado: secciones del menú
-  // "title-authors" | "chapters" | "close"
+  // Estados
   const [activeSection, setActiveSection] = useState<
     "title-authors" | "chapters" | "close"
   >("title-authors");
-
-  // Estado: datos del libro y autores
   const [bookTitle, setBookTitle] = useState("");
   const [authors, setAuthors] = useState<Author[]>([]);
-  // Modal para añadir autor
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   const [showAddAuthorModal, setShowAddAuthorModal] = useState(false);
   const [newDni, setNewDni] = useState("");
   const [newName, setNewName] = useState("");
   const [newLastname, setNewLastname] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Estado: capítulos de este libro
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-
+  // Carga inicial: libro, autores y capítulos
   useEffect(() => {
-    // Cargar datos del libro (título, autores)
-    // GET /api/books/:bookId
-    // GET /api/books/:bookId/authors
-    setBookTitle(
-      "Auxiliar Administrativo de Centros Hospitalarios: Optimización de Recursos y Gestión Eficaz"
-    );
-    setAuthors([
-      {
-        id: 101,
-        dni: "46398526M",
-        fullName: "MARILINI DELGADO MEJÍA",
-        email: "marilini@example.com",
-        status: "Validado",
-      },
-      {
-        id: 102,
-        dni: "45078590R",
-        fullName: "JUANA PÉREZ DURÁN",
-        email: "juana@example.com",
-        status: "Validado",
-      },
-    ]);
+    const fetchData = async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const token = localStorage.getItem("token");
+      try {
+        setLoading(true);
 
-    // Cargar capítulos
-    // GET /api/books/:bookId/chapters
-    setChapters([
-      {
-        id: 1,
-        title: "Gestión de riesgos hospitalarios",
-        status: "Aceptado",
-        submissionDate: "2024-10-01",
-      },
-      {
-        id: 2,
-        title: "Análisis de casos clínicos en pediatría",
-        status: "Pendiente",
-        submissionDate: "2024-10-05",
-      },
-    ]);
+        // 1. Obtener libro
+        const resBook = await fetch(`${baseUrl}/books/${bookId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resBook.ok) throw new Error("Error al obtener el libro");
+        const book = await resBook.json();
+        setBookTitle(book.title);
+
+        // 2. Obtener autores
+        const resAuthors = await fetch(`${baseUrl}/books/${bookId}/authors`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resAuthors.ok) throw new Error("Error al obtener autores");
+        const authorsData: Author[] = await resAuthors.json();
+        setAuthors(authorsData);
+
+        // 3. Obtener capítulos
+        const resChapters = await fetch(`${baseUrl}/books/${bookId}/chapters`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resChapters.ok) throw new Error("Error al obtener capítulos");
+        const chaptersData: Chapter[] = await resChapters.json();
+        setChapters(chaptersData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [bookId]);
 
-  // =============================
-  //  Lógica Título & Autores
-  // =============================
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <p>Cargando datos del libro...</p>
+      </div>
+    );
+  }
+
+  // Funciones auxiliares y handlers (igual que antes)
   const handleSaveTitle = async () => {
-    // PUT /api/books/:bookId { title: bookTitle }
-    alert("Título guardado (demo).");
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${baseUrl}/books/${bookId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: bookTitle }),
+      });
+      if (!res.ok) throw new Error("Error guardando título");
+      alert("Título guardado correctamente.");
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo guardar el título.");
+    }
   };
 
   const openAddAuthorModal = () => {
+    if (authors.length >= 7) {
+      alert("Máximo 7 autores (incluyendo al creador).");
+      return;
+    }
     setShowAddAuthorModal(true);
   };
 
@@ -147,19 +163,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
     setShowAddAuthorModal(false);
   };
 
-  const handleBlurDni = async () => {
-    if (!newDni) return;
-    // GET /api/users?dni=...
-    // autocompletar nombre, apellido, email
-    // DEMO
-    if (newDni === "12345678Z") {
-      setNewName("Carlos");
-      setNewLastname("Gómez López");
-      setNewEmail("carlos@example.com");
-    }
-  };
-
-  const handleAddAuthor = async () => {
+  const handleAddAuthor = () => {
     if (authors.length >= 7) {
       alert("Máximo 7 autores (incluyendo al creador).");
       return;
@@ -177,10 +181,22 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
     alert("Autor agregado (demo).");
   };
 
-  const handleDeleteAuthor = async (id: number) => {
-    // DELETE /api/books/:bookId/authors/:id
-    setAuthors((prev) => prev.filter((a) => a.id !== id));
-    alert("Autor eliminado (demo).");
+  const handleDeleteAuthor = async (userId: number) => {
+    if (!confirm("¿Eliminar este autor?")) return;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${baseUrl}/books/${bookId}/authors/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error eliminando autor");
+      setAuthors((prev) => prev.filter((a) => a.id !== userId));
+      alert("Autor eliminado correctamente.");
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo eliminar el autor.");
+    }
   };
 
   // =============================
@@ -211,7 +227,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
       "Al cerrar el libro, no podrás hacer más cambios. ¿Continuar?"
     );
     if (confirmClose) {
-      // PUT /api/books/:bookId/close
+      // PUT /api/books/\:bookId/close
       alert(
         "Libro cerrado (demo). Queda 'Pendiente de revisión' en administración."
       );
@@ -352,59 +368,41 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
           <DialogHeader>
             <DialogTitle>Añadir nuevo autor</DialogTitle>
             <DialogDescription>
-              Introduce el DNI/NIE/Pasaporte del autor para añadirlo al libro.
+              Busca, añade manualmente o invita a un autor para este libro.
             </DialogDescription>
           </DialogHeader>
-          <div className='space-y-4 py-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='dni'>DNI/NIE/Pasaporte</Label>
-              <Input
-                id='dni'
-                value={newDni}
-                onChange={(e) => setNewDni(e.target.value)}
-                onBlur={handleBlurDni}
-                placeholder='Introduce el documento de identidad'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Nombre</Label>
-              <Input
-                id='name'
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder='Nombre'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='lastname'>Apellidos</Label>
-              <Input
-                id='lastname'
-                value={newLastname}
-                onChange={(e) => setNewLastname(e.target.value)}
-                placeholder='Apellidos'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder='correo@ejemplo.com'
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={closeAddAuthorModal}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleAddAuthor}
-              className='bg-purple-600 hover:bg-purple-700'>
-              Añadir autor
-            </Button>
-          </DialogFooter>
+
+          <AuthorInvitation
+            bookId={bookId}
+            onAuthorAdded={() => {
+              closeAddAuthorModal();
+              // Refresh authors list
+              fetch(`/books/${bookId}/authors`)
+                .then((res) => res.json())
+                .then((data) => {
+                  setAuthors(
+                    data.map(
+                      (author: {
+                        id: number;
+                        dni: string;
+                        fullName: string;
+                        email: string;
+                      }) => ({
+                        id: author.id,
+                        dni: author.dni,
+                        fullName: author.fullName,
+                        email: author.email,
+                        status: "Pendiente" as Author["status"],
+                      })
+                    )
+                  );
+                })
+                .catch((err) =>
+                  console.error("Error refreshing authors:", err)
+                );
+            }}
+            onCancel={closeAddAuthorModal}
+          />
         </DialogContent>
       </Dialog>
     </div>

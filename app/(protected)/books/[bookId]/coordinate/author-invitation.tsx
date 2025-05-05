@@ -28,62 +28,63 @@ export default function AuthorInvitation({
   const { user } = useUser();
   const currentUserId = user?.id;
 
-  // Listado y filtro
+  // API root
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
+
+  // 1️⃣ All users for search
   const [allUsers, setAllUsers] = useState<Author[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
-  // Formulario manual
+  // 2️⃣ Manual form
   const [dniManual, setDniManual] = useState("");
+  const [emailManual, setEmailManual] = useState("");
   const [firstNameManual, setFirstNameManual] = useState("");
   const [lastNameManual, setLastNameManual] = useState("");
-  const [emailManual, setEmailManual] = useState("");
-  const [manualLoading, setManualLoading] = useState(false);
+  const [isManualLoading, setIsManualLoading] = useState(false);
 
-  // 1️⃣ Carga inicial y mapeo, excluyendo al usuario actual
+  // Load user list once
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      setError(null);
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      const token = localStorage.getItem("token");
+    async function loadUsers() {
+      setIsLoadingUsers(true);
+      setUsersError(null);
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch(`${baseUrl}/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Error al obtener usuarios");
         const raw: any[] = await res.json();
-        const mapped: Author[] = raw
+        const mapped = raw
           .map((u) => ({
             id: u.id,
             dni: u.id,
-            fullName: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(),
+            fullName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
             email: u.email,
           }))
           .filter((u) => u.id !== currentUserId);
         setAllUsers(mapped);
       } catch (err) {
         console.error(err);
-        setError("No se pudieron cargar los usuarios");
+        setUsersError("No se pudieron cargar los usuarios");
       } finally {
-        setIsLoading(false);
+        setIsLoadingUsers(false);
       }
-    };
-    fetchUsers();
-  }, [currentUserId]);
+    }
+    loadUsers();
+  }, [baseUrl, currentUserId]);
 
-  // 2️⃣ Filtrar por fullName, sin incluir al usuario actual
+  // 3️⃣ Filtered list
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return allUsers.filter((u) => u.fullName.toLowerCase().includes(term));
   }, [allUsers, searchTerm]);
 
-  // 3️⃣ Invitar usuario existente
+  // 4️⃣ Invite existing
   const inviteExisting = async (userId: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const token = localStorage.getItem("token");
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${baseUrl}/books/${bookId}/authors`, {
         method: "POST",
         headers: {
@@ -100,17 +101,17 @@ export default function AuthorInvitation({
     }
   };
 
-  // 4️⃣ Crear manualmente y añadir
+  // 5️⃣ Create & invite manual
   const handleManualAdd = async () => {
-    if (!dniManual || !firstNameManual || !lastNameManual || !emailManual) {
-      alert("Completa todos los campos del formulario manual.");
+    if (!dniManual || !emailManual || !firstNameManual || !lastNameManual) {
+      alert("Completa todos los campos del formulario.");
       return;
     }
-    setManualLoading(true);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const token = localStorage.getItem("token");
+    setIsManualLoading(true);
     try {
-      // Crear usuario
+      const token = localStorage.getItem("token");
+
+      // Create user
       const resCreate = await fetch(`${baseUrl}/users`, {
         method: "POST",
         headers: {
@@ -129,7 +130,8 @@ export default function AuthorInvitation({
         const text = await resCreate.text();
         throw new Error(`Error creando usuario: ${text}`);
       }
-      // Añadir coautor
+
+      // Invite to book
       const resInvite = await fetch(`${baseUrl}/books/${bookId}/authors`, {
         method: "POST",
         headers: {
@@ -141,22 +143,22 @@ export default function AuthorInvitation({
       if (!resInvite.ok) throw new Error("Error añadiendo coautor");
 
       onAuthorAdded();
-      // Limpiar form
+      // clear form
       setDniManual("");
+      setEmailManual("");
       setFirstNameManual("");
       setLastNameManual("");
-      setEmailManual("");
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Error al añadir autor manual.");
     } finally {
-      setManualLoading(false);
+      setIsManualLoading(false);
     }
   };
 
   return (
     <div className='space-y-6'>
-      {/* Formulario manual */}
+      {/* Manual entry */}
       <div className='p-4 bg-gray-50 rounded space-y-2'>
         <h4 className='font-semibold'>Crear autor manualmente</h4>
         <div className='grid grid-cols-2 gap-2'>
@@ -167,6 +169,7 @@ export default function AuthorInvitation({
           />
           <Input
             placeholder='Email'
+            type='email'
             value={emailManual}
             onChange={(e) => setEmailManual(e.target.value)}
           />
@@ -183,13 +186,13 @@ export default function AuthorInvitation({
         </div>
         <Button
           onClick={handleManualAdd}
-          disabled={manualLoading}
+          disabled={isManualLoading}
           className='mt-2'>
-          {manualLoading ? "Creando..." : "Crear y añadir"}
+          {isManualLoading ? "Creando..." : "Crear y añadir"}
         </Button>
       </div>
 
-      {/* Buscador de existentes */}
+      {/* Search existing */}
       <Input
         placeholder='Filtrar por nombre...'
         value={searchTerm}
@@ -197,9 +200,9 @@ export default function AuthorInvitation({
         className='w-full'
       />
 
-      {error && <p className='text-red-500'>{error}</p>}
+      {usersError && <p className='text-red-500'>{usersError}</p>}
 
-      {isLoading ? (
+      {isLoadingUsers ? (
         <p>Cargando usuarios...</p>
       ) : (
         <Card>

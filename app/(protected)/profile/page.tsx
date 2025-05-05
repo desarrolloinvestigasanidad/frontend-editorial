@@ -317,7 +317,7 @@ export default function ProfilePage() {
                     onClick={() => setActiveTab("personal")}>
                     Información Personal
                   </button>
-                  <button
+                  {/* <button
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       activeTab === "publications"
                         ? "bg-purple-100 text-purple-800"
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                     }`}
                     onClick={() => setActiveTab("payments")}>
                     Mis Pagos
-                  </button>
+                  </button> */}
                 </div>
                 {activeTab === "personal" && (
                   <div className='space-y-6'>

@@ -192,7 +192,7 @@ export default function MyBookChaptersPage() {
                   )}
                   <div className='flex justify-center'>
                     <Link
-                      href={`/editions/${chapter.editionId}/books/${chapter.bookId}/chapters/${chapter.id}`}>
+                      href={`/books/${chapter.bookId}/my-chapters/${chapter.id}`}>
                       <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
                         Ver Detalles
                         <ArrowRight className='ml-2 h-4 w-4' />

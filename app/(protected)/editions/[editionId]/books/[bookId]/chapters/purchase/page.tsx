@@ -4,9 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import ChapterSelection from "@/components/ChapterSelection";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import RegulationsModal from "@/components/RegulationsModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, BookOpen } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,6 +22,7 @@ export default function PurchaseChaptersPage() {
   const [hasUser, setHasUser] = useState(false);
   const [totalPurchased, setTotalPurchased] = useState(0);
   const [bookTitle, setBookTitle] = useState("");
+  const [editionName, setEditionName] = useState("");
   const [regulationsAccepted, setRegulationsAccepted] = useState(false);
 
   // 1) Track whether we actually have a user
@@ -49,24 +49,34 @@ export default function PurchaseChaptersPage() {
     if (hasUser) fetchPurchasedChapters();
   }, [hasUser, fetchPurchasedChapters]);
 
-  // 3) Fetch the book’s title
-  const fetchBookDetails = useCallback(async () => {
+  // 3) Fetch the book's title and edition details
+  const fetchBookAndEditionDetails = useCallback(async () => {
     if (!editionId || !bookId) return;
     try {
-      const res = await fetch(
+      // Fetch book details
+      const bookRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`
       );
-      if (!res.ok) throw new Error("Error al obtener detalles del libro");
-      const data = await res.json();
-      setBookTitle(data.title);
+      if (!bookRes.ok) throw new Error("Error al obtener detalles del libro");
+      const bookData = await bookRes.json();
+      setBookTitle(bookData.title);
+
+      // Fetch edition details
+      const editionRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`
+      );
+      if (!editionRes.ok)
+        throw new Error("Error al obtener detalles de la edición");
+      const editionData = await editionRes.json();
+      setEditionName(editionData.name);
     } catch (err) {
       console.error(err);
     }
   }, [editionId, bookId]);
 
   useEffect(() => {
-    fetchBookDetails();
-  }, [fetchBookDetails]);
+    fetchBookAndEditionDetails();
+  }, [fetchBookAndEditionDetails]);
 
   // 4) Handle checkout
   const handleSelect = (chaptersToBuy: number, priceToCharge: number) => {
@@ -118,41 +128,30 @@ export default function PurchaseChaptersPage() {
   }
 
   return (
-    <Card className='w-full '>
+    <Card className='w-full'>
       <CardHeader>
-        <CardTitle>Compra de Capítulos</CardTitle>
-        <CardDescription>
-          {bookTitle
-            ? `Libro: ${bookTitle}`
-            : "Seleccione cuántos capítulos comprar"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className='mb-6'>
-          <div className='flex items-center gap-2 mb-4'>
-            <RegulationsModal
-              isAccepted={regulationsAccepted}
-              onAcceptChange={setRegulationsAccepted}
-            />
-            {regulationsAccepted && (
-              <span className='text-sm text-green-600'>
-                ✓ Normativa aceptada
-              </span>
-            )}
+        <div className='flex items-center gap-2'>
+          <BookOpen className='h-5 w-5 text-primary' />
+          <div>
+            <CardTitle>Compra de Capítulos</CardTitle>
+            <CardDescription>
+              {bookTitle
+                ? `Libro: ${bookTitle}`
+                : "Seleccione cuántos capítulos comprar"}
+              {editionName ? ` - Edición: ${editionName}` : ""}
+            </CardDescription>
           </div>
-          {!regulationsAccepted && (
-            <Alert className='mb-4'>
-              <AlertCircle className='h-4 w-4' />
-              <AlertDescription>
-                Debes aceptar la normativa antes de continuar.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
+      </CardHeader>
+
+      <CardContent>
         <ChapterSelection
           purchasedChapters={totalPurchased}
           onSelect={handleSelect}
           disabled={!regulationsAccepted}
+          editionId={Array.isArray(editionId) ? editionId[0] : editionId}
+          isRegulationsAccepted={regulationsAccepted}
+          onRegulationsAcceptChange={setRegulationsAccepted}
         />
       </CardContent>
     </Card>

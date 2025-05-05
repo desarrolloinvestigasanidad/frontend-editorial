@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,142 +9,199 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertCircle, Calendar, Clock, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RegulationsModalProps {
   isAccepted: boolean;
   onAcceptChange: (accepted: boolean) => void;
+  editionId?: string | number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface Edition {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  year: number;
+  cover: string;
+  openDate: string;
+  deadlineChapters: string;
+  publishDate: string;
+  normativa: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function RegulationsModal({
   isAccepted,
   onAcceptChange,
+  editionId,
+  open,
+  onOpenChange,
 }: RegulationsModalProps) {
-  const [open, setOpen] = useState(false);
+  const [edition, setEdition] = useState<Edition | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEdition = async () => {
+      if (!editionId && !open) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const endpoint = editionId
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`
+          : `${process.env.NEXT_PUBLIC_BASE_URL}/editions/current`;
+
+        const response = await fetch(endpoint);
+
+        if (!response.ok) {
+          throw new Error("No se pudo cargar la información de la edición");
+        }
+
+        const data = await response.json();
+        setEdition(data);
+      } catch (err) {
+        console.error("Error al cargar la información de la edición:", err);
+        setError(
+          "No se pudo cargar la normativa. Por favor, inténtalo de nuevo."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEdition();
+  }, [editionId, open]);
+
+  // Función para reemplazar placeholders en la normativa con datos reales
+  const processNormativa = (normativa: string, edition: Edition): string => {
+    if (!normativa) return "";
+
+    // Reemplazar placeholders con datos reales de la edición
+    return normativa
+      .replace(/\[Nombre de la Edición\/Libro\]/g, edition.title)
+      .replace(
+        /\[Fecha límite\]/g,
+        new Date(edition.deadlineChapters).toLocaleDateString()
+      )
+      .replace(
+        /\[Fecha de publicación\]/g,
+        new Date(edition.publishDate).toLocaleDateString()
+      )
+      .replace(
+        /\[FECHA\]/g,
+        new Date(edition.publishDate).toLocaleDateString()
+      );
+  };
+
+  const RegulationsContent = () => {
+    if (loading) {
+      return (
+        <div className='flex flex-col items-center justify-center py-12'>
+          <Loader2 className='h-8 w-8 text-primary animate-spin mb-4' />
+          <p className='text-sm text-muted-foreground'>Cargando normativa...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Alert variant='destructive' className='my-4'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (!edition) {
+      return (
+        <Alert className='my-4'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertDescription>
+            No hay normativa disponible para esta edición.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    // Fechas importantes de la edición
+    const importantDates = [
+      { label: "Apertura", date: edition.openDate },
+      { label: "Fecha límite para capítulos", date: edition.deadlineChapters },
+      { label: "Fecha de publicación", date: edition.publishDate },
+    ];
+
+    return (
+      <>
+        <div className='mb-4'>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-2 mb-4'>
+            {importantDates.map((date, index) => (
+              <div
+                key={index}
+                className='flex items-center gap-2 text-sm border rounded-md p-2 bg-muted/30'>
+                <Calendar className='h-4 w-4 text-primary' />
+                <span className='font-medium'>{date.label}:</span>
+                <span>{new Date(date.date).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className='text-xs text-muted-foreground flex items-center gap-1 mb-4'>
+            <Clock className='h-3 w-3' />
+            Última actualización:{" "}
+            {new Date(edition.updatedAt).toLocaleDateString()}
+          </div>
+        </div>
+
+        <ScrollArea className='h-[400px] pr-4'>
+          <div
+            className='prose prose-sm max-w-none'
+            dangerouslySetInnerHTML={{
+              __html: processNormativa(edition.normativa, edition),
+            }}
+          />
+        </ScrollArea>
+      </>
+    );
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant='outline'>Leer Normativa de Publicación</Button>
-      </DialogTrigger>
-      <DialogContent className='sm:max-w-[600px]'>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className='sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>
-            Normativa de Publicación - Edición de Libros de Investiga Sanidad
+            {edition?.title || "Normativa de Publicación"}
           </DialogTitle>
           <DialogDescription>
-            Por favor, lee atentamente la normativa antes de continuar con la
-            compra de capítulos.
+            {edition?.description ||
+              "Por favor, lee atentamente la normativa antes de continuar con la compra de capítulos."}
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className='h-[400px] pr-4'>
-          <div className='space-y-4 text-sm'>
-            <p>Estimado/a autor/a,</p>
-            <p>
-              Te damos la bienvenida a la [Nombre de la Edición/Libro] de
-              Investiga Sanidad. A continuación, te detallamos las normativas y
-              fechas importantes para el envío de tus capítulos, la publicación
-              de la edición y la descarga de los libros y certificados:
-            </p>
-
-            <h3 className='text-base font-medium'>1. Envío de Capítulos</h3>
-            <p>
-              El plazo para el envío de capítulos es [Fecha límite]. Recuerda
-              que cada capítulo debe ajustarse a las siguientes especificaciones
-              para poder ser considerado para la publicación:
-            </p>
-            <ul className='list-disc pl-5 space-y-1'>
-              <li>
-                Cada capítulo debe tener una extensión mínima y máxima en cada
-                uno de los apartados.
-              </li>
-              <li>
-                Si tu capítulo no cumple con las especificaciones o con la
-                calidad de contenido establecido por el comité científico de la
-                editorial, será rechazado y lo devolveremos para su corrección
-                antes de su publicación, siempre y cuando esté dentro de plazo.
-              </li>
-            </ul>
-
-            <h3 className='text-base font-medium'>2. Revisión y Publicación</h3>
-            <ul className='list-disc pl-5 space-y-1'>
-              <li>
-                Los capítulos serán evaluados por nuestro equipo editorial, y
-                los autores recibirán notificaciones sobre la aceptación o
-                correcciones necesarias.
-              </li>
-              <li>
-                La fecha de publicación oficial de la edición es el [Fecha de
-                publicación]. A partir de esta fecha, la edición estará
-                disponible para su descarga.
-              </li>
-            </ul>
-
-            <h3 className='text-base font-medium'>
-              3. Descarga de Libros y Certificados
-            </h3>
-            <p>
-              Después de la publicación, los autores y coautores podrán
-              descargar los siguientes recursos:
-            </p>
-            <ul className='list-disc pl-5 space-y-1'>
-              <li>
-                Libro Completo: Una vez publicado el libro, estará disponible
-                para su descarga completa en [Fecha de publicación].
-              </li>
-              <li>
-                Certificados de Participación: Los certificados estarán
-                disponibles para descarga desde [Fecha de publicación] y hasta
-                [Fecha límite de descarga].
-              </li>
-            </ul>
-
-            <h3 className='text-base font-medium'>
-              4. Términos y Condiciones Adicionales
-            </h3>
-            <ul className='list-disc pl-5 space-y-1'>
-              <li>
-                Derechos de autor: Todos los autores deberán ceder los derechos
-                de publicación a Investiga Sanidad al momento de enviar su
-                capítulo para la publicación y aceptar que cumplen con la Ley de
-                Propiedad Intelectual de sus trabajos.
-              </li>
-              <li>
-                Correcciones Post-Publicación: Después de la publicación final,
-                no se aceptarán correcciones o modificaciones en los capítulos.
-              </li>
-            </ul>
-
-            <h3 className='text-base font-medium'>Fechas importantes:</h3>
-            <ul className='list-disc pl-5 space-y-1'>
-              <li>Envío de capítulos: [FECHA]</li>
-              <li>Revisión y corrección de trabajos: [FECHA]</li>
-              <li>
-                Publicación de la edición y descarga de certificados: [FECHA]
-              </li>
-            </ul>
-
-            <p className='font-medium'>El equipo de Investiga Sanidad</p>
-          </div>
-        </ScrollArea>
+        <RegulationsContent />
         <DialogFooter className='flex flex-col sm:flex-row gap-2 sm:gap-0'>
           <div className='flex items-center space-x-2'>
             <Checkbox
-              id='accept-regulations'
+              id='accept-regulations-modal'
               checked={isAccepted}
               onCheckedChange={(checked) => {
                 onAcceptChange(checked === true);
               }}
             />
-            <Label htmlFor='accept-regulations'>
+            <Label htmlFor='accept-regulations-modal'>
               He leído y acepto la normativa de publicación
             </Label>
           </div>
-          <Button onClick={() => setOpen(false)}>Cerrar</Button>
+          <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

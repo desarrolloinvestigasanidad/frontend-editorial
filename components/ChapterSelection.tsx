@@ -4,6 +4,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import RegulationsModal from "@/components/RegulationsModal";
 
 // Tabla de precios (en euros) para la compra de capítulos
 const priceTable: { [key: number]: number } = {
@@ -21,15 +24,23 @@ interface ChapterSelectionProps {
   purchasedChapters: number; // ya comprados
   onSelect: (chaptersToBuy: number, priceToCharge: number) => void;
   disabled?: boolean;
+  editionId?: string | number;
+  isRegulationsAccepted: boolean;
+  onRegulationsAcceptChange: (accepted: boolean) => void;
 }
 
 export default function ChapterSelection({
   purchasedChapters,
   onSelect,
+  disabled = false,
+  editionId,
+  isRegulationsAccepted,
+  onRegulationsAcceptChange,
 }: ChapterSelectionProps) {
   const maxChapters = 8;
   const remaining = maxChapters - purchasedChapters;
   const options = Array.from({ length: remaining }, (_, i) => i + 1);
+  const [regulationsModalOpen, setRegulationsModalOpen] = useState(false);
 
   const calculatePrice = (option: number): number => {
     const totalCount = purchasedChapters + option;
@@ -71,10 +82,39 @@ export default function ChapterSelection({
             Compra de Capítulos
           </h2>
           <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mb-4'></div>
-          <p className='text-gray-600 max-w-2xl mx-auto'>
+          <p className='text-gray-600 max-w-2xl mx-auto mb-4'>
             Selecciona cuántas participaciones quieres comprar para esta
             edición.
           </p>
+
+          {/* Checkbox de aceptación de normativa */}
+          <div className='flex items-center justify-center space-x-2 mb-6'>
+            <Checkbox
+              id='accept-regulations'
+              checked={isRegulationsAccepted}
+              onCheckedChange={(checked) => {
+                onRegulationsAcceptChange(checked === true);
+              }}
+            />
+            <Label htmlFor='accept-regulations' className='text-sm'>
+              He leído y acepto la{" "}
+              <button
+                onClick={() => setRegulationsModalOpen(true)}
+                className='text-purple-600 underline hover:text-purple-800 font-medium'>
+                normativa
+              </button>{" "}
+              de la edición actual
+            </Label>
+          </div>
+
+          {/* Modal de normativa */}
+          <RegulationsModal
+            isAccepted={isRegulationsAccepted}
+            onAcceptChange={onRegulationsAcceptChange}
+            editionId={editionId}
+            open={regulationsModalOpen}
+            onOpenChange={setRegulationsModalOpen}
+          />
         </motion.div>
 
         <motion.div
@@ -107,6 +147,7 @@ export default function ChapterSelection({
 
                 <Button
                   onClick={() => onSelect(option, price)}
+                  disabled={disabled || !isRegulationsAccepted}
                   className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white'>
                   Pagar {option} {option === 1 ? "Capítulo" : "Capítulos"}
                 </Button>

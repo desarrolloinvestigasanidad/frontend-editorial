@@ -715,16 +715,18 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
   };
 
   // Manejo de validaciones de longitud
-  const MIN_INTRO = 200;
-  const MAX_INTRO = 1100;
-  const MIN_OBJ = 200;
-  const MAX_OBJ = 1100;
-  const MIN_RES = 200;
-  const MAX_RES = 2500;
-  const MIN_DISC = 100;
-  const MAX_DISC = 1100;
-  const MIN_BIB = 100;
-  const MAX_BIB = 1100;
+  const MIN_INTRO = 50;
+  const MAX_INTRO = 150;
+  const MIN_OBJ = 50;
+  const MAX_OBJ = 150;
+  const MIN_METH = 30;
+  const MAX_METH = 100;
+  const MIN_RES = 50;
+  const MAX_RES = 250;
+  const MIN_DISC = 30;
+  const MAX_DISC = 150;
+  const MIN_BIB = 30;
+  const MAX_BIB = 150;
 
   // Funciones para navegar entre pasos
   const handleNext = () => {
@@ -744,7 +746,7 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
       case "Objetivos":
         return { text: objectives, min: MIN_OBJ, max: MAX_OBJ };
       case "Metodología":
-        return { text: methodology, min: MIN_OBJ, max: MAX_OBJ };
+        return { text: methodology, min: MIN_METH, max: MAX_METH };
       case "Resultados":
         return { text: results, min: MIN_RES, max: MAX_RES };
       case "Discusión-Conclusión":
@@ -912,8 +914,8 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
               )}
               <WordCountProgress
                 text={methodology}
-                min={MIN_OBJ}
-                max={MAX_OBJ}
+                min={MIN_METH}
+                max={MAX_METH}
               />
             </TabsContent>
 
@@ -1106,8 +1108,8 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
             {!focusMode && (
               <WordCountProgress
                 text={methodology}
-                min={MIN_OBJ}
-                max={MAX_OBJ}
+                min={MIN_METH}
+                max={MAX_METH}
               />
             )}
           </>
@@ -1251,41 +1253,57 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
     }
   }, [focusMode]);
 
+  // Reemplazar la función handleSubmit con esta versión corregida que cuenta palabras en lugar de caracteres
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // Reseteamos errores
     const currentErrors: string[] = [];
 
+    // Función auxiliar para contar palabras
+    const countWords = (text: string) => {
+      return text.trim() === ""
+        ? 0
+        : text.trim().split(/\s+/).filter(Boolean).length;
+    };
+
+    // Validaciones de conteo de palabras
+    const introWords = countWords(introduction);
+    const objWords = countWords(objectives);
+    const methWords = countWords(methodology);
+    const resWords = countWords(results);
+    const discWords = countWords(discussion);
+    const bibWords = countWords(bibliography);
+
     // Validaciones simples (mínimos y máximos)
-    if (introduction.length < MIN_INTRO || introduction.length > MAX_INTRO) {
+    if (introWords < MIN_INTRO || introWords > MAX_INTRO) {
       currentErrors.push(
-        `La Introducción debe tener entre ${MIN_INTRO} y ${MAX_INTRO} caracteres`
+        `La Introducción debe tener entre ${MIN_INTRO} y ${MAX_INTRO} palabras`
       );
     }
-    if (objectives.length < MIN_OBJ || objectives.length > MAX_OBJ) {
+    if (objWords < MIN_OBJ || objWords > MAX_OBJ) {
       currentErrors.push(
-        `Los Objetivos deben tener entre ${MIN_OBJ} y ${MAX_OBJ} caracteres`
+        `Los Objetivos deben tener entre ${MIN_OBJ} y ${MAX_OBJ} palabras`
       );
     }
-    if (methodology.length < MIN_OBJ || methodology.length > MAX_OBJ) {
+    if (methWords < MIN_METH || methWords > MAX_METH) {
       currentErrors.push(
-        `La Metodología debe tener entre ${MIN_OBJ} y ${MAX_OBJ} caracteres`
+        `La Metodología debe tener entre ${MIN_METH} y ${MAX_METH} palabras`
       );
     }
-    if (results.length < MIN_RES || results.length > MAX_RES) {
+    if (resWords < MIN_RES || resWords > MAX_RES) {
       currentErrors.push(
-        `Los Resultados deben tener entre ${MIN_RES} y ${MAX_RES} caracteres`
+        `Los Resultados deben tener entre ${MIN_RES} y ${MAX_RES} palabras`
       );
     }
-    if (discussion.length < MIN_DISC || discussion.length > MAX_DISC) {
+    if (discWords < MIN_DISC || discWords > MAX_DISC) {
       currentErrors.push(
-        `La Discusión-Conclusión debe tener entre ${MIN_DISC} y ${MAX_DISC} caracteres`
+        `La Discusión-Conclusión debe tener entre ${MIN_DISC} y ${MAX_DISC} palabras`
       );
     }
-    if (bibliography.length < MIN_BIB || bibliography.length > MAX_BIB) {
+    if (bibWords < MIN_BIB || bibWords > MAX_BIB) {
       currentErrors.push(
-        `La Bibliografía debe tener entre ${MIN_BIB} y ${MAX_BIB} caracteres`
+        `La Bibliografía debe tener entre ${MIN_BIB} y ${MAX_BIB} palabras`
       );
     }
     if (!acceptConfidentiality) {
@@ -1324,7 +1342,7 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
 
       // Aquí hacemos el POST a la API para capítulos propios
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/chapters`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/chapters`,
         {
           method: "POST",
           headers: {

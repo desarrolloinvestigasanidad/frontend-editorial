@@ -48,8 +48,8 @@ export default function OwnChaptersPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pendiente" | "aprobado" | "rechazado"
   >("all");
-  const [editionFilter, setEditionFilter] = useState<
-    "all" | "edicion" | "personal"
+  const [bookTypeFilter, setBookTypeFilter] = useState<
+    "all" | "personalizado" | "edicion"
   >("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
@@ -82,11 +82,11 @@ export default function OwnChaptersPage() {
         statusFilter === "all" ? true : ch.status.toLowerCase() === statusFilter
       )
       .filter((ch) => {
-        if (editionFilter === "all") return true;
-        if (editionFilter === "edicion") return ch.editionId !== null;
+        if (bookTypeFilter === "all") return true;
+        if (bookTypeFilter === "edicion") return ch.editionId !== null;
         return ch.editionId === null;
       });
-  }, [chapters, searchTerm, statusFilter, editionFilter]);
+  }, [chapters, searchTerm, statusFilter, bookTypeFilter]);
 
   /* --------------------------- helpers ----------------------------- */
   const btnClass = (active: boolean) =>
@@ -150,8 +150,8 @@ export default function OwnChaptersPage() {
           setSearchTerm={setSearchTerm}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
-          editionFilter={editionFilter}
-          setEditionFilter={setEditionFilter}
+          bookTypeFilter={bookTypeFilter}
+          setBookTypeFilter={setBookTypeFilter}
           btnClass={btnClass}
         />
 
@@ -220,16 +220,16 @@ function SearchAndFilter({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
-  editionFilter,
-  setEditionFilter,
+  bookTypeFilter,
+  setBookTypeFilter,
   btnClass,
 }: {
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   statusFilter: "all" | "pendiente" | "aprobado" | "rechazado";
   setStatusFilter: (v: "all" | "pendiente" | "aprobado" | "rechazado") => void;
-  editionFilter: "all" | "edicion" | "personal";
-  setEditionFilter: (v: "all" | "edicion" | "personal") => void;
+  bookTypeFilter: "all" | "personalizado" | "edicion";
+  setBookTypeFilter: (v: "all" | "personalizado" | "edicion") => void;
   btnClass: (active: boolean) => string;
 }) {
   return (
@@ -270,19 +270,18 @@ function SearchAndFilter({
           ))}
         </div>
 
-        {/* Filtro de Origen */}
-        <div className='flex items-center space-x-2'>
-          <span className='whitespace-nowrap font-medium'>Origen:</span>
+        {/* Filtro de Tipo de Libro */}
+        <div>
           <Select
-            value={editionFilter}
-            onValueChange={(val) => setEditionFilter(val as any)}>
-            <SelectTrigger className='w-32'>
-              <SelectValue placeholder='Todos' />
+            value={bookTypeFilter}
+            onValueChange={(val) => setBookTypeFilter(val as any)}>
+            <SelectTrigger className='w-40'>
+              <SelectValue placeholder='Todos los libros' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all'>Todos</SelectItem>
-              <SelectItem value='edicion'>Edición</SelectItem>
-              <SelectItem value='personal'>Personal</SelectItem>
+              <SelectItem value='all'>Todos los libros</SelectItem>
+              <SelectItem value='personalizado'>Libro personalizado</SelectItem>
+              <SelectItem value='edicion'>Libro de edición</SelectItem>
             </SelectContent>
           </Select>
         </div>

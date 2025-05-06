@@ -13,6 +13,13 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import Link from "next/link";
 import { useUser } from "@/context/UserContext";
 
@@ -22,7 +29,7 @@ import { useUser } from "@/context/UserContext";
 export type Chapter = {
   id: string;
   title: string;
-  status: string; // "en revisión", "aprobado", "rechazado"
+  status: string; // "pendiente", "aprobado", "rechazado"
   createdAt: string;
   editionId: string | null;
   bookId: string;
@@ -41,25 +48,30 @@ export default function OwnChaptersPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pendiente" | "aprobado" | "rechazado"
   >("all");
+  const [editionFilter, setEditionFilter] = useState<
+    "all" | "edicion" | "personal"
+  >("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
   /* ----------------------------- fetch ----------------------------- */
   useEffect(() => {
     async function fetchChapters() {
       try {
-        let url = `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?authorId=${userId}`;
+        const url = `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?authorId=${userId}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Error al obtener los capítulos");
         const data: Chapter[] = await res.json();
-        // Solo capítulos de libros personalizados (sin editionId)
-        setChapters(data.filter((ch) => ch.editionId === null));
+        setChapters(data);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
-    if (userId) fetchChapters();
+    if (userId) {
+      setLoading(true);
+      fetchChapters();
+    }
   }, [userId]);
 
   /* --------------------------- filters ----------------------------- */
@@ -68,8 +80,13 @@ export default function OwnChaptersPage() {
       .filter((ch) => ch.title.toLowerCase().includes(searchTerm.toLowerCase()))
       .filter((ch) =>
         statusFilter === "all" ? true : ch.status.toLowerCase() === statusFilter
-      );
-  }, [chapters, searchTerm, statusFilter]);
+      )
+      .filter((ch) => {
+        if (editionFilter === "all") return true;
+        if (editionFilter === "edicion") return ch.editionId !== null;
+        return ch.editionId === null;
+      });
+  }, [chapters, searchTerm, statusFilter, editionFilter]);
 
   /* --------------------------- helpers ----------------------------- */
   const btnClass = (active: boolean) =>
@@ -110,7 +127,7 @@ export default function OwnChaptersPage() {
     return (
       <div className='flex items-center justify-center h-64'>
         <div className='relative'>
-          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin'></div>
+          <div className='h-16 w-16 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin' />
           <div className='absolute inset-0 flex items-center justify-center'>
             <Clock className='h-6 w-6 text-purple-500' />
           </div>
@@ -133,6 +150,8 @@ export default function OwnChaptersPage() {
           setSearchTerm={setSearchTerm}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          editionFilter={editionFilter}
+          setEditionFilter={setEditionFilter}
           btnClass={btnClass}
         />
 
@@ -160,9 +179,9 @@ export default function OwnChaptersPage() {
 function BackgroundBlobs() {
   return (
     <div className='absolute inset-0 z-0'>
-      <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
-      <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
-      <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
+      <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white' />
+      <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob' />
+      <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000' />
     </div>
   );
 }
@@ -189,7 +208,7 @@ const TitleSection = () => (
     <h2 className='text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900 mb-4'>
       Capítulos Personalizados
     </h2>
-    <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mb-4'></div>
+    <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mb-4' />
     <p className='text-gray-600 max-w-2xl mx-auto'>
       Gestiona aquí los capítulos que has enviado
     </p>
@@ -201,12 +220,16 @@ function SearchAndFilter({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  editionFilter,
+  setEditionFilter,
   btnClass,
 }: {
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   statusFilter: "all" | "pendiente" | "aprobado" | "rechazado";
   setStatusFilter: (v: "all" | "pendiente" | "aprobado" | "rechazado") => void;
+  editionFilter: "all" | "edicion" | "personal";
+  setEditionFilter: (v: "all" | "edicion" | "personal") => void;
   btnClass: (active: boolean) => string;
 }) {
   return (
@@ -215,33 +238,55 @@ function SearchAndFilter({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className='relative w-full md:w-1/2 mx-auto'>
-        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
-        <Input
-          placeholder='Buscar capítulos...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='pl-10 border-gray-200 focus:border-purple-300 focus:ring-purple-200'
-        />
-      </motion.div>
+        className='flex flex-col md:flex-row md:items-center md:justify-center md:space-x-6'>
+        {/* Buscador */}
+        <div className='relative w-full md:w-1/3 mb-4 md:mb-0'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+          <Input
+            placeholder='Buscar capítulos...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='pl-10 border-gray-200 focus:border-purple-300 focus:ring-purple-200'
+          />
+        </div>
 
-      <div className='flex justify-center gap-2'>
-        {(
-          [
-            { key: "all", label: "Todos" },
-            { key: "pendiente", label: "Pendiente" },
-            { key: "aprobado", label: "Aprobado" },
-            { key: "rechazado", label: "Rechazado" },
-          ] as const
-        ).map(({ key, label }) => (
-          <button
-            key={key}
-            className={btnClass(statusFilter === key)}
-            onClick={() => setStatusFilter(key)}>
-            {label}
-          </button>
-        ))}
-      </div>
+        {/* Filtro de Estado */}
+        <div className='flex items-center space-x-2'>
+          <span className='whitespace-nowrap font-medium'>Estado:</span>
+          {(
+            [
+              { key: "all", label: "Todos" },
+              { key: "pendiente", label: "Pendiente" },
+              { key: "aprobado", label: "Aprobado" },
+              { key: "rechazado", label: "Rechazado" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              className={btnClass(statusFilter === key)}
+              onClick={() => setStatusFilter(key)}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtro de Origen */}
+        <div className='flex items-center space-x-2'>
+          <span className='whitespace-nowrap font-medium'>Origen:</span>
+          <Select
+            value={editionFilter}
+            onValueChange={(val) => setEditionFilter(val as any)}>
+            <SelectTrigger className='w-32'>
+              <SelectValue placeholder='Todos' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todos</SelectItem>
+              <SelectItem value='edicion'>Edición</SelectItem>
+              <SelectItem value='personal'>Personal</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </motion.div>
     </div>
   );
 }

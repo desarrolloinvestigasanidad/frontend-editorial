@@ -28,6 +28,13 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
 
+  interface Chapter {
+    id: number;
+    title: string;
+    status: "aprobado" | "pendiente" | "rechazado";
+  }
+
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   useEffect(() => {
     const checkIfCreator = async () => {
       try {
@@ -50,6 +57,14 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
 
         const fetched: Book = await res.json();
         setBook(fetched);
+
+        const resChapters = await fetch(`${base}/books/${bookId}/chapters`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (resChapters.ok) {
+          const data: Chapter[] = await resChapters.json();
+          setChapters(data);
+        }
 
         const amAuthor = fetched.authorId === userId;
 
@@ -90,6 +105,8 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
       transition: { duration: 0.5 },
     },
   };
+
+  const allChaptersApproved = chapters.every((ch) => ch.status === "aprobado");
 
   return (
     <div className='relative overflow-hidden py-8'>
@@ -270,7 +287,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           )}
 
           {/* Cerrar libro - Solo visible para el creador */}
-          {isCreator && book?.status === "desarrollo" && (
+          {isCreator && allChaptersApproved && (
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}

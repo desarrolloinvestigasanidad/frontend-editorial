@@ -55,7 +55,7 @@ interface Author {
 interface Chapter {
   id: number;
   title: string;
-  status: "Aceptado" | "Pendiente" | "Rechazado";
+  status: "aprobado" | "pendiente" | "rechazado";
   submissionDate: string;
 }
 
@@ -76,6 +76,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [bookTitle, setBookTitle] = useState("");
   const [authors, setAuthors] = useState<Author[]>([]);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+
+  const allChaptersApproved = chapters.every((ch) => ch.status === "aprobado");
+
   const [showAddAuthorModal, setShowAddAuthorModal] = useState(false);
   const [newDni, setNewDni] = useState("");
   const [newName, setNewName] = useState("");
@@ -442,14 +445,19 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 </button>
 
                 <button
-                  className={`flex items-center gap-2 text-left w-full p-3 rounded-lg transition-colors ${
-                    activeSection === "close"
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
-                  }`}
-                  onClick={() => setActiveSection("close")}>
+                  disabled={!allChaptersApproved}
+                  className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
+    ${!allChaptersApproved ? "opacity-50 cursor-not-allowed" : ""}
+    ${
+      activeSection === "close"
+        ? "bg-purple-100 text-purple-700"
+        : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
+    }`}
+                  onClick={() =>
+                    allChaptersApproved && setActiveSection("close")
+                  }>
                   <Lock className='h-5 w-5' />
-                  <span className='font-medium'>Cerrar libro</span>
+                  <span>Cerrar libro</span>
                 </button>
               </CardContent>
             </Card>
@@ -730,9 +738,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                     <div className='col-span-2 p-3 border-r'>
                       <Badge
                         className={
-                          chapter.status === "Aceptado"
+                          chapter.status === "aprobado"
                             ? "bg-green-100 text-green-800 border-green-200"
-                            : chapter.status === "Pendiente"
+                            : chapter.status === "pendiente"
                             ? "bg-yellow-100 text-yellow-800 border-yellow-200"
                             : "bg-red-100 text-red-800 border-red-200"
                         }>
@@ -809,7 +817,18 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             final.
           </p>
         </div>
-
+        {!allChaptersApproved && (
+          <Alert className='mb-4 bg-red-50 border-red-200'>
+            <AlertCircle className='h-4 w-4 text-red-600' />
+            <AlertTitle className='text-red-800'>
+              Capítulos pendientes
+            </AlertTitle>
+            <AlertDescription className='text-red-700'>
+              No puedes cerrar el libro hasta que todos los capítulos estén en
+              estado <strong>Aceptado</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
         <Alert className='bg-yellow-50 border-yellow-200'>
           <AlertCircle className='h-4 w-4 text-yellow-600' />
           <AlertTitle className='text-yellow-800'>Importante</AlertTitle>
@@ -831,7 +850,12 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
           <Button
             variant='destructive'
             onClick={handleCloseBook}
-            className='bg-red-600 hover:bg-red-700'>
+            disabled={!allChaptersApproved}
+            className={`bg-red-600 ${
+              !allChaptersApproved
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-red-700"
+            }`}>
             <Lock className='h-4 w-4 mr-2' />
             Cerrar libro definitivamente
           </Button>

@@ -14,6 +14,8 @@ import {
   Eye,
   Edit,
   AlertCircle,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -46,6 +48,8 @@ interface Author {
   lastName: string;
   email: string;
   status: "Validado" | "Pendiente" | "Rechazado";
+  order?: number;
+  isMainAuthor?: boolean;
 }
 
 interface Chapter {
@@ -104,6 +108,14 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
         });
         if (!resAuthors.ok) throw new Error("Error al obtener autores");
         const authorsData: Author[] = await resAuthors.json();
+
+        // Sort authors - main author first, then by order
+        authorsData.sort((a, b) => {
+          if (a.isMainAuthor) return -1;
+          if (b.isMainAuthor) return 1;
+          return (a.order || 0) - (b.order || 0);
+        });
+
         setAuthors(authorsData);
 
         // 3. Obtener capítulos
@@ -201,6 +213,69 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
     } catch (err) {
       console.error(err);
       alert("No se pudo eliminar el autor.");
+    }
+  };
+
+  const handleReorderAuthor = async (
+    userId: number,
+    direction: "up" | "down"
+  ) => {
+    const authorIndex = authors.findIndex((a) => a.id === userId);
+    if (authorIndex === -1) return;
+
+    // Don't allow reordering the main author
+    if (authors[authorIndex].isMainAuthor) return;
+
+    // Calculate new positions
+    const currentOrder = authors[authorIndex].order || authorIndex;
+    const newOrder = direction === "up" ? currentOrder - 1 : currentOrder + 1;
+
+    // Don't allow moving beyond boundaries
+    if (newOrder < 1 || newOrder >= authors.length) return;
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(
+        `${baseUrl}/books/${bookId}/authors/${userId}/order`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ order: newOrder }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Error actualizando orden");
+
+      // Update local state
+      const newAuthors = [...authors];
+
+      // Find the author that needs to swap positions
+      const swapIndex = newAuthors.findIndex((a) => a.order === newOrder);
+      if (swapIndex !== -1) {
+        newAuthors[swapIndex].order = currentOrder;
+      }
+
+      // Update the current author's order
+      newAuthors[authorIndex].order = newOrder;
+
+      // Sort the authors by order
+      newAuthors.sort((a, b) => {
+        // Main author always first
+        if (a.isMainAuthor) return -1;
+        if (b.isMainAuthor) return 1;
+
+        // Then sort by order
+        return (a.order || 0) - (b.order || 0);
+      });
+
+      setAuthors(newAuthors);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo actualizar el orden del autor.");
     }
   };
 
@@ -528,8 +603,15 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 <div className='col-span-2 p-3 border-r'>{author.id}</div>
                 <div className='col-span-4 p-3 border-r'>
                   {author.firstName + " " + author.lastName}
+                  {author.isMainAuthor && (
+                    <Badge className='ml-2 bg-purple-100 text-purple-800 border-purple-200'>
+                      Autor Principal
+                    </Badge>
+                  )}
                 </div>
-                <div className='col-span-3 p-3 border-r'>{author.email}</div>
+                <div className='col-span-3 p-3 border-r overflow-x-scroll'>
+                  {author.email}
+                </div>
                 <div className='col-span-2 p-3 border-r'>
                   <Badge
                     className={
@@ -542,13 +624,40 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                     {author.status}
                   </Badge>
                 </div>
-                <div className='col-span-1 p-3 flex justify-center'>
+                <div className='col-span-1 p-3 flex justify-center gap-1'>
                   {bookStatus !== "Revisión" && (
-                    <button
-                      onClick={() => handleDeleteAuthor(author.id)}
-                      className='text-red-500 hover:text-red-700 transition-colors'>
-                      <Trash className='h-4 w-4' />
-                    </button>
+                    <>
+                      {!author.isMainAuthor && (
+                        <>
+                          <button
+                            onClick={() => handleReorderAuthor(author.id, "up")}
+                            disabled={idx <= 1} // First co-author can't move up (idx 0 is main author)
+                            className={`text-gray-500 hover:text-gray-700 transition-colors ${
+                              idx <= 1 ? "opacity-30" : ""
+                            }`}>
+                            <ChevronUp className='h-4 w-4' />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleReorderAuthor(author.id, "down")
+                            }
+                            disabled={idx >= authors.length - 1}
+                            className={`text-gray-500 hover:text-gray-700 transition-colors ${
+                              idx >= authors.length - 1 ? "opacity-30" : ""
+                            }`}>
+                            <ChevronDown className='h-4 w-4' />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleDeleteAuthor(author.id)}
+                        disabled={author.isMainAuthor}
+                        className={`text-red-500 hover:text-red-700 transition-colors ${
+                          author.isMainAuthor ? "opacity-30" : ""
+                        }`}>
+                        <Trash className='h-4 w-4' />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

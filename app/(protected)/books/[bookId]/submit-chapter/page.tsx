@@ -36,6 +36,7 @@ import {
   Target,
   Download,
   Eye,
+  UserPlus,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -64,6 +65,7 @@ import {
 } from "@/components/ui/dialog";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import AuthorInvitationDialog from "./author-invitation-dialog";
 
 // Tipos de estudio que se mostrarán en el select
 const STUDY_TYPES = [
@@ -758,6 +760,9 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
     }
   };
 
+  const [chapterId, setChapterId] = useState<string>("");
+  const [showAuthorInvitation, setShowAuthorInvitation] = useState(false);
+
   // useEffect para obtener datos: perfil y detalles del libro
   useEffect(() => {
     const fetchData = async () => {
@@ -1370,10 +1375,19 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
         throw new Error(data.message || "Error al crear el capítulo");
       }
 
+      // Obtener el ID del capítulo de la respuesta
+      const chapterData = await response.json();
+      const chapterId = chapterData.id;
+
+      // Guardar el ID del capítulo en el estado
+      setChapterId(chapterId);
+
+      // Mostrar el diálogo de invitación de coautores
+      setShowAuthorInvitation(true);
+
       setSuccess(true);
-      setTimeout(() => {
-        router.push(`/books/${bookId}`);
-      }, 2000);
+      // No redirigir inmediatamente para permitir la invitación de coautores
+      // La redirección se hará después de cerrar el diálogo de invitación
     } catch (err: any) {
       console.error("Error al enviar el capítulo:", err);
       setError([err.message || "Ocurrió un error al enviar el capítulo"]);
@@ -1414,6 +1428,30 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
             Tu capítulo ha sido enviado correctamente y está pendiente de
             revisión.
           </p>
+
+          {showAuthorInvitation && (
+            <div className='mb-4'>
+              <AuthorInvitationDialog
+                bookId={bookId}
+                chapterId={chapterId}
+                onAuthorAdded={() => {
+                  setShowAuthorInvitation(false);
+                  router.push(`/books/${bookId}`);
+                }}
+                trigger={
+                  <Button className='w-full mb-2 bg-orange-500 hover:bg-orange-600'>
+                    <UserPlus className='h-4 w-4 mr-2' />
+                    Invitar coautores ahora
+                  </Button>
+                }
+              />
+              <p className='text-xs text-muted-foreground mt-1'>
+                Puedes invitar coautores ahora o hacerlo más tarde desde la
+                página del libro
+              </p>
+            </div>
+          )}
+
           <Button
             className='bg-orange-500 hover:bg-orange-600'
             onClick={() => router.push(`/books/${bookId}`)}>
@@ -1448,11 +1486,17 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
           <h1 className='text-2xl font-bold text-orange-600'>
             Envía tu capítulo
           </h1>
-          <Button
-            variant='outline'
-            className='border border-orange-300 text-orange-600 hover:bg-orange-50'>
-            Añadir coautor
-          </Button>
+          <AuthorInvitationDialog
+            bookId={bookId}
+            onAuthorAdded={() => console.log("Coautor añadido")}
+            trigger={
+              <Button
+                variant='outline'
+                className='border border-orange-300 text-orange-600 hover:bg-orange-50'>
+                Añadir coautor
+              </Button>
+            }
+          />
         </header>
 
         {/* Formulario inicial o detallado según la fase */}

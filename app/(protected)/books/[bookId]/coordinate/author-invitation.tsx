@@ -5,13 +5,16 @@ import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Search, User, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Author {
   id: string; // DNI
   dni: string;
   fullName: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 interface AuthorInvitationProps {
@@ -44,6 +47,12 @@ export default function AuthorInvitation({
   const [lastNameManual, setLastNameManual] = useState("");
   const [isManualLoading, setIsManualLoading] = useState(false);
 
+  // 3️⃣ New ID search functionality
+  const [searchId, setSearchId] = useState("");
+  const [isSearchingId, setIsSearchingId] = useState(false);
+  const [foundUser, setFoundUser] = useState<Author | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   // Load user list once
   useEffect(() => {
     async function loadUsers() {
@@ -62,6 +71,8 @@ export default function AuthorInvitation({
             dni: u.id,
             fullName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
             email: u.email,
+            firstName: u.firstName,
+            lastName: u.lastName,
           }))
           .filter((u) => u.id !== currentUserId);
         setAllUsers(mapped);
@@ -148,6 +159,7 @@ export default function AuthorInvitation({
       setEmailManual("");
       setFirstNameManual("");
       setLastNameManual("");
+      setFoundUser(null);
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Error al añadir autor manual.");
@@ -156,87 +168,186 @@ export default function AuthorInvitation({
     }
   };
 
+  // 6️⃣ New function to search user by ID
+  const searchUserById = async () => {
+    if (!searchId.trim()) {
+      alert("Por favor, introduce un DNI para buscar");
+      return;
+    }
+
+    setIsSearchingId(true);
+    setFoundUser(null);
+    setSearchError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${baseUrl}/users/search?term=${searchId.trim()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Error al buscar usuario");
+      }
+
+      const users = await res.json();
+      if (users.length > 0) {
+        // User found, set the found user
+        const user = users[0];
+        setFoundUser(user);
+
+        // Auto-fill the manual form
+        setDniManual(user.id || user.dni);
+        setEmailManual(user.email);
+        setFirstNameManual(
+          user.firstName || (user.fullName ? user.fullName.split(" ")[0] : "")
+        );
+        setLastNameManual(
+          user.lastName ||
+            (user.fullName ? user.fullName.split(" ").slice(1).join(" ") : "")
+        );
+      } else {
+        // User not found, clear the form for manual entry except DNI
+        setDniManual(searchId);
+        setEmailManual("");
+        setFirstNameManual("");
+        setLastNameManual("");
+        setSearchError("Usuario no encontrado. Puedes añadirlo manualmente.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSearchError(err.message || "Error al buscar usuario");
+    } finally {
+      setIsSearchingId(false);
+    }
+  };
+
   return (
     <div className='space-y-6'>
-      {/* Manual entry */}
-      <div className='p-4 bg-gray-50 rounded space-y-2'>
-        <h4 className='font-semibold'>Crear autor manualmente</h4>
-        <div className='grid grid-cols-2 gap-2'>
+      {/* New ID search section */}
+      <div className='p-4 bg-purple-50 rounded-lg border border-purple-100 space-y-3'>
+        <h4 className='font-semibold text-purple-800 flex items-center gap-2'>
+          <Search className='h-4 w-4' />
+          Buscar usuario por DNI
+        </h4>
+        <p className='text-sm text-gray-600'>
+          Primero busca si el usuario ya está registrado en el sistema.
+        </p>
+        <div className='flex gap-2'>
           <Input
-            placeholder='DNI'
-            value={dniManual}
-            onChange={(e) => setDniManual(e.target.value)}
+            placeholder='Introduce DNI'
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            className='border-purple-200 focus:border-purple-300 focus:ring-purple-200'
           />
-          <Input
-            placeholder='Email'
-            type='email'
-            value={emailManual}
-            onChange={(e) => setEmailManual(e.target.value)}
-          />
-          <Input
-            placeholder='Nombre'
-            value={firstNameManual}
-            onChange={(e) => setFirstNameManual(e.target.value)}
-          />
-          <Input
-            placeholder='Apellidos'
-            value={lastNameManual}
-            onChange={(e) => setLastNameManual(e.target.value)}
-          />
+          <Button
+            onClick={searchUserById}
+            disabled={isSearchingId}
+            className='bg-purple-600 hover:bg-purple-700'>
+            {isSearchingId ? "Buscando..." : "Buscar"}
+          </Button>
+        </div>
+
+        {searchError && (
+          <Alert className='bg-yellow-50 border-yellow-200'>
+            <AlertCircle className='h-4 w-4 text-yellow-600' />
+            <AlertDescription className='text-yellow-700'>
+              {searchError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {foundUser && (
+          <div className='mt-2 p-3 bg-green-50 border border-green-200 rounded-lg'>
+            <div className='flex items-center gap-2 text-green-700 font-medium mb-1'>
+              <User className='h-4 w-4' />
+              <span>Usuario encontrado</span>
+            </div>
+            <p className='text-sm text-green-800 mb-2'>
+              {foundUser.fullName ||
+                `${foundUser.firstName} ${foundUser.lastName}`}{" "}
+              ({foundUser.email})
+            </p>
+            <Button
+              onClick={() => inviteExisting(foundUser.id)}
+              className='mt-1 bg-green-600 hover:bg-green-700 text-sm'
+              size='sm'>
+              <UserPlus className='h-3.5 w-3.5 mr-1.5' />
+              Añadir como coautor
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Manual entry - now used either for new users or to edit found user details */}
+      <div className='p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3'>
+        <h4 className='font-semibold text-gray-800'>
+          {foundUser
+            ? "Datos del usuario encontrado"
+            : "Crear autor manualmente"}
+        </h4>
+        <p className='text-sm text-gray-600'>
+          {foundUser
+            ? "Puedes editar los datos si es necesario antes de añadir al usuario."
+            : "Si el usuario no está registrado, completa sus datos para añadirlo."}
+        </p>
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='space-y-1'>
+            <label className='text-xs text-gray-500'>DNI</label>
+            <Input
+              placeholder='DNI'
+              value={dniManual}
+              onChange={(e) => setDniManual(e.target.value)}
+              readOnly={!!foundUser}
+              className={foundUser ? "bg-gray-100" : ""}
+            />
+          </div>
+          <div className='space-y-1'>
+            <label className='text-xs text-gray-500'>Email</label>
+            <Input
+              placeholder='Email'
+              type='email'
+              value={emailManual}
+              onChange={(e) => setEmailManual(e.target.value)}
+            />
+          </div>
+          <div className='space-y-1'>
+            <label className='text-xs text-gray-500'>Nombre</label>
+            <Input
+              placeholder='Nombre'
+              value={firstNameManual}
+              onChange={(e) => setFirstNameManual(e.target.value)}
+            />
+          </div>
+          <div className='space-y-1'>
+            <label className='text-xs text-gray-500'>Apellidos</label>
+            <Input
+              placeholder='Apellidos'
+              value={lastNameManual}
+              onChange={(e) => setLastNameManual(e.target.value)}
+            />
+          </div>
         </div>
         <Button
           onClick={handleManualAdd}
           disabled={isManualLoading}
-          className='mt-2'>
-          {isManualLoading ? "Creando..." : "Crear y añadir"}
+          className='mt-2 bg-purple-600 hover:bg-purple-700'>
+          {isManualLoading
+            ? "Procesando..."
+            : foundUser
+            ? "Actualizar y añadir"
+            : "Crear y añadir"}
         </Button>
       </div>
 
-      {/* Search existing */}
-      <Input
-        placeholder='Filtrar por nombre...'
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className='w-full'
-      />
-
-      {usersError && <p className='text-red-500'>{usersError}</p>}
-
-      {isLoadingUsers ? (
-        <p>Cargando usuarios...</p>
-      ) : (
-        <Card>
-          <CardContent className='p-3 max-h-60 overflow-y-auto'>
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((u) => (
-                <div
-                  key={u.id}
-                  className='flex justify-between items-center p-2 hover:bg-gray-100 rounded-md'>
-                  <div>
-                    <p className='font-medium'>{u.fullName}</p>
-                    <p className='text-sm text-gray-500'>
-                      {u.dni} • {u.email}
-                    </p>
-                  </div>
-                  <Button
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => inviteExisting(u.id)}>
-                    <UserPlus className='h-4 w-4' />
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <p className='text-center text-gray-500'>
-                No se encontraron usuarios.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       <div className='flex justify-end'>
-        <Button variant='outline' onClick={onCancel}>
+        <Button
+          variant='outline'
+          onClick={onCancel}
+          className='border-gray-200'>
           Cancelar
         </Button>
       </div>

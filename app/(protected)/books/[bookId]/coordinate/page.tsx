@@ -86,13 +86,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [bookStatus, setBookStatus] = useState<
-    | "borrador"
+    | "pendiente"
     | "pendiente"
     | "revision"
     | "aprobado"
     | "rechazado"
     | "publicado"
-  >("borrador");
+  >("pendiente");
 
   // Carga inicial: libro, autores y capítulos
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
 
   // Update the useEffect to reset activeSection if it's "close" but book is not in draft state
   useEffect(() => {
-    if (bookStatus !== "borrador" && activeSection === "close") {
+    if (bookStatus !== "pendiente" && activeSection === "close") {
       setActiveSection("title-authors");
     }
   }, [bookStatus, activeSection]);
@@ -447,7 +447,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             </div>
             <Badge
               className={`
-      ${bookStatus === "borrador" ? "bg-gray-100 text-gray-800" : ""}
+      ${bookStatus === "pendiente" ? "bg-gray-100 text-gray-800" : ""}
       ${bookStatus === "pendiente" ? "bg-yellow-100 text-yellow-800" : ""}
       ${bookStatus === "revision" ? "bg-blue-100 text-blue-800" : ""}
       ${bookStatus === "aprobado" ? "bg-green-100 text-green-800" : ""}
@@ -623,13 +623,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             className='border-purple-200 focus:border-purple-300 focus:ring-purple-200'
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
-            disabled={bookStatus !== "borrador"}
+            disabled={bookStatus !== "pendiente"}
           />
           <Button
             onClick={handleSaveTitle}
-            disabled={bookStatus !== "borrador"}
+            disabled={bookStatus !== "pendiente"}
             className={`bg-purple-600 ${
-              bookStatus !== "borrador"
+              bookStatus !== "pendiente"
                 ? "opacity-50 cursor-not-allowed"
                 : "hover:bg-purple-700"
             } mt-2`}>
@@ -650,9 +650,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             <Button
               variant='outline'
               onClick={openAddAuthorModal}
-              disabled={bookStatus !== "borrador"}
+              disabled={bookStatus !== "pendiente"}
               className={`border-purple-200 text-purple-700 ${
-                bookStatus !== "borrador"
+                bookStatus !== "pendiente"
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-purple-50"
               }`}>
@@ -703,7 +703,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   </Badge>
                 </div>
                 <div className='col-span-1 p-3 flex justify-center gap-1'>
-                  {bookStatus === "borrador" && (
+                  {bookStatus === "pendiente" && (
                     <>
                       {!author.isMainAuthor && (
                         <>
@@ -829,7 +829,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                         <Eye className='h-3 w-3 mr-1' />
                         Ver
                       </Button>
-                      {bookStatus !== "borrador" && (
+                      {bookStatus !== "pendiente" && (
                         <>
                           <Button
                             size='sm'
@@ -854,7 +854,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 ))}
               </div>
 
-              {bookStatus !== "borrador" ? (
+              {bookStatus !== "pendiente" ? (
                 <Button className='bg-purple-600 opacity-50 cursor-not-allowed inline-block px-4 py-2 rounded text-white'>
                   Enviar nuevo capítulo
                 </Button>
@@ -877,14 +877,14 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   // ===============================
   function renderCloseSection() {
     // Don't show close book section if book is not in draft state
-    if (bookStatus !== "borrador") {
+    if (bookStatus !== "pendiente") {
       return (
         <div className='p-6 text-center'>
           <div className='mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
             <AlertCircle className='h-8 w-8 text-blue-500' />
           </div>
           <h3 className='text-lg font-medium text-gray-800 mb-2'>
-            Este libro ya no está en estado borrador
+            Este libro ya no está en estado pendiente
           </h3>
           <p className='text-gray-600'>
             El libro ya ha sido enviado a revisión y no puede ser cerrado

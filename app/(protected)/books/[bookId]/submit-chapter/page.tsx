@@ -104,15 +104,20 @@ function WordCountProgress({
     success: "text-green-600",
   };
 
+  // sólo mostramos el rango si max no es infinito
+  const showRange = max < Number.MAX_SAFE_INTEGER;
+
   return (
     <div className='mt-2 space-y-1'>
       <div className='flex items-center justify-between text-xs'>
         <span className={statusColors[status]}>
           {count} palabra{count !== 1 && "s"}
         </span>
-        <span className='text-muted-foreground'>
-          {min}-{max} palabras
-        </span>
+        {showRange && (
+          <span className='text-muted-foreground'>
+            {min}-{max} palabras
+          </span>
+        )}
       </div>
       <Progress
         value={percentage}
@@ -717,18 +722,26 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
   };
 
   // Manejo de validaciones de longitud
-  const MIN_INTRO = 50;
-  const MAX_INTRO = 150;
-  const MIN_OBJ = 50;
-  const MAX_OBJ = 150;
-  const MIN_METH = 30;
-  const MAX_METH = 100;
-  const MIN_RES = 50;
-  const MAX_RES = 250;
-  const MIN_DISC = 30;
-  const MAX_DISC = 150;
-  const MIN_BIB = 30;
-  const MAX_BIB = 150;
+  // Nuevos rangos de palabras
+  const MIN_INTRO = 200;
+  const MAX_INTRO = 1100;
+
+  const MIN_OBJ = 20;
+  const MAX_OBJ = 500;
+
+  const MIN_METH = 40;
+  const MAX_METH = 1200;
+
+  const MIN_RES = 280;
+  const MAX_RES = 2500;
+
+  const MIN_DISC = 100;
+  const MAX_DISC = 1100;
+
+  // Bibliografía sin límite
+  const MIN_BIB = 0;
+  // Ponemos un valor muy alto para que nunca llegue a superarse
+  const MAX_BIB = Number.MAX_SAFE_INTEGER;
 
   // Funciones para navegar entre pasos
   const handleNext = () => {

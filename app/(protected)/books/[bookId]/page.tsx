@@ -31,7 +31,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
   interface Chapter {
     id: number;
     title: string;
-    status: "aprobado" | "pendiente" | "rechazado";
+    status: "desarrollo" | "aprobado" | "pendiente" | "rechazado";
   }
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -287,7 +287,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           )}
 
           {/* Cerrar libro - Solo visible para el creador */}
-          {isCreator && allChaptersApproved && book?.status !== "revision" && (
+          {isCreator && allChaptersApproved && book?.status !== "pendiente" && (
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}

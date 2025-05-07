@@ -55,7 +55,7 @@ interface Author {
 interface Chapter {
   id: number;
   title: string;
-  status: "aprobado" | "pendiente" | "rechazado";
+  status: "desarrollo" | "aprobado" | "pendiente" | "rechazado";
   submissionDate: string;
 }
 
@@ -86,13 +86,18 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [bookStatus, setBookStatus] = useState<
-    | "pendiente"
+    | "desarrollo"
     | "pendiente"
     | "revision"
     | "aprobado"
     | "rechazado"
     | "publicado"
-  >("pendiente");
+  >("desarrollo");
+
+  // Función auxiliar para verificar si el libro es editable
+  const isBookEditable = () => {
+    return bookStatus === "desarrollo" || bookStatus === "rechazado";
+  };
 
   // Carga inicial: libro, autores y capítulos
   useEffect(() => {
@@ -144,7 +149,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
 
   // Update the useEffect to reset activeSection if it's "close" but book is not in draft state
   useEffect(() => {
-    if (bookStatus !== "pendiente" && activeSection === "close") {
+    if (bookStatus !== "desarrollo" && activeSection === "close") {
       setActiveSection("title-authors");
     }
   }, [bookStatus, activeSection]);
@@ -447,7 +452,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             </div>
             <Badge
               className={`
-      ${bookStatus === "pendiente" ? "bg-gray-100 text-gray-800" : ""}
+      ${bookStatus === "desarrollo" ? "bg-gray-100 text-gray-800" : ""}
       ${bookStatus === "pendiente" ? "bg-yellow-100 text-yellow-800" : ""}
       ${bookStatus === "revision" ? "bg-blue-100 text-blue-800" : ""}
       ${bookStatus === "aprobado" ? "bg-green-100 text-green-800" : ""}
@@ -507,8 +512,8 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   <span className='font-medium'>Capítulos</span>
                 </button>
 
-                {/* Only show Close Book option if book is in draft state */}
-                {bookStatus !== "revision" && (
+                {/* Solo mostrar la opción de cerrar libro si está en estado desarrollo */}
+                {bookStatus === "desarrollo" && (
                   <button
                     disabled={!allChaptersApproved}
                     className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
@@ -623,13 +628,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             className='border-purple-200 focus:border-purple-300 focus:ring-purple-200'
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
-            disabled={bookStatus !== "pendiente"}
+            disabled={!isBookEditable()}
           />
           <Button
             onClick={handleSaveTitle}
-            disabled={bookStatus !== "pendiente"}
+            disabled={!isBookEditable()}
             className={`bg-purple-600 ${
-              bookStatus !== "pendiente"
+              !isBookEditable()
                 ? "opacity-50 cursor-not-allowed"
                 : "hover:bg-purple-700"
             } mt-2`}>
@@ -650,9 +655,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             <Button
               variant='outline'
               onClick={openAddAuthorModal}
-              disabled={bookStatus !== "pendiente"}
+              disabled={!isBookEditable()}
               className={`border-purple-200 text-purple-700 ${
-                bookStatus !== "pendiente"
+                !isBookEditable()
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-purple-50"
               }`}>
@@ -703,7 +708,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   </Badge>
                 </div>
                 <div className='col-span-1 p-3 flex justify-center gap-1'>
-                  {bookStatus === "pendiente" && (
+                  {isBookEditable() && (
                     <>
                       {!author.isMainAuthor && (
                         <>
@@ -812,7 +817,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                             ? "bg-green-100 text-green-800 border-green-200"
                             : chapter.status === "pendiente"
                             ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                            : "bg-red-100 text-red-800 border-red-200"
+                            : chapter.status === "rechazado"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : "bg-gray-100 text-gray-800 border-gray-200"
                         }>
                         {chapter.status}
                       </Badge>
@@ -829,7 +836,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                         <Eye className='h-3 w-3 mr-1' />
                         Ver
                       </Button>
-                      {bookStatus !== "pendiente" && (
+                      {isBookEditable() && (
                         <>
                           <Button
                             size='sm'
@@ -854,7 +861,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 ))}
               </div>
 
-              {bookStatus !== "pendiente" ? (
+              {!isBookEditable() ? (
                 <Button className='bg-purple-600 opacity-50 cursor-not-allowed inline-block px-4 py-2 rounded text-white'>
                   Enviar nuevo capítulo
                 </Button>
@@ -877,14 +884,14 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   // ===============================
   function renderCloseSection() {
     // Don't show close book section if book is not in draft state
-    if (bookStatus !== "pendiente") {
+    if (bookStatus !== "desarrollo") {
       return (
         <div className='p-6 text-center'>
           <div className='mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
             <AlertCircle className='h-8 w-8 text-blue-500' />
           </div>
           <h3 className='text-lg font-medium text-gray-800 mb-2'>
-            Este libro ya no está en estado pendiente
+            Este libro ya no está en estado desarrollo
           </h3>
           <p className='text-gray-600'>
             El libro ya ha sido enviado a revisión y no puede ser cerrado
@@ -913,7 +920,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             </AlertTitle>
             <AlertDescription className='text-red-700'>
               No puedes cerrar el libro hasta que todos los capítulos estén en
-              estado <strong>Aceptado</strong>.
+              estado <strong>Aprobado</strong>.
             </AlertDescription>
           </Alert>
         )}

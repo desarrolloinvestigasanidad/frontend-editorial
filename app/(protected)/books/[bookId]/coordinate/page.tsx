@@ -86,8 +86,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [bookStatus, setBookStatus] = useState<
-    "Borrador" | "Revisión" | "Publicado"
-  >("Borrador");
+    | "borrador"
+    | "pendiente"
+    | "revision"
+    | "aprobado"
+    | "rechazado"
+    | "publicado"
+  >("borrador");
 
   // Carga inicial: libro, autores y capítulos
   useEffect(() => {
@@ -136,6 +141,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
     };
     fetchData();
   }, [bookId]);
+
+  // Update the useEffect to reset activeSection if it's "close" but book is not in draft state
+  useEffect(() => {
+    if (bookStatus !== "borrador" && activeSection === "close") {
+      setActiveSection("title-authors");
+    }
+  }, [bookStatus, activeSection]);
 
   if (loading) {
     return (
@@ -318,10 +330,10 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: "Revisión" }),
+        body: JSON.stringify({ status: "pendiente" }),
       });
       if (!res.ok) throw new Error("Error al cerrar el libro");
-      setBookStatus("Revisión");
+      setBookStatus("pendiente");
       alert("El libro ha sido enviado a revisión.");
     } catch (err) {
       console.error(err);
@@ -360,29 +372,67 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
       </div>
 
       <div className='container mx-auto px-4 relative z-10'>
-        {bookStatus === "Revisión" && (
+        {(bookStatus === "pendiente" ||
+          bookStatus === "revision" ||
+          bookStatus === "aprobado" ||
+          bookStatus === "rechazado" ||
+          bookStatus === "publicado") && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className='mb-6'>
-            <Alert className='bg-yellow-50 border-yellow-200'>
-              <AlertCircle className='h-4 w-4 text-yellow-600' />
-              <AlertTitle className='text-yellow-800'>
-                Libro en revisión
+            <Alert
+              className={`
+      ${bookStatus === "pendiente" ? "bg-yellow-50 border-yellow-200" : ""}
+      ${bookStatus === "revision" ? "bg-blue-50 border-blue-200" : ""}
+      ${bookStatus === "aprobado" ? "bg-green-50 border-green-200" : ""}
+      ${bookStatus === "rechazado" ? "bg-red-50 border-red-200" : ""}
+      ${bookStatus === "publicado" ? "bg-purple-50 border-purple-200" : ""}
+    `}>
+              <AlertCircle
+                className={`h-4 w-4 
+        ${bookStatus === "pendiente" ? "text-yellow-600" : ""}
+        ${bookStatus === "revision" ? "text-blue-600" : ""}
+        ${bookStatus === "aprobado" ? "text-green-600" : ""}
+        ${bookStatus === "rechazado" ? "text-red-600" : ""}
+        ${bookStatus === "publicado" ? "text-purple-600" : ""}
+      `}
+              />
+              <AlertTitle
+                className={`
+        ${bookStatus === "pendiente" ? "text-yellow-800" : ""}
+        ${bookStatus === "revision" ? "text-blue-800" : ""}
+        ${bookStatus === "aprobado" ? "text-green-800" : ""}
+        ${bookStatus === "rechazado" ? "text-red-800" : ""}
+        ${bookStatus === "publicado" ? "text-purple-800" : ""}
+      `}>
+                Libro en estado:{" "}
+                {bookStatus.charAt(0).toUpperCase() + bookStatus.slice(1)}
               </AlertTitle>
-              <AlertDescription className='text-yellow-700'>
-                Este libro está actualmente en revisión. No se pueden modificar
-                autores, capítulos ni el título hasta que finalice el proceso.
+              <AlertDescription
+                className={`
+        ${bookStatus === "pendiente" ? "text-yellow-700" : ""}
+        ${bookStatus === "revision" ? "text-blue-700" : ""}
+        ${bookStatus === "aprobado" ? "text-green-700" : ""}
+        ${bookStatus === "rechazado" ? "text-red-700" : ""}
+        ${bookStatus === "publicado" ? "text-purple-700" : ""}
+      `}>
+                {bookStatus === "pendiente" &&
+                  "Este libro está pendiente de revisión. No se pueden modificar autores, capítulos ni el título hasta que finalice el proceso."}
+                {bookStatus === "revision" &&
+                  "Este libro está actualmente en revisión. No se pueden modificar autores, capítulos ni el título hasta que finalice el proceso."}
+                {bookStatus === "aprobado" &&
+                  "Este libro ha sido aprobado y está listo para ser publicado."}
+                {bookStatus === "rechazado" &&
+                  "Este libro ha sido rechazado. Por favor, contacta con administración para más detalles."}
+                {bookStatus === "publicado" &&
+                  "Este libro ha sido publicado y está disponible para su lectura."}
               </AlertDescription>
             </Alert>
           </motion.div>
         )}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className='flex items-center justify-between mb-8'>
+        <div className='flex items-center justify-between mb-8'>
           <Link href={`/books/${bookId}`}>
             <Button
               variant='ghost'
@@ -391,10 +441,23 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
               Volver al libro
             </Button>
           </Link>
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-            Coordinar Libro
+          <div className='flex items-center gap-2'>
+            <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+              Coordinar Libro
+            </div>
+            <Badge
+              className={`
+      ${bookStatus === "borrador" ? "bg-gray-100 text-gray-800" : ""}
+      ${bookStatus === "pendiente" ? "bg-yellow-100 text-yellow-800" : ""}
+      ${bookStatus === "revision" ? "bg-blue-100 text-blue-800" : ""}
+      ${bookStatus === "aprobado" ? "bg-green-100 text-green-800" : ""}
+      ${bookStatus === "rechazado" ? "bg-red-100 text-red-800" : ""}
+      ${bookStatus === "publicado" ? "bg-purple-100 text-purple-800" : ""}
+    `}>
+              {bookStatus.charAt(0).toUpperCase() + bookStatus.slice(1)}
+            </Badge>
           </div>
-        </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -444,21 +507,28 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   <span className='font-medium'>Capítulos</span>
                 </button>
 
-                <button
-                  disabled={!allChaptersApproved}
-                  className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
-    ${!allChaptersApproved ? "opacity-50 cursor-not-allowed" : ""}
-    ${
-      activeSection === "close"
-        ? "bg-purple-100 text-purple-700"
-        : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
-    }`}
-                  onClick={() =>
-                    allChaptersApproved && setActiveSection("close")
-                  }>
-                  <Lock className='h-5 w-5' />
-                  <span>Cerrar libro</span>
-                </button>
+                {/* Only show Close Book option if book is in draft state */}
+                {bookStatus !== "revision" && (
+                  <button
+                    disabled={!allChaptersApproved}
+                    className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
+                      ${
+                        !allChaptersApproved
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }
+                      ${
+                        activeSection === "close"
+                          ? "bg-purple-100 text-purple-700"
+                          : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
+                      }`}
+                    onClick={() =>
+                      allChaptersApproved && setActiveSection("close")
+                    }>
+                    <Lock className='h-5 w-5' />
+                    <span>Cerrar libro</span>
+                  </button>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -553,13 +623,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             className='border-purple-200 focus:border-purple-300 focus:ring-purple-200'
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
-            disabled={bookStatus === "Revisión"}
+            disabled={bookStatus !== "borrador"}
           />
           <Button
             onClick={handleSaveTitle}
-            disabled={bookStatus === "Revisión"}
+            disabled={bookStatus !== "borrador"}
             className={`bg-purple-600 ${
-              bookStatus === "Revisión"
+              bookStatus !== "borrador"
                 ? "opacity-50 cursor-not-allowed"
                 : "hover:bg-purple-700"
             } mt-2`}>
@@ -580,9 +650,9 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             <Button
               variant='outline'
               onClick={openAddAuthorModal}
-              disabled={bookStatus === "Revisión"}
+              disabled={bookStatus !== "borrador"}
               className={`border-purple-200 text-purple-700 ${
-                bookStatus === "Revisión"
+                bookStatus !== "borrador"
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-purple-50"
               }`}>
@@ -633,7 +703,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                   </Badge>
                 </div>
                 <div className='col-span-1 p-3 flex justify-center gap-1'>
-                  {bookStatus !== "Revisión" && (
+                  {bookStatus === "borrador" && (
                     <>
                       {!author.isMainAuthor && (
                         <>
@@ -759,7 +829,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                         <Eye className='h-3 w-3 mr-1' />
                         Ver
                       </Button>
-                      {bookStatus !== "Revisión" && (
+                      {bookStatus !== "borrador" && (
                         <>
                           <Button
                             size='sm'
@@ -784,7 +854,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 ))}
               </div>
 
-              {bookStatus === "Revisión" ? (
+              {bookStatus !== "borrador" ? (
                 <Button className='bg-purple-600 opacity-50 cursor-not-allowed inline-block px-4 py-2 rounded text-white'>
                   Enviar nuevo capítulo
                 </Button>
@@ -806,6 +876,24 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   //  Sub-Render: Cerrar Libro
   // ===============================
   function renderCloseSection() {
+    // Don't show close book section if book is not in draft state
+    if (bookStatus !== "borrador") {
+      return (
+        <div className='p-6 text-center'>
+          <div className='mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
+            <AlertCircle className='h-8 w-8 text-blue-500' />
+          </div>
+          <h3 className='text-lg font-medium text-gray-800 mb-2'>
+            Este libro ya no está en estado borrador
+          </h3>
+          <p className='text-gray-600'>
+            El libro ya ha sido enviado a revisión y no puede ser cerrado
+            nuevamente.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className='space-y-6'>
         <div>

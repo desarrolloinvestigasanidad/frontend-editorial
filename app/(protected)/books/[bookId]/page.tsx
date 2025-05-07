@@ -287,7 +287,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           )}
 
           {/* Cerrar libro - Solo visible para el creador */}
-          {isCreator && allChaptersApproved && (
+          {isCreator && allChaptersApproved && book?.status !== "revision" && (
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}

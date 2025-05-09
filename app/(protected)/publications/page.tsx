@@ -56,7 +56,7 @@ export default function PublicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "publicado" | "en proceso" | "desarrollo"
+    "all" | "publicado" | "en proceso" | "borrador"
   >("all");
 
   /* ----------------------------- fetch ----------------------------- */
@@ -137,7 +137,7 @@ export default function PublicationsPage() {
     switch (s?.toLowerCase()) {
       case "publicado":
         return <CheckCircle className='h-5 w-5 text-green-500' />;
-      case "desarrollo":
+      case "borrador":
       case "en proceso":
         return <Clock className='h-5 w-5 text-yellow-500' />;
       default:
@@ -148,7 +148,7 @@ export default function PublicationsPage() {
     switch (s?.toLowerCase()) {
       case "publicado":
         return "bg-green-100 text-green-800";
-      case "desarrollo":
+      case "borrador":
       case "en proceso":
         return "bg-yellow-100 text-yellow-800";
       default:
@@ -302,9 +302,7 @@ function StatusFilterButtons({
   setStatusFilter,
 }: {
   statusFilter: string;
-  setStatusFilter: (
-    v: "all" | "publicado" | "en proceso" | "desarrollo"
-  ) => void;
+  setStatusFilter: (v: "all" | "publicado" | "en proceso" | "borrador") => void;
 }) {
   const btnClass = (active: boolean) =>
     `text-sm px-3 py-1 rounded-full border transition
@@ -320,7 +318,7 @@ function StatusFilterButtons({
         { key: "all", label: "Todos" },
         { key: "publicado", label: "Publicado" },
         { key: "en proceso", label: "En proceso" },
-        { key: "desarrollo", label: "Desarrollo" },
+        { key: "borrador", label: "Desarrollo" },
       ].map(({ key, label }) => (
         <button
           key={key}

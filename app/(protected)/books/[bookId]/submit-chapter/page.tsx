@@ -66,7 +66,7 @@ import {
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import AuthorInvitationDialog from "./author-invitation-dialog";
-
+import { ConfidentialityLawModal } from "./confidentiality-law-modal";
 // Tipos de estudio que se mostrarán en el select
 const STUDY_TYPES = [
   "Revisión bibliográfica",
@@ -1682,9 +1682,13 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
                           htmlFor='confidentiality'
                           className='text-sm text-gray-600'>
                           Al pulsar enviar, confirmo que revisé y cumplo la
-                          <span className='text-orange-600 ml-1 cursor-pointer underline'>
-                            Ley de confidencialidad informática
-                          </span>
+                          <ConfidentialityLawModal
+                            trigger={
+                              <span className='text-orange-600 ml-1 cursor-pointer underline'>
+                                Ley de confidencialidad informática
+                              </span>
+                            }
+                          />
                         </label>
                       </div>
                     </div>

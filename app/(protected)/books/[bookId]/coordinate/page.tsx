@@ -86,17 +86,17 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [bookStatus, setBookStatus] = useState<
-    | "desarrollo"
     | "pendiente"
     | "revision"
     | "aprobado"
     | "rechazado"
     | "publicado"
-  >("desarrollo");
+    | "borrador"
+  >("borrador");
 
   // Función auxiliar para verificar si el libro es editable
   const isBookEditable = () => {
-    return bookStatus === "desarrollo" || bookStatus === "rechazado";
+    return bookStatus === "borrador" || bookStatus === "rechazado";
   };
 
   // Carga inicial: libro, autores y capítulos
@@ -149,7 +149,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
 
   // Update the useEffect to reset activeSection if it's "close" but book is not in draft state
   useEffect(() => {
-    if (bookStatus !== "desarrollo" && activeSection === "close") {
+    if (bookStatus !== "borrador" && activeSection === "close") {
       setActiveSection("title-authors");
     }
   }, [bookStatus, activeSection]);
@@ -452,7 +452,7 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
             </div>
             <Badge
               className={`
-      ${bookStatus === "desarrollo" ? "bg-gray-100 text-gray-800" : ""}
+      ${bookStatus === "borrador" ? "bg-gray-100 text-gray-800" : ""}
       ${bookStatus === "pendiente" ? "bg-yellow-100 text-yellow-800" : ""}
       ${bookStatus === "revision" ? "bg-blue-100 text-blue-800" : ""}
       ${bookStatus === "aprobado" ? "bg-green-100 text-green-800" : ""}
@@ -513,10 +513,11 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                 </button>
 
                 {/* Solo mostrar la opción de cerrar libro si está en estado desarrollo */}
-                {bookStatus === "desarrollo" && (
-                  <button
-                    disabled={!allChaptersApproved}
-                    className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
+                {(bookStatus === "borrador" || bookStatus === "rechazado") &&
+                  allChaptersApproved && (
+                    <button
+                      disabled={!allChaptersApproved}
+                      className={`flex items-center gap-2 w-full p-3 rounded-lg transition-colors
                       ${
                         !allChaptersApproved
                           ? "opacity-50 cursor-not-allowed"
@@ -527,13 +528,13 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
                           ? "bg-purple-100 text-purple-700"
                           : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
                       }`}
-                    onClick={() =>
-                      allChaptersApproved && setActiveSection("close")
-                    }>
-                    <Lock className='h-5 w-5' />
-                    <span>Cerrar libro</span>
-                  </button>
-                )}
+                      onClick={() =>
+                        allChaptersApproved && setActiveSection("close")
+                      }>
+                      <Lock className='h-5 w-5' />
+                      <span>Cerrar libro</span>
+                    </button>
+                  )}
               </CardContent>
             </Card>
           </motion.div>
@@ -884,14 +885,14 @@ export default function CoordinatePage({ params }: CoordinatePageProps) {
   // ===============================
   function renderCloseSection() {
     // Don't show close book section if book is not in draft state
-    if (bookStatus !== "desarrollo") {
+    if (bookStatus !== "borrador") {
       return (
         <div className='p-6 text-center'>
           <div className='mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4'>
             <AlertCircle className='h-8 w-8 text-blue-500' />
           </div>
           <h3 className='text-lg font-medium text-gray-800 mb-2'>
-            Este libro ya no está en estado desarrollo
+            Este libro ya no está en estado borrador
           </h3>
           <p className='text-gray-600'>
             El libro ya ha sido enviado a revisión y no puede ser cerrado

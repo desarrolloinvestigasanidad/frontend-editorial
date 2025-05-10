@@ -20,7 +20,7 @@ export type Chapter = {
   id: string;
   title: string;
   description?: string;
-  status: string; // "pendiente", "aprobado", "rechazado", etc.
+  status: string;
   createdAt: string;
   updatedAt: string;
   editionId: string | null;
@@ -37,7 +37,7 @@ export default function MyBookChaptersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "pendiente" | "aprobado" | "rechazado"
+    "all" | "borrador" | "pendiente" | "aprobado" | "rechazado"
   >("all");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
@@ -54,6 +54,8 @@ export default function MyBookChaptersPage() {
   // Icon and color per status
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
+      case "borrador":
+        return <CheckCircle className='h-5 w-5 text-orange-500' />;
       case "aprobado":
         return <CheckCircle className='h-5 w-5 text-green-500' />;
       case "pendiente":
@@ -66,6 +68,8 @@ export default function MyBookChaptersPage() {
   };
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
+      case "borrador":
+        return "bg-green-100 text-orange-800";
       case "aprobado":
         return "bg-green-100 text-green-800";
       case "pendiente":
@@ -157,6 +161,7 @@ export default function MyBookChaptersPage() {
           {(
             [
               { key: "all", label: "Todos" },
+              { key: "borrador", label: "Borrador" },
               { key: "pendiente", label: "Pendiente" },
               { key: "aprobado", label: "Aprobado" },
               { key: "rechazado", label: "Rechazado" },

@@ -31,7 +31,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
   interface Chapter {
     id: number;
     title: string;
-    status: "desarrollo" | "aprobado" | "pendiente" | "rechazado";
+    status: "borrador" | "aprobado" | "pendiente" | "rechazado";
   }
 
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -254,7 +254,7 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           </motion.div>
 
           {/* Envío de capítulo - Visible para todos */}
-          {book?.status === "desarrollo" && (
+          {book?.status === "borrador" && (
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -5 }}
@@ -287,38 +287,40 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
           )}
 
           {/* Cerrar libro - Solo visible para el creador */}
-          {isCreator && allChaptersApproved && book?.status !== "pendiente" && (
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className='group'>
-              <Link href={`/books/${bookId}/coordinate?section=close`}>
-                <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
-                  <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
-                  <div className='flex flex-col items-center text-center'>
-                    <div className='bg-red-100 p-4 rounded-full mb-4 group-hover:bg-red-200 transition-colors duration-300 group-hover:scale-110'>
-                      <X className='h-8 w-8 text-red-700' />
-                    </div>
-                    <h2 className='text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors mb-2'>
-                      Cerrar libro
-                    </h2>
-                    <p className='text-gray-600 mb-4'>
-                      Finaliza el libro para su revisión y publicación
-                      definitiva
-                    </p>
-                    <div className='mt-auto pt-2'>
-                      <Button
-                        variant='outline'
-                        className='border-red-200 text-red-700 hover:bg-red-50'>
-                        Finalizar libro
-                        <ChevronRight className='ml-2 h-4 w-4' />
-                      </Button>
+          {isCreator &&
+            allChaptersApproved &&
+            (book?.status === "borrador" || book?.status === "rechazado") && (
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                className='group'>
+                <Link href={`/books/${bookId}/coordinate?section=close`}>
+                  <div className='backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 h-full transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
+                    <div className='absolute top-0 right-0 w-24 h-24 bg-purple-100 rounded-bl-full -z-10 group-hover:bg-purple-200 transition-colors duration-300'></div>
+                    <div className='flex flex-col items-center text-center'>
+                      <div className='bg-red-100 p-4 rounded-full mb-4 group-hover:bg-red-200 transition-colors duration-300 group-hover:scale-110'>
+                        <X className='h-8 w-8 text-red-700' />
+                      </div>
+                      <h2 className='text-xl font-bold text-gray-900 group-hover:text-red-700 transition-colors mb-2'>
+                        Cerrar libro
+                      </h2>
+                      <p className='text-gray-600 mb-4'>
+                        Finaliza el libro para su revisión y publicación
+                        definitiva
+                      </p>
+                      <div className='mt-auto pt-2'>
+                        <Button
+                          variant='outline'
+                          className='border-red-200 text-red-700 hover:bg-red-50'>
+                          Finalizar libro
+                          <ChevronRight className='ml-2 h-4 w-4' />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          )}
+                </Link>
+              </motion.div>
+            )}
         </motion.div>
 
         {/* Información adicional sobre libros propios */}

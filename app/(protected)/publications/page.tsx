@@ -56,7 +56,7 @@ export default function PublicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "publicado" | "en proceso" | "borrador"
+    "all" | "publicado" | "pendiente" | "borrador" | "aprobado" | "rechazado"
   >("all");
 
   /* ----------------------------- fetch ----------------------------- */
@@ -137,8 +137,12 @@ export default function PublicationsPage() {
     switch (s?.toLowerCase()) {
       case "publicado":
         return <CheckCircle className='h-5 w-5 text-green-500' />;
+      case "aprobado":
+        return <CheckCircle className='h-5 w-5 text-blue-500' />;
+      case "rechazado":
+        return <CheckCircle className='h-5 w-5 text-red-500' />;
       case "borrador":
-      case "en proceso":
+      case "pendiente":
         return <Clock className='h-5 w-5 text-yellow-500' />;
       default:
         return <AlertCircle className='h-5 w-5 text-gray-400' />;
@@ -302,7 +306,9 @@ function StatusFilterButtons({
   setStatusFilter,
 }: {
   statusFilter: string;
-  setStatusFilter: (v: "all" | "publicado" | "en proceso" | "borrador") => void;
+  setStatusFilter: (
+    v: "all" | "publicado" | "pendiente" | "borrador" | "aprobado" | "rechazado"
+  ) => void;
 }) {
   const btnClass = (active: boolean) =>
     `text-sm px-3 py-1 rounded-full border transition
@@ -316,9 +322,11 @@ function StatusFilterButtons({
     <div className='flex flex-wrap gap-2 mb-4'>
       {[
         { key: "all", label: "Todos" },
+        { key: "borrador", label: "Borrador" },
         { key: "publicado", label: "Publicado" },
-        { key: "en proceso", label: "En proceso" },
-        { key: "borrador", label: "Desarrollo" },
+        { key: "pendiente", label: "Pendiente" },
+        { key: "aprobado", label: "Aprobado" },
+        { key: "rechazado", label: "Rechazado" },
       ].map(({ key, label }) => (
         <button
           key={key}

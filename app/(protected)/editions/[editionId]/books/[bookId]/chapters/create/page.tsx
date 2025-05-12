@@ -37,6 +37,8 @@ import {
   Download,
   Eye,
 } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
 import {
@@ -491,6 +493,18 @@ export default function CreateChapterPage() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const [exampleFor, setExampleFor] = useState<string | null>(null);
+  // Verifica que cada sección cumpla el mínimo y máximo de palabras
+  const isValidRange = (text: string, min: number, max: number) => {
+    const count = text.trim() ? text.trim().split(/\s+/).length : 0;
+    return count >= min && count <= max;
+  };
+  const allValid =
+    isValidRange(introduction, 50, 150) &&
+    isValidRange(objectives, 50, 150) &&
+    isValidRange(methodology, 30, 100) &&
+    isValidRange(results, 50, 250) &&
+    isValidRange(discussion, 30, 150) &&
+    isValidRange(bibliography, 30, 150);
 
   // Consejos dinámicos según el paso actual
   const tips: {
@@ -782,10 +796,19 @@ export default function CreateChapterPage() {
           <div className='mt-6 flex justify-center'>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant='outline' className='gap-2'>
+                <Button
+                  variant='outline'
+                  className='gap-2'
+                  disabled={!allValid}
+                  title={
+                    !allValid
+                      ? "Completa todas las secciones dentro de rango para previsualizar"
+                      : undefined
+                  }>
                   <Eye className='h-4 w-4' /> Previsualizar como PDF
                 </Button>
               </DialogTrigger>
+
               <DialogContent className='max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh]'>
                 <DialogHeader>
                   <DialogTitle>Vista previa en formato PDF</DialogTitle>
@@ -802,9 +825,75 @@ export default function CreateChapterPage() {
                     bibliography={bibliography}
                   />
                 </div>
-                <Button className='mt-4 gap-2'>
-                  <Download className='h-4 w-4' /> Descargar PDF
-                </Button>
+                <PDFDownloadLink
+                  document={
+                    <Document>
+                      <Page size='A4' style={styles.page}>
+                        <View>
+                          <Text style={styles.title}>{title}</Text>
+                          <Text style={styles.studyType}>
+                            Tipo de estudio: {studyType}
+                          </Text>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>
+                              Introducción
+                            </Text>
+                            <Text style={styles.text}>{introduction}</Text>
+                          </View>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Objetivos</Text>
+                            <Text style={styles.text}>{objectives}</Text>
+                          </View>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Metodología</Text>
+                            <Text style={styles.text}>{methodology}</Text>
+                          </View>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Resultados</Text>
+                            <Text style={styles.text}>{results}</Text>
+                          </View>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>
+                              Discusión y Conclusiones
+                            </Text>
+                            <Text style={styles.text}>{discussion}</Text>
+                          </View>
+
+                          <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>
+                              Bibliografía
+                            </Text>
+                            <Text style={styles.text}>{bibliography}</Text>
+                          </View>
+
+                          <Text style={styles.footer}>
+                            Este documento es una vista previa y puede estar
+                            sujeto a cambios.
+                          </Text>
+                        </View>
+                      </Page>
+                    </Document>
+                  }
+                  fileName={`${title.replace(/\s+/g, "_")}.pdf`}>
+                  {({ loading }) => (
+                    <Button
+                      disabled={loading}
+                      className='mt-4 gap-2 bg-primary hover:bg-primary/90 disabled:opacity-50'>
+                      {loading ? (
+                        "Generando PDF…"
+                      ) : (
+                        <>
+                          <Download className='h-4 w-4' /> Descargar PDF
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
               </DialogContent>
             </Dialog>
           </div>
@@ -1153,7 +1242,7 @@ export default function CreateChapterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push(`/editions/${editionId}/books/${bookId}/chapters`);
+        router.push(`/editions/${editionId}`);
       }, 2000);
     } catch (err: any) {
       setError(err.message);
@@ -1196,10 +1285,10 @@ export default function CreateChapterPage() {
           </p>
           <Button
             className='bg-primary hover:bg-primary/90'
-            onClick={() =>
-              router.push(`/editions/${editionId}/books/${bookId}/chapters`)
+            onClick={
+              () => router.push(`/editions/${editionId}`) // al listado de libros de la edición
             }>
-            Ver todos los capítulos
+            Ir a la edición
           </Button>
         </motion.div>
       </div>
@@ -1437,7 +1526,13 @@ export default function CreateChapterPage() {
                     {currentStep === steps.length - 1 ? (
                       <Button
                         onClick={handleSubmit}
-                        className='gap-1 bg-primary hover:bg-primary/90'>
+                        disabled={!allValid}
+                        title={
+                          !allValid
+                            ? "No cumple todos los requisitos de palabras"
+                            : undefined
+                        }
+                        className='gap-1 bg-primary hover:bg-primary/90 disabled:opacity-50'>
                         <Send className='h-4 w-4' /> Enviar Capítulo
                       </Button>
                     ) : (

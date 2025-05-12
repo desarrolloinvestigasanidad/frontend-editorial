@@ -606,7 +606,7 @@ export default function RegisterPage() {
         {/* Columna izquierda: Solo logo e información sin foto de fondo */}
         <div className='relative md:w-2/5 min-h-[250px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700 flex flex-col items-center justify-center p-8'>
           <Image
-            src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'
+            src='/is_white_bg.jpg'
             alt='Investiga Sanidad'
             width={300}
             height={75}
@@ -962,7 +962,7 @@ export default function RegisterPage() {
                         htmlFor='infoAccepted'
                         className='text-sm text-gray-700'>
                         Acepto el envío de comunicaciones y promociones por
-                        parte de Investiga Sanida
+                        parte de Investiga Sanidad
                       </label>
                     </div>
                   </>

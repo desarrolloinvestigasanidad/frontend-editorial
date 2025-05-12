@@ -220,7 +220,7 @@ export default function EditionDetailPage() {
               className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
               {/* Tarjeta de Normativa */}
               <motion.div variants={itemVariants}>
-                <Card className='h-full bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
+                <Card className='h-full flex flex-col justify-between bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
                   <CardHeader className='pb-2'>
                     <div className='w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-2'>
                       <FileText className='h-6 w-6 text-purple-600' />
@@ -232,7 +232,7 @@ export default function EditionDetailPage() {
                       Consulta las reglas y requisitos para participar
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className='text-sm text-gray-600'>
+                  <CardContent className='text-sm text-gray-600 flex-grow'>
                     <p>
                       Revisa la normativa completa para conocer los requisitos
                       de formato, plazos y proceso de revisión de los capítulos.
@@ -254,7 +254,7 @@ export default function EditionDetailPage() {
 
               {/* Tarjeta de Pago de Tasas */}
               <motion.div variants={itemVariants}>
-                <Card className='h-full bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
+                <Card className='h-full flex flex-col justify-between bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
                   <CardHeader className='pb-2'>
                     <div className='w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2'>
                       <CreditCard className='h-6 w-6 text-green-600' />
@@ -266,7 +266,7 @@ export default function EditionDetailPage() {
                       Adquiere créditos para enviar capítulos
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className='text-sm text-gray-600'>
+                  <CardContent className='text-sm text-gray-600 flex-grow'>
                     <p>
                       Compra créditos para poder enviar tus capítulos. Cada
                       crédito te permite enviar un capítulo a cualquier libro de
@@ -297,7 +297,7 @@ export default function EditionDetailPage() {
 
               {/* Tarjeta de Enviar Capítulos */}
               <motion.div variants={itemVariants}>
-                <Card className='h-full bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
+                <Card className='h-full flex flex-col justify-between bg-white/80 backdrop-blur-sm border-white/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
                   <CardHeader className='pb-2'>
                     <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2'>
                       <Send className='h-6 w-6 text-blue-600' />
@@ -309,7 +309,7 @@ export default function EditionDetailPage() {
                       Crea y envía tus capítulos para revisión
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className='text-sm text-gray-600'>
+                  <CardContent className='text-sm text-gray-600 flex-grow'>
                     <p>
                       Selecciona un libro y envía tu capítulo para que sea
                       revisado y publicado en la edición actual.

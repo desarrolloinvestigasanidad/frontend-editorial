@@ -22,8 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
-import Image from "next/image";
-import Terminos from "./terminos";
+
 import Normativa from "./normativa";
 
 export default function CrearLibroPage() {

@@ -199,7 +199,7 @@ export default function BookDetailPage() {
                     </div>
                     <div>
                       <p className='text-xs text-gray-500'>
-                        Fecha de Publicación
+                        Fecha de publicación
                       </p>
                       <p className='text-sm font-medium'>
                         {new Date(book.publicationDate).toLocaleDateString()}

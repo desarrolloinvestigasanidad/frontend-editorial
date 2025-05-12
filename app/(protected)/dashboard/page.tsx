@@ -150,10 +150,10 @@ export default function DashboardPage() {
                 Crea tu propio libro y consulta los que ya has creado.
               </p>
 
-              <div className='mt-auto flex gap-2'>
+              <div className='mt-auto flex flex-col gap-2 md:flex-row'>
                 <Link href='/create-book'>
                   <Button
-                    className='flex-1 bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
+                    className='w-full md:flex-1 bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg text-white'
                     onMouseEnter={() => handleMouseEnter("create-book")}
                     onMouseLeave={() => handleMouseLeave("create-book")}>
                     Crear Libro Personalizado
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                   <Link href='/my-books'>
                     <Button
                       variant='outline'
-                      className='flex-1 border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300'
+                      className='w-full md:flex-1 border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300'
                       onMouseEnter={() => handleMouseEnter("my-books")}
                       onMouseLeave={() => handleMouseLeave("my-books")}>
                       Ver Libros creados

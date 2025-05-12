@@ -90,18 +90,13 @@ export default function LoginPage() {
         {/* Columna izquierda con imagen y overlay - Ajustada para mejor responsividad */}
         <div className='relative md:w-1/2 min-h-[300px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700'>
           <Image
-            src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/INVESTIGA%20SANIDAD%20SIN%20FONDO-BLQnlRYtFpCHZb4z2Xwzh7LiZbpq1R.png'
+            src='/is_white_bg.jpg'
             alt='Investiga Sanidad'
             width={300}
             height={75}
             className='absolute top-8 left-1/2 -translate-x-1/2 z-20 w-40 h-auto'
           />
-          <Image
-            src='https://images.pexels.com/photos/8376232/pexels-photo-8376232.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-            alt='Acceso a la plataforma'
-            fill
-            className='object-cover absolute inset-0 mix-blend-overlay opacity-60'
-          />
+
           <div className='absolute inset-0 bg-gradient-to-br from-purple-900/90 to-purple-700/90 z-10'></div>
           <div className='relative z-20 p-6 md:p-8 h-full flex flex-col justify-center mt-16'>
             <motion.div

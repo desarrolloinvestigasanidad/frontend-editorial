@@ -248,7 +248,7 @@ function ObjectivesPanel({
             onChange={(e) => setObjectives(e.target.value)}
             rows={6}
             placeholder='Define claramente los objetivos del trabajo...'
-            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none text-sm'
+            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y text-sm'
           />
           <WordCountProgress text={objectives} min={50} max={150} />
         </div>
@@ -866,7 +866,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Describe el contexto y los antecedentes de tu estudio...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={introduction} min={50} max={150} />
@@ -885,7 +885,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Define claramente los objetivos del trabajo...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={objectives} min={50} max={150} />
@@ -904,7 +904,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Explica el método y las técnicas que utilizarás...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={methodology} min={30} max={100} />
@@ -923,7 +923,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Presenta los resultados esperados...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={results} min={50} max={250} />
@@ -942,7 +942,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Discute los hallazgos y saca conclusiones...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={discussion} min={30} max={150} />
@@ -961,7 +961,7 @@ export default function CreateChapterPage() {
               rows={8}
               placeholder='Incluye todas las fuentes consultadas...'
               required
-              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-none focus-mode-textarea'
+              className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
             {!focusMode && (
               <WordCountProgress text={bibliography} min={30} max={150} />

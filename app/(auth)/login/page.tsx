@@ -68,7 +68,10 @@ export default function LoginPage() {
 
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        router.replace("/dashboard");
+        // 1) movemos al dashboard
+        router.push("/dashboard");
+        // 2) forzamos que Next.js vuelva a cargar datos de servidor/user context
+        router.refresh();
       } else {
         setMessage(data.message || "Error al iniciar sesión.");
       }

@@ -11,16 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, LogOut, Search, Settings, User } from "lucide-react";
+import { LogOut, Search, Settings } from "lucide-react";
 import { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   const router = useRouter();
-  const [user] = useState({
-    name: "Usuario Demo",
-    email: "usuario@demo.com",
-  });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -44,45 +40,6 @@ export function AppHeader() {
             />
           </div>
         </form>
-      </div>
-
-      {/* Acciones: notificaciones + menú de usuario */}
-      <div className='ml-auto flex items-center gap-6'>
-        {/* Menú de usuario: ícono más grande, texto de menú más grande */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='ghost'
-              className='relative h-10 w-10 rounded-full bg-muted text-xl'>
-              <User className='h-6 w-6' />
-              <span className='sr-only'>Perfil</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' className='text-base'>
-            <DropdownMenuLabel className='flex flex-col'>
-              <span className='font-bold'>{user.name}</span>
-              <span className='text-xs text-muted-foreground'>
-                {user.email}
-              </span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/profile")}>
-              <User className='mr-2 h-5 w-5' />
-              Mi Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <Settings className='mr-2 h-5 w-5' />
-              Configuración
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-red-600 focus:text-red-600'
-              onClick={handleLogout}>
-              <LogOut className='mr-2 h-5 w-5' />
-              Cerrar sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );

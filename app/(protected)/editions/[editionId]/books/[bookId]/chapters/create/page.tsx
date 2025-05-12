@@ -194,69 +194,6 @@ function StepsNavigation({
   );
 }
 
-// Componente para la navegación horizontal de pasos
-// Componente para mostrar los objetivos en el panel lateral derecho
-function ObjectivesPanel({
-  objectives,
-  setObjectives,
-}: {
-  objectives: string;
-  setObjectives: (val: string) => void;
-}) {
-  return (
-    <div className='bg-white p-4 rounded-xl border shadow-sm'>
-      <div className='flex items-center gap-2 mb-3 text-primary'>
-        <Target className='h-5 w-5' />
-        <h3 className='font-medium'>Objetivos del capítulo</h3>
-      </div>
-
-      <div className='space-y-3'>
-        <p className='text-sm text-muted-foreground'>
-          Define claramente qué pretendes conseguir con este capítulo. Los
-          objetivos deben ser:
-        </p>
-
-        <div className='space-y-2'>
-          <div className='flex items-start gap-2'>
-            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
-            <p className='text-sm'>Específicos y concretos</p>
-          </div>
-          <div className='flex items-start gap-2'>
-            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
-            <p className='text-sm'>Medibles y verificables</p>
-          </div>
-          <div className='flex items-start gap-2'>
-            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
-            <p className='text-sm'>Alcanzables y realistas</p>
-          </div>
-          <div className='flex items-start gap-2'>
-            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
-            <p className='text-sm'>Relevantes para el tema</p>
-          </div>
-          <div className='flex items-start gap-2'>
-            <CheckSquare className='h-4 w-4 text-green-500 mt-0.5' />
-            <p className='text-sm'>Acotados en el tiempo</p>
-          </div>
-        </div>
-
-        <div className='pt-3'>
-          <Label className='text-gray-700 font-medium mb-2 block'>
-            Editar objetivos
-          </Label>
-          <Textarea
-            value={objectives}
-            onChange={(e) => setObjectives(e.target.value)}
-            rows={6}
-            placeholder='Define claramente los objetivos del trabajo...'
-            className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y text-sm'
-          />
-          <WordCountProgress text={objectives} min={50} max={150} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Componente para mostrar consejos específicos para cada paso con iconos más visuales
 function StepTipsPanel({ step, tips }: { step: string; tips: any }) {
   const currentTip = tips[step];
@@ -553,6 +490,8 @@ export default function CreateChapterPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
 
+  const [exampleFor, setExampleFor] = useState<string | null>(null);
+
   // Consejos dinámicos según el paso actual
   const tips: {
     [key: string]: { title: string; content: string; icon: React.ReactNode };
@@ -600,6 +539,29 @@ export default function CreateChapterPage() {
       icon: <HelpCircle className='size-4' />,
     },
   };
+  const EXAMPLES: Record<string, string> = {
+    introduccion: `En la última década, la telemedicina ha emergido como una estrategia clave para el manejo de enfermedades crónicas, especialmente la diabetes tipo 2. La monitorización remota de glucemias, las consultas virtuales y el apoyo educativo a distancia buscan mejorar el control metabólico y reducir complicaciones. A pesar de sus ventajas, persisten dudas sobre su efectividad comparada con la atención presencial y la adherencia a largo plazo. Este estudio evalúa el impacto de un programa de telemedicina estructurado en pacientes con diabetes tipo 2, analizando tanto parámetros clínicos como percepción del paciente.`,
+    objetivos: `1. Determinar la variación de HbA1c en pacientes con diabetes tipo 2 antes y después de implementar telemedicina.\n2. Analizar la adherencia al tratamiento farmacológico y los cambios en hábitos de vida saludable.\n3. Evaluar la satisfacción, la percepción de calidad de atención y la accesibilidad a los servicios virtuales.`,
+    metodologia: `Estudio cuasi-experimental de 12 semanas con cohorte de 80 pacientes con diabetes tipo 2. Se recolectaron valores de HbA1c al inicio y tras la intervención. Los participantes recibieron consultas virtuales semanales, educación nutricional y herramientas de autocontrol mediante app móvil. Se aplicaron encuestas de adherencia (Morisky–Green) y satisfacción validada. El análisis incluyó prueba t para muestras pareadas y estadística descriptiva.`,
+    resultados: `Al finalizar el programa, el promedio de HbA1c disminuyó de 8,2 % a 7,4 % (p < 0,001). La adherencia al tratamiento mejoró un 20 %, según Morisky–Green (p = 0,02). El 78 % de los participantes calificó la experiencia como satisfactoria o muy satisfactoria, y el 85 % destacó mayor comodidad y accesibilidad. Se observó una reducción del 30 % en visitas de emergencia por hipoglucemia, aunque no fue estadísticamente significativa (p = 0,08).`,
+    discusion: `Estos hallazgos indican que la telemedicina puede mejorar significativamente el control glucémico y la adherencia en pacientes con diabetes tipo 2, probablemente gracias al monitoreo continuo y soporte educativo frecuente. Coinciden con González et al. (2020) y Sánchez y Pérez (2021), que reportaron resultados similares. No obstante, es necesario evaluar la sostenibilidad a largo plazo y su integración en la práctica clínica. Futuras investigaciones deberían explorar costos, escalabilidad y eficacia en poblaciones rurales.`,
+    bibliografia: `1. González A., Martínez L. (2020). Telemedicina en diabetes tipo 2: revisión sistemática. *Revista Clínica de Endocrinología*, 15(3), 123–134.\n2. Sánchez M., Pérez J. (2021). Adherencia y satisfacción en programas virtuales de diabetes. *Journal of Telehealth*, 8(2), 45–53.\n3. World Health Organization. (2019). *Global report on diabetes*. OMS.`,
+  };
+
+  const renderExample = (key: string, title: string) =>
+    exampleFor === key && (
+      <Alert variant='default' className='mt-2 whitespace-pre-wrap relative'>
+        <Button
+          variant='ghost'
+          size='icon'
+          onClick={() => setExampleFor(null)}
+          className='absolute top-2 right-2'>
+          <X className='h-4 w-4' />
+        </Button>
+        <AlertTitle>Ejemplo de {title}</AlertTitle>
+        <AlertDescription className='text-sm'>{EXAMPLES[key]}</AlertDescription>
+      </Alert>
+    );
 
   // Funciones para navegar entre pasos
   const handleNext = () => {
@@ -860,6 +822,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Introducción
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("introduccion")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={introduction}
               onChange={(e) => setIntroduction(e.target.value)}
@@ -868,6 +836,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("introduccion", "Introducción")}
             {!focusMode && (
               <WordCountProgress text={introduction} min={50} max={150} />
             )}
@@ -879,6 +848,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Objetivos
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("objetivos")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={objectives}
               onChange={(e) => setObjectives(e.target.value)}
@@ -887,6 +862,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("objetivos", "Objetivos")}
             {!focusMode && (
               <WordCountProgress text={objectives} min={50} max={150} />
             )}
@@ -898,6 +874,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Metodología
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("metodologia")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={methodology}
               onChange={(e) => setMethodology(e.target.value)}
@@ -906,6 +888,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("metodologia", "Metodología")}
             {!focusMode && (
               <WordCountProgress text={methodology} min={30} max={100} />
             )}
@@ -917,6 +900,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Resultados
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("resultados")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={results}
               onChange={(e) => setResults(e.target.value)}
@@ -925,6 +914,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("resultados", "Resultados")}
             {!focusMode && (
               <WordCountProgress text={results} min={50} max={250} />
             )}
@@ -936,6 +926,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Discusión-Conclusión
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("discusion")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={discussion}
               onChange={(e) => setDiscussion(e.target.value)}
@@ -944,6 +940,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("discusion", "Discusión-Conclusión")}
             {!focusMode && (
               <WordCountProgress text={discussion} min={30} max={150} />
             )}
@@ -955,6 +952,12 @@ export default function CreateChapterPage() {
             <Label className='text-gray-700 font-medium mb-1 block'>
               Bibliografía
             </Label>
+            <Button
+              variant='link'
+              size='sm'
+              onClick={() => setExampleFor("bibliografia")}>
+              Ver ejemplo
+            </Button>
             <Textarea
               value={bibliography}
               onChange={(e) => setBibliography(e.target.value)}
@@ -963,6 +966,7 @@ export default function CreateChapterPage() {
               required
               className='border-gray-200 focus:border-purple-300 focus:ring-purple-200 resize-y focus-mode-textarea'
             />
+            {renderExample("bibliografia", "Bibliografía")}
             {!focusMode && (
               <WordCountProgress text={bibliography} min={30} max={150} />
             )}

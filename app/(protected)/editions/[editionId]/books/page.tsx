@@ -231,28 +231,6 @@ export default function EditionBooksPage() {
                   )}
 
                   <div className='flex flex-col gap-3 mt-6'>
-                    <Link href={`/editions/${editionId}/books/${book.id}`}>
-                      <Button
-                        className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300 transform group-hover:-translate-y-1 hover:shadow-lg'
-                        onMouseEnter={() =>
-                          handleMouseEnter(`details-${book.id}`)
-                        }
-                        onMouseLeave={() =>
-                          handleMouseLeave(`details-${book.id}`)
-                        }>
-                        <span className='flex items-center justify-center'>
-                          Ver Detalles
-                          <motion.span
-                            animate={{
-                              x: hoverStates[`details-${book.id}`] ? 5 : 0,
-                            }}
-                            transition={{ duration: 0.2 }}>
-                            <ArrowRight className='ml-2 h-4 w-4' />
-                          </motion.span>
-                        </span>
-                      </Button>
-                    </Link>
-
                     <Link
                       href={`/editions/${editionId}/books/${book.id}/chapters/create`}>
                       <Button

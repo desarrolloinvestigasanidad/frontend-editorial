@@ -1389,8 +1389,8 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
       }
 
       // Obtener el ID del capítulo de la respuesta
-      const chapterData = await response.json();
-      const chapterId = chapterData.id;
+      const { chapter } = await response.json();
+      const chapterId = chapter.id;
 
       // Guardar el ID del capítulo en el estado
       setChapterId(chapterId);

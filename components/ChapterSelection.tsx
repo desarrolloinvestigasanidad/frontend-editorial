@@ -146,8 +146,13 @@ export default function ChapterSelection({
                 </ul>
 
                 <Button
-                  onClick={() => onSelect(option, price)}
-                  disabled={disabled || !isRegulationsAccepted}
+                  onClick={() => {
+                    if (!isRegulationsAccepted) {
+                      setRegulationsModalOpen(true);
+                    } else {
+                      onSelect(option, price);
+                    }
+                  }}
                   className='w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white'>
                   Pagar {option} {option === 1 ? "Capítulo" : "Capítulos"}
                 </Button>

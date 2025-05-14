@@ -1,3 +1,4 @@
+// frontend-editorial/app/(protected)/editions/[editionId]/books/[bookId]/purchase-chapters/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -5,7 +6,7 @@ import ChapterSelection from "@/components/ChapterSelection";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, BookOpen } from "lucide-react";
+import { AlertCircle, BookOpen, ArrowLeft } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function PurchaseChaptersPage() {
   const { user, loading: userLoading } = useUser();
@@ -25,19 +27,19 @@ export default function PurchaseChaptersPage() {
   const [editionName, setEditionName] = useState("");
   const [regulationsAccepted, setRegulationsAccepted] = useState(false);
 
-  // 1) Track whether we actually have a user
+  // 1) Track user presence
   useEffect(() => {
     setHasUser(!!user?.id);
   }, [user]);
 
-  // 2) Fetch how many chapters they already purchased
+  // 2) Fetch purchased chapters
   const fetchPurchasedChapters = useCallback(async () => {
     if (!user?.id) return;
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/${user.id}/editions/${editionId}/chapter-credits`
       );
-      if (!res.ok) throw new Error("Error al obtener los capítulos");
+      if (!res.ok) throw new Error("Error al obtener créditos de capítulos");
       const data = await res.json();
       setTotalPurchased(data.creditos);
     } catch (err) {
@@ -49,11 +51,10 @@ export default function PurchaseChaptersPage() {
     if (hasUser) fetchPurchasedChapters();
   }, [hasUser, fetchPurchasedChapters]);
 
-  // 3) Fetch the book's title and edition details
+  // 3) Fetch book & edition details
   const fetchBookAndEditionDetails = useCallback(async () => {
     if (!editionId || !bookId) return;
     try {
-      // Fetch book details
       const bookRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}/books/${bookId}`
       );
@@ -61,7 +62,6 @@ export default function PurchaseChaptersPage() {
       const bookData = await bookRes.json();
       setBookTitle(bookData.title);
 
-      // Fetch edition details
       const editionRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`
       );
@@ -78,7 +78,7 @@ export default function PurchaseChaptersPage() {
     fetchBookAndEditionDetails();
   }, [fetchBookAndEditionDetails]);
 
-  // 4) Handle checkout
+  // 4) Checkout handler
   const handleSelect = (chaptersToBuy: number, priceToCharge: number) => {
     if (!regulationsAccepted) {
       alert("Debes aceptar la normativa antes de continuar");
@@ -106,7 +106,7 @@ export default function PurchaseChaptersPage() {
       .catch(console.error);
   };
 
-  // ────────── Renders ──────────
+  // ────── Renders ──────
 
   if (userLoading) {
     return (
@@ -128,32 +128,42 @@ export default function PurchaseChaptersPage() {
   }
 
   return (
-    <Card className='w-full'>
-      <CardHeader>
-        <div className='flex items-center gap-2'>
-          <BookOpen className='h-5 w-5 text-primary' />
-          <div>
-            <CardTitle>Compra de Capítulos</CardTitle>
-            <CardDescription>
-              {bookTitle
-                ? `Libro: ${bookTitle}`
-                : "Seleccione cuántos capítulos comprar"}
-              {editionName ? ` - Edición: ${editionName}` : ""}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+    <div className='w-full mx-auto space-y-4 py-6'>
+      {/* Botón Volver */}
 
-      <CardContent>
-        <ChapterSelection
-          purchasedChapters={totalPurchased}
-          onSelect={handleSelect}
-          disabled={!regulationsAccepted}
-          editionId={Array.isArray(editionId) ? editionId[0] : editionId}
-          isRegulationsAccepted={regulationsAccepted}
-          onRegulationsAcceptChange={setRegulationsAccepted}
-        />
-      </CardContent>
-    </Card>
+      <Card className='w-full'>
+        <CardHeader>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='ghost'
+              onClick={() => router.back()}
+              className='flex items-center gap-2'>
+              <ArrowLeft className='h-4 w-4' /> Volver
+            </Button>
+            <BookOpen className='h-5 w-5 text-primary' />
+            <div>
+              <CardTitle>Compra de Capítulos</CardTitle>
+              <CardDescription>
+                {bookTitle
+                  ? `Libro: ${bookTitle}`
+                  : "Seleccione cuántos capítulos comprar"}
+                {editionName ? ` - Edición: ${editionName}` : ""}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <ChapterSelection
+            purchasedChapters={totalPurchased}
+            onSelect={handleSelect}
+            disabled={!regulationsAccepted}
+            editionId={Array.isArray(editionId) ? editionId[0] : editionId}
+            isRegulationsAccepted={regulationsAccepted}
+            onRegulationsAcceptChange={setRegulationsAccepted}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

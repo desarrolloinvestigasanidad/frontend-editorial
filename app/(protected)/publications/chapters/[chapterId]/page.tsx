@@ -23,35 +23,78 @@ export type Chapter = {
   status: string; // "en revisión", "aprobado", "rechazado", etc.
   createdAt: string;
   updatedAt: string;
-  editionId: string;
   bookId: string;
+  editionId: string | null;
 };
 
-export default function MyBookChaptersPage() {
+export default function ChapterDetailPage() {
   const { user } = useUser();
   const userId = user?.id || null;
-  const { bookId } = useParams();
+  const { chapterId } = useParams(); // <-- aquí saco chapterId
   const router = useRouter();
 
+  // Estados para el breadcrumb
+  const [bookId, setBookId] = useState<string>();
+  const [bookTitle, setBookTitle] = useState<string>();
+  const [editionId, setEditionId] = useState<string | null>(null);
+  const [editionTitle, setEditionTitle] = useState<string>();
+
+  // Estados para los capítulos listados (si en realidad vas a listar varios).
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [hoverStates, setHoverStates] = useState<Record<string, boolean>>({});
 
-  // Animations de Framer Motion
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
+  // 1) Antes de todo: traigo el capítulo y su libro/edición expandidos
+  useEffect(() => {
+    if (!chapterId) return;
+    async function fetchChapter() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/
+            ${chapterId}?_expand=book&_expand=edition`.replace(/\s+/g, "")
+        );
+        if (!res.ok) throw new Error("No se encontró el capítulo");
+        const data = await res.json();
+        // el backend ha de devolver algo así:
+        // data.book = { id, title, … }
+        // data.edition = { id, title, … } o null
+        setBookId(data.book.id);
+        setBookTitle(data.book.title);
+        setEditionId(data.book.editionId);
+        if (data.edition) setEditionTitle(data.edition.title);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchChapter();
+  }, [chapterId]);
 
-  // Icono segun status
+  // 2) Si luego tienes sentido en listar TODOS los capítulos de ese mismo libro:
+  useEffect(() => {
+    if (!userId || !bookId) return;
+    async function fetchChapters() {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?
+             authorId=${userId}&bookId=${bookId}`.replace(/\s+/g, "")
+        );
+        if (!res.ok) throw new Error("Error al obtener los capítulos");
+        setChapters(await res.json());
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchChapters();
+  }, [userId, bookId]);
+
+  // Filtrado y helpers…
+  const filtered = chapters.filter((ch) =>
+    ch.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case "aprobado":
@@ -64,7 +107,6 @@ export default function MyBookChaptersPage() {
         return <AlertCircle className='h-5 w-5 text-gray-400' />;
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "aprobado":
@@ -78,34 +120,10 @@ export default function MyBookChaptersPage() {
     }
   };
 
-  // Fetch chapters del usuario para este libro
-  useEffect(() => {
-    const fetchChapters = async () => {
-      if (!userId || !bookId) return;
-      try {
-        setLoading(true);
-        const url = `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?authorId=${userId}&bookId=${bookId}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Error al obtener los capítulos");
-        const data: Chapter[] = await res.json();
-        setChapters(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchChapters();
-  }, [userId, bookId]);
-
-  const filteredChapters = chapters.filter((ch) =>
-    ch.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (loading) {
     return (
       <div className='flex items-center justify-center h-64'>
-        <p>Cargando capítulos del libro...</p>
+        <p>Cargando capítulos del libro…</p>
       </div>
     );
   }
@@ -113,35 +131,56 @@ export default function MyBookChaptersPage() {
   return (
     <div className='relative overflow-hidden py-8'>
       {/* Fondo decorativo */}
-      <div className='absolute inset-0 z-0'>
-        <div className='absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-50 to-white'></div>
-        <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob'></div>
-        <div className='absolute bottom-1/4 right-1/4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000'></div>
-      </div>
+      <div className='absolute inset-0 z-0'>{/* … */}</div>
 
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
-        {/* Breadcrumb y header */}
+        {/* === Breadcrumb === */}
         <div className='flex items-center justify-between'>
+          <nav
+            aria-label='breadcrumb'
+            className='flex items-center space-x-2 text-sm text-gray-600'>
+            <Link href='/publications' className='hover:underline'>
+              Mis Publicaciones
+            </Link>
+            <span>/</span>
+            {bookTitle && (
+              <>
+                <Link href={`/books/${bookId}`} className='hover:underline'>
+                  {bookTitle}
+                </Link>
+                <span>/</span>
+              </>
+            )}
+            {editionTitle && editionId && (
+              <>
+                <Link
+                  href={`/editions/${editionId}`}
+                  className='hover:underline'>
+                  Ed. {editionTitle}
+                </Link>
+                <span>/</span>
+              </>
+            )}
+            <span className='font-medium'>Mis Capítulos</span>
+          </nav>
+
           <Button
             variant='ghost'
             className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50'
             onClick={() => router.push("/publications")}>
             <ChevronLeft className='mr-1 h-4 w-4' />
-            Volver a Mis Publicaciones
+            Volver
           </Button>
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-            Capítulos del Libro
-          </div>
         </div>
 
+        {/* === Listado de capítulos === */}
         <div className='text-center mb-6'>
           <h2 className='text-2xl md:text-3xl font-bold'>
             Mis Capítulos en este Libro
           </h2>
-          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mt-2'></div>
+          <div className='w-20 h-1 bg-gradient-to-r from-purple-500 to-yellow-500 mx-auto mt-2' />
         </div>
 
-        {/* Buscador */}
         <div className='mb-6 max-w-md mx-auto'>
           <Input
             placeholder='Buscar capítulos...'
@@ -150,8 +189,7 @@ export default function MyBookChaptersPage() {
           />
         </div>
 
-        {/* Grid de capítulos */}
-        {filteredChapters.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className='text-center'>
             <p>No hay capítulos que coincidan con tu búsqueda.</p>
           </div>
@@ -159,41 +197,47 @@ export default function MyBookChaptersPage() {
           <motion.div
             initial='hidden'
             animate='visible'
-            variants={containerVariants}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+            }}
             className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-            {filteredChapters.map((chapter) => (
+            {filtered.map((ch) => (
               <motion.div
-                key={chapter.id}
-                variants={itemVariants}
+                key={ch.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+                }}
                 whileHover={{ y: -5 }}
                 className='group'>
                 <div
                   className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 transition-all duration-300 hover:shadow-xl hover:border-purple-200'
                   onMouseEnter={() =>
-                    setHoverStates((hs) => ({ ...hs, [chapter.id]: true }))
+                    setHoverStates((hs) => ({ ...hs, [ch.id]: true }))
                   }
                   onMouseLeave={() =>
-                    setHoverStates((hs) => ({ ...hs, [chapter.id]: false }))
+                    setHoverStates((hs) => ({ ...hs, [ch.id]: false }))
                   }>
                   <div className='flex items-center justify-between mb-4'>
-                    <h3 className='text-xl font-bold'>{chapter.title}</h3>
+                    <h3 className='text-xl font-bold'>{ch.title}</h3>
                     <span
                       className={`text-xs px-2 py-1 rounded-full flex items-center ${getStatusColor(
-                        chapter.status
+                        ch.status
                       )}`}>
-                      {getStatusIcon(chapter.status)}
-                      <span className='ml-1 capitalize'>{chapter.status}</span>
+                      {getStatusIcon(ch.status)}
+                      <span className='ml-1 capitalize'>{ch.status}</span>
                     </span>
                   </div>
-                  {chapter.description && (
+                  {ch.description && (
                     <p className='text-gray-600 mb-4 line-clamp-2'>
-                      {chapter.description}
+                      {ch.description}
                     </p>
                   )}
                   <div className='flex justify-center'>
-                    <Link
-                      href={`/books/${chapter.bookId}/my-chapters/${chapter.id}`}>
+                    <Link href={`/books/${ch.bookId}/my-chapters/${ch.id}`}>
                       <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
+                        <BookOpen className='mr-2 h-4 w-4' />
                         Ver Detalles
                         <ArrowRight className='ml-2 h-4 w-4' />
                       </Button>
@@ -205,7 +249,6 @@ export default function MyBookChaptersPage() {
           </motion.div>
         )}
 
-        {/* Nota al pie */}
         <div className='text-center mt-16'>
           <p className='text-sm text-gray-600'>
             Aquí puedes revisar el estado de tus capítulos para este libro:

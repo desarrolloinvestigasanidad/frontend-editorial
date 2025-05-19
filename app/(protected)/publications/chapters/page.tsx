@@ -33,6 +33,8 @@ export type Chapter = {
   createdAt: string;
   editionId: string | null;
   bookId: string;
+  bookTitle: string;
+  editionTitle?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -55,22 +57,83 @@ export default function OwnChaptersPage() {
 
   /* ----------------------------- fetch ----------------------------- */
   useEffect(() => {
-    async function fetchChapters() {
+    async function fetchChaptersWithNames() {
       try {
-        const url = `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?authorId=${userId}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Error al obtener los capítulos");
-        const data: Chapter[] = await res.json();
-        setChapters(data);
+        setLoading(true);
+
+        // 1) Trae los capítulos “pelados”
+        const chaptersRes = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/chapters?authorId=${userId}`
+        );
+        if (!chaptersRes.ok) throw new Error("Error al obtener los capítulos");
+        const chaptersData: Chapter[] = await chaptersRes.json();
+
+        // 2) Extrae los IDs únicos
+        const bookIds = Array.from(
+          new Set(chaptersData.map((ch) => ch.bookId))
+        );
+        const editionIds = Array.from(
+          new Set(
+            chaptersData
+              .map((ch) => ch.editionId)
+              .filter((id): id is string => id !== null)
+          )
+        );
+
+        // 3) Pide una sola vez cada libro y edición
+        const booksFetch = Promise.all(
+          bookIds.map((id) =>
+            fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/books/${id}`).then(
+              (r) => {
+                if (!r.ok) throw new Error("Libro no encontrado");
+                return r.json();
+              }
+            )
+          )
+        );
+        const editionsFetch =
+          editionIds.length > 0
+            ? Promise.all(
+                editionIds.map((id) =>
+                  fetch(
+                    `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${id}`
+                  ).then((r) => {
+                    if (!r.ok) throw new Error("Edición no encontrada");
+                    return r.json();
+                  })
+                )
+              )
+            : Promise.resolve([]);
+
+        const [books, editions] = await Promise.all([
+          booksFetch,
+          editionsFetch,
+        ]);
+
+        // 4) Construye mapas de id → título
+        const bookMap = new Map(books.map((b) => [b.id, b.title]));
+        const editionMap = new Map(editions.map((e) => [e.id, e.title]));
+
+        // 5) Enriquecer cada capítulo con bookTitle y editionTitle
+        const enriched: Chapter[] = chaptersData.map((ch) => ({
+          ...ch,
+          bookTitle: bookMap.get(ch.bookId) || "—",
+          editionTitle:
+            ch.editionId != null
+              ? editionMap.get(ch.editionId) || "—"
+              : undefined,
+        }));
+
+        setChapters(enriched);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
+
     if (userId) {
-      setLoading(true);
-      fetchChapters();
+      fetchChaptersWithNames();
     }
   }, [userId]);
 
@@ -141,7 +204,12 @@ export default function OwnChaptersPage() {
       <BackgroundBlobs />
 
       <div className='container mx-auto px-4 relative z-10 space-y-8'>
-        <HeaderSection />
+        <HeaderSection
+          bookId={chapters[0]?.bookId || ""}
+          bookTitle={chapters[0]?.bookTitle}
+          editionId={chapters[0]?.editionId}
+          editionTitle={chapters[0]?.editionTitle}
+        />
 
         <TitleSection />
 
@@ -186,18 +254,55 @@ function BackgroundBlobs() {
   );
 }
 
-const HeaderSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: -10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className='flex items-center justify-between'>
-    <Breadcrumb />
-    <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-      Mis Capítulos
-    </span>
-  </motion.div>
-);
+function HeaderSection({
+  bookId,
+  bookTitle,
+  editionId,
+  editionTitle,
+}: {
+  bookId: string;
+  bookTitle?: string;
+  editionId?: string | null;
+  editionTitle?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className='flex items-center justify-between'>
+      <nav
+        aria-label='breadcrumb'
+        className='flex items-center space-x-2 text-sm text-gray-600'>
+        <Link href='/publications' className='hover:underline'>
+          Mis Publicaciones
+        </Link>
+        <span>/</span>
+        {bookTitle && (
+          <>
+            <Link href={`/books/${bookId}`} className='hover:underline'>
+              {bookTitle}
+            </Link>
+            <span>/</span>
+          </>
+        )}
+        {editionTitle && editionId && (
+          <>
+            <Link href={`/editions/${editionId}`} className='hover:underline'>
+              Ed. {editionTitle}
+            </Link>
+            <span>/</span>
+          </>
+        )}
+        <span className='font-medium'>Mis Capítulos</span>
+      </nav>
+
+      <span className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
+        Mis Capítulos
+      </span>
+    </motion.div>
+  );
+}
 
 const TitleSection = () => (
   <motion.div
@@ -348,6 +453,11 @@ function ChapterGrid({
             <div className='text-gray-500 text-xs mb-4'>
               Creado: {formatDate(ch.createdAt)}
             </div>
+
+            <p className='text-sm text-gray-500'>
+              Pertecene al libro: {ch.bookTitle} Edición:
+              {ch.editionTitle && `– Ed. ${ch.editionTitle}`}
+            </p>
             <div className='flex justify-center'>
               <Link href={`/books/${ch.bookId}/my-chapters/${ch.id}`}>
                 <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>

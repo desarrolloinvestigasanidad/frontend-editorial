@@ -37,11 +37,12 @@ export default function PurchaseChaptersPage() {
     if (!user?.id) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/users/${user.id}/editions/${editionId}/chapter-credits`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/users/${user.id}/editions/${editionId}/available-chapter-credits`
       );
       if (!res.ok) throw new Error("Error al obtener créditos de capítulos");
       const data = await res.json();
-      setTotalPurchased(data.creditos);
+      console.log(data.available);
+      setTotalPurchased(data.available);
     } catch (err) {
       console.error(err);
     }

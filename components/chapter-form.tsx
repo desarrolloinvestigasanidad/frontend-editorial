@@ -34,6 +34,7 @@ import {
   HelpCircle,
   Target,
   Save,
+  UserPlus,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAvailableCredits } from "@/hooks/useAvailableCredits";
@@ -56,6 +57,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import AuthorInvitationDialog from "@/app/(protected)/books/[bookId]/submit-chapter/author-invitation-dialog";
 
 // Tipos
 interface ChapterData {
@@ -81,6 +83,11 @@ interface ChapterFormProps {
   bookId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+interface Coauthor {
+  id: string;
+  fullName: string;
+  email: string;
 }
 
 // Componente mejorado para el seguimiento de palabras
@@ -378,6 +385,8 @@ export default function ChapterForm({
   // Estado para controlar la fase del formulario (inicial o detallada)
   const [formPhase, setFormPhase] = useState<"initial" | "detailed">("initial");
 
+  const [coauthors, setCoauthors] = useState<Coauthor[]>([]);
+
   // Definición de pasos
   const steps = [
     "Introducción",
@@ -582,6 +591,27 @@ export default function ChapterForm({
 
     fetchData();
   }, [mode, chapterId, bookId, editionId]);
+
+  const fetchCoauthors = async () => {
+    if (!chapterId) return;
+    const token = localStorage.getItem("token");
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/chapters/${chapterId}/authors`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) throw new Error("No pudimos obtener los coautores");
+    const data = await res.json();
+    setCoauthors(
+      data.map((u: any) => ({
+        id: u.id,
+        fullName: `${u.firstName} ${u.lastName}`,
+        email: u.email,
+      }))
+    );
+  };
+  useEffect(() => {
+    if (mode === "edit") fetchCoauthors();
+  }, [mode, chapterId]);
 
   // Renderizado condicional para cada paso
   const renderStepContent = () => {

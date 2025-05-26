@@ -441,19 +441,6 @@ export default function NormativaPage() {
                         </p>
                       </div>
                     </li>
-                    <li className='flex items-start gap-2'>
-                      <CheckCircle className='h-5 w-5 text-green-500 mt-0.5 flex-shrink-0' />
-                      <div>
-                        <p className='text-gray-800 font-medium'>
-                          Imágenes y Tablas
-                        </p>
-                        <p className='text-sm text-gray-600'>
-                          Se permite incluir hasta 2 imágenes o tablas por
-                          capítulo. Deben ser originales o contar con los
-                          permisos correspondientes.
-                        </p>
-                      </div>
-                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -510,20 +497,6 @@ export default function NormativaPage() {
                           <span className='text-purple-700 font-bold'>3</span>
                         </div>
                         <h4 className='text-lg font-medium text-purple-800'>
-                          Revisión por Pares
-                        </h4>
-                        <p className='text-gray-600 mt-1'>
-                          El capítulo es evaluado por revisores expertos que
-                          determinan su calidad científica y adecuación a la
-                          temática del libro.
-                        </p>
-                      </div>
-
-                      <div className='relative pl-12'>
-                        <div className='absolute left-0 w-8 h-8 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center'>
-                          <span className='text-purple-700 font-bold'>4</span>
-                        </div>
-                        <h4 className='text-lg font-medium text-purple-800'>
                           Decisión Editorial
                         </h4>
                         <p className='text-gray-600 mt-1'>
@@ -535,7 +508,7 @@ export default function NormativaPage() {
 
                       <div className='relative pl-12'>
                         <div className='absolute left-0 w-8 h-8 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center'>
-                          <span className='text-purple-700 font-bold'>5</span>
+                          <span className='text-purple-700 font-bold'>4</span>
                         </div>
                         <h4 className='text-lg font-medium text-purple-800'>
                           Correcciones (si aplica)
@@ -549,7 +522,7 @@ export default function NormativaPage() {
 
                       <div className='relative pl-12'>
                         <div className='absolute left-0 w-8 h-8 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center'>
-                          <span className='text-purple-700 font-bold'>6</span>
+                          <span className='text-purple-700 font-bold'>5</span>
                         </div>
                         <h4 className='text-lg font-medium text-purple-800'>
                           Maquetación
@@ -562,7 +535,7 @@ export default function NormativaPage() {
 
                       <div className='relative pl-12'>
                         <div className='absolute left-0 w-8 h-8 rounded-full bg-purple-100 border-2 border-purple-300 flex items-center justify-center'>
-                          <span className='text-purple-700 font-bold'>7</span>
+                          <span className='text-purple-700 font-bold'>6</span>
                         </div>
                         <h4 className='text-lg font-medium text-purple-800'>
                           Publicación
@@ -573,48 +546,6 @@ export default function NormativaPage() {
                         </p>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                <div className='space-y-4 mt-8'>
-                  <h3 className='text-lg font-semibold text-gray-800'>
-                    Tiempos Estimados
-                  </h3>
-                  <div className='bg-white p-5 rounded-lg border border-gray-200'>
-                    <ul className='space-y-3'>
-                      <li className='flex items-start gap-3'>
-                        <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-medium flex-shrink-0'>
-                          1-2 semanas
-                        </div>
-                        <p className='text-gray-700'>
-                          Revisión inicial tras el envío del capítulo
-                        </p>
-                      </li>
-                      <li className='flex items-start gap-3'>
-                        <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-medium flex-shrink-0'>
-                          2-4 semanas
-                        </div>
-                        <p className='text-gray-700'>
-                          Proceso completo de revisión por pares
-                        </p>
-                      </li>
-                      <li className='flex items-start gap-3'>
-                        <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-medium flex-shrink-0'>
-                          1-2 semanas
-                        </div>
-                        <p className='text-gray-700'>
-                          Plazo para realizar correcciones (si se solicitan)
-                        </p>
-                      </li>
-                      <li className='flex items-start gap-3'>
-                        <div className='bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-medium flex-shrink-0'>
-                          4-6 semanas
-                        </div>
-                        <p className='text-gray-700'>
-                          Maquetación y preparación final del libro
-                        </p>
-                      </li>
-                    </ul>
                   </div>
                 </div>
               </CardContent>

@@ -1,16 +1,17 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Breadcrumb } from "@/components/breadcrumb";
 import {
-  ChevronLeft,
   Search,
   Clock,
   CheckCircle,
   AlertCircle,
   ArrowRight,
+  Edit3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -440,6 +441,25 @@ function ChapterGrid({
               setHoverStates((prev) => ({ ...prev, [ch.id]: false }))
             }
             className='relative backdrop-blur-sm bg-white/80 p-6 rounded-2xl shadow-lg border border-white/50 transition-all duration-300 hover:shadow-xl hover:border-purple-200'>
+            {/* Breadcrumb navigation */}
+            <div className='flex items-center text-xs text-gray-500 mb-3 pb-2 border-b border-gray-100'>
+              {ch.editionTitle && ch.editionId && (
+                <>
+                  <Link
+                    href={`/editions/${ch.editionId}`}
+                    className='hover:text-purple-600 hover:underline transition-colors'>
+                    {ch.editionTitle}
+                  </Link>
+                  <span className='mx-1'>/</span>
+                </>
+              )}
+              <Link
+                href={`/books/${ch.bookId}`}
+                className='hover:text-purple-600 hover:underline transition-colors'>
+                {ch.bookTitle}
+              </Link>
+            </div>
+
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-xl font-bold'>{ch.title}</h3>
               <span
@@ -454,15 +474,27 @@ function ChapterGrid({
               Creado: {formatDate(ch.createdAt)}
             </div>
 
-            <p className='text-sm text-gray-500'>
-              Pertecene al libro: {ch.bookTitle} Edición:
-              {ch.editionTitle && `– Ed. ${ch.editionTitle}`}
-            </p>
+            <div className='mb-4'></div>
             <div className='flex justify-center'>
               <Link href={`/books/${ch.bookId}/my-chapters/${ch.id}`}>
-                <Button className='bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 transition-all duration-300'>
+                <Button className='bg-gradient-to-r from-purple-600 to-purple-800 …'>
                   Ver Detalles
                   <ArrowRight className='ml-2 h-4 w-4' />
+                </Button>
+              </Link>
+
+              {/* Nuevo botón de “Editar” */}
+              <Link
+                href={
+                  ch.editionId
+                    ? // Si viene de una edición, abrimos el formulario de edición de edición
+                      `/editions/${ch.editionId}/books/${ch.bookId}/chapters/${ch.id}/edit`
+                    : // Sino, ir al edit “genérico” bajo books (tendrás que crear esta página si no existe)
+                      `/books/${ch.bookId}/my-chapters/${ch.id}/edit`
+                }>
+                <Button variant='outline' className='gap-1'>
+                  <Edit3 className='h-4 w-4' />
+                  Editar
                 </Button>
               </Link>
             </div>

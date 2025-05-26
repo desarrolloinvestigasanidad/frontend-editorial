@@ -5,6 +5,7 @@ import "./globals.css";
 import { UserProvider } from "@/context/UserContext";
 import { User } from "lucide-react";
 import ImpersonationBar from "@/components/ImpersonationBar";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           <main className='flex-grow'>
             <UserProvider>
               <ImpersonationBar />
+              <Toaster />
               {children}
             </UserProvider>
           </main>

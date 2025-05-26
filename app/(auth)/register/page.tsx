@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Componente MultiSelect
 export type Option = {
@@ -394,7 +395,7 @@ export default function RegisterPage() {
   const [infoAccepted, setInfoAccepted] = useState(false); // Consentimiento para comunicaciones
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [deviceIp, setDeviceIp] = useState("");
-
+  const { toast } = useToast();
   // Se elimina "province" ya que se solicitará en facturación
   const [formData, setFormData] = useState({
     id: "",
@@ -472,7 +473,11 @@ export default function RegisterPage() {
     if (step === 0) {
       const { id, email, password, confirmPassword } = formData;
       if (!id || !email || !password || !confirmPassword) {
-        setMessage("Por favor, completa todos los campos requeridos");
+        toast({
+          title: "Error",
+          description: "Por favor, completa todos los campos requeridos.",
+          variant: "destructive",
+        });
         return;
       }
       if (!validateEmail(email)) {
@@ -552,16 +557,28 @@ export default function RegisterPage() {
       });
       const data: { message?: string } = await res.json();
       if (res.ok) {
-        setMessage(
-          "Se ha enviado un correo a tu email para verificar la cuenta."
-        );
+        toast({
+          title: "Registro exitoso",
+          description: "Revisa tu correo para verificar la cuenta.",
+        });
         setRegistrationComplete(true);
       } else {
-        setMessage(data.message || "Error al registrar el usuario.");
+        toast({
+          title: "Error al registrar",
+          description: data.message || "Ha ocurrido un error inesperado.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error(error);
-      setMessage("Error al registrar el usuario.");
+      toast({
+        title: "Error de red",
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se ha podido conectar con el servidor.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

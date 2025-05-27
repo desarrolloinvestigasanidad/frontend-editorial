@@ -96,7 +96,7 @@ export default function RegulationsModal({
       return; // Detener la ejecución si no hay un ID de edición válido
     }
 
-    const endpoint = `${BASE_API_URL}/api/editions/${currentEditionId}`; // Asumiendo que tu server.js monta 'editions.js' en /api/editions
+    const endpoint = `${BASE_API_URL}/editions/${currentEditionId}`; // Asumiendo que tu server.js monta 'editions.js' en /api/editions
     // console.log(`RegulationsModal: Fetching from ${endpoint}`); // Para depuración
 
     (async () => {

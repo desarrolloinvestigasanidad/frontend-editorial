@@ -54,9 +54,8 @@ export default function RegulationsModal({
     setError(null);
     (async () => {
       try {
-        const endpoint = editionId
-          ? `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`
-          : `${process.env.NEXT_PUBLIC_BASE_URL}/editions/current`;
+        const endpoint = `${process.env.NEXT_PUBLIC_BASE_URL}/editions/${editionId}`;
+
         const res = await fetch(endpoint);
         if (!res.ok) throw new Error("Error fetching edition");
         setEdition(await res.json());

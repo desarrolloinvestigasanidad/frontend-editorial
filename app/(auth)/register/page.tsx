@@ -19,17 +19,18 @@ import {
   Check,
   ChevronDown,
   Search,
+  Loader2, // Para el estado de carga del select
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-// Componente MultiSelect
+// Componente MultiSelect (se mantiene como está, no se usa para categorías profesionales aquí)
 export type Option = {
   value: string;
   label: string;
 };
-
+// ... (código del componente MultiSelect sin cambios) ...
 type MultiSelectProps = {
   options: Option[];
   value: string[];
@@ -54,12 +55,6 @@ function MultiSelect({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Filtrar opciones basadas en el término de búsqueda
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Manejar clic fuera para cerrar el dropdown
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (
@@ -69,21 +64,22 @@ function MultiSelect({
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
 
-  // Enfocar el input de búsqueda cuando se abre el dropdown
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isOpen]);
 
-  // Alternar selección de una opción
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const toggleOption = (optionValue: string) => {
     if (value.includes(optionValue)) {
       onChange(value.filter((val) => val !== optionValue));
@@ -92,7 +88,6 @@ function MultiSelect({
     }
   };
 
-  // Remover una opción seleccionada
   const removeOption = (
     e: React.MouseEvent<HTMLButtonElement>,
     optionValue: string
@@ -101,7 +96,6 @@ function MultiSelect({
     onChange(value.filter((val) => val !== optionValue));
   };
 
-  // Obtener etiquetas para las opciones seleccionadas
   const getSelectedLabels = () => {
     return value.map(
       (val) => options.find((option) => option.value === val)?.label || val
@@ -116,7 +110,6 @@ function MultiSelect({
         disabled && "opacity-70 cursor-not-allowed",
         className
       )}>
-      {/* Botón principal que muestra las selecciones actuales */}
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={cn(
@@ -151,11 +144,8 @@ function MultiSelect({
           )}
         />
       </div>
-
-      {/* Dropdown con opciones */}
       {isOpen && (
         <div className='absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg'>
-          {/* Barra de búsqueda */}
           <div className='sticky top-0 z-20 bg-white px-2 py-1.5 border-b border-gray-100'>
             <div className='relative'>
               <Search className='absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500' />
@@ -176,8 +166,6 @@ function MultiSelect({
               )}
             </div>
           </div>
-
-          {/* Lista de opciones */}
           <div className='mt-1'>
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => {
@@ -218,6 +206,7 @@ function MultiSelect({
 }
 
 // Componente Terminos (placeholder)
+// ... (código del componente Terminos sin cambios) ...
 export function Terminos() {
   return (
     <div className='max-h-[70vh] overflow-y-auto p-4'>
@@ -334,7 +323,8 @@ export function Terminos() {
   );
 }
 
-// TODAS las comunidades (se usan para vincular los certificados)
+// Datos de regiones y provincias (sin cambios)
+// ... (código de regionsProvinces sin cambios) ...
 const regionsProvinces = {
   Andalucía: [
     "Almería",
@@ -382,9 +372,18 @@ const regionsProvinces = {
   Melilla: ["Melilla"],
 };
 
+// Tipo para las opciones de categoría profesional
+type ProfessionalCategoryOption = {
+  id: string;
+  nombre: string;
+};
+
+const CONFIG_KEY_CATEGORIAS = "professional_categories_simple"; // Clave consistente
+const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Para el submit final
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [message, setMessage] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -392,11 +391,17 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [infoAccepted, setInfoAccepted] = useState(false); // Consentimiento para comunicaciones
+  const [infoAccepted, setInfoAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [deviceIp, setDeviceIp] = useState("");
   const { toast } = useToast();
-  // Se elimina "province" ya que se solicitará en facturación
+
+  // Nuevos estados para categorías profesionales
+  const [professionalCategories, setProfessionalCategories] = useState<
+    ProfessionalCategoryOption[]
+  >([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true); // Carga de categorías
+
   const [formData, setFormData] = useState({
     id: "",
     password: "",
@@ -405,16 +410,14 @@ export default function RegisterPage() {
     firstName: "",
     lastName: "",
     phone: "",
-    professionalCategory: "",
+    professionalCategory: "", // El valor será el 'id' de la categoría
     gender: "",
     address: "",
     interests: "",
     country: "España",
-    // Ahora es un array para permitir la selección múltiple
     autonomousCommunity: [] as string[],
   });
 
-  // Convertir regionsProvinces a opciones para MultiSelect
   const communityOptions: Option[] = Object.keys(regionsProvinces).map(
     (community) => ({
       value: community,
@@ -422,7 +425,6 @@ export default function RegisterPage() {
     })
   );
 
-  // Redirigir al usuario si ya está autenticado
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -430,13 +432,64 @@ export default function RegisterPage() {
     }
   }, [router]);
 
-  // Obtener la IP del dispositivo usando ipify
   useEffect(() => {
     fetch("https://api.ipify.org?format=json")
       .then((res) => res.json())
       .then((data) => setDeviceIp(data.ip))
       .catch((err) => console.error("Error al obtener la IP:", err));
   }, []);
+
+  // useEffect para cargar las categorías profesionales
+  useEffect(() => {
+    const fetchProfessionalCategories = async () => {
+      setIsLoadingCategories(true);
+      if (!BASE_API_URL) {
+        console.error("URL base de la API no configurada para categorías.");
+        toast({
+          title: "Error de Configuración",
+          description: "No se pudo cargar las categorías profesionales.",
+          variant: "destructive",
+        });
+        setIsLoadingCategories(false);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${BASE_API_URL}/config/${CONFIG_KEY_CATEGORIAS}`
+        );
+        if (response.status === 404) {
+          setProfessionalCategories([]); // No hay categorías configuradas
+        } else if (response.ok) {
+          const setting = await response.json();
+          const parsedCategories = (
+            JSON.parse(setting.value || "[]") as any[]
+          ).map((cat) => ({
+            id: cat.id, // Asegúrate que 'id' es el campo correcto
+            nombre: cat.nombre, // Asegúrate que 'nombre' es el campo correcto
+          }));
+          setProfessionalCategories(
+            parsedCategories.sort((a, b) => a.nombre.localeCompare(b.nombre))
+          ); // Ordenar alfabéticamente
+        } else {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || "Error al cargar categorías del servidor."
+          );
+        }
+      } catch (error: any) {
+        console.error("Error fetching professional categories:", error);
+        toast({
+          title: "Error al cargar categorías",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchProfessionalCategories();
+  }, []); // Se ejecuta solo una vez al montar
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -457,7 +510,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Función para manejar el cambio en el MultiSelect de comunidades
   const handleCommunityChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
@@ -467,14 +519,14 @@ export default function RegisterPage() {
 
   const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setMessage("");
+    setMessage(""); // Limpiar mensajes de error/éxito de validaciones previas
     setEmailError("");
 
     if (step === 0) {
       const { id, email, password, confirmPassword } = formData;
       if (!id || !email || !password || !confirmPassword) {
         toast({
-          title: "Error",
+          title: "Campos incompletos",
           description: "Por favor, completa todos los campos requeridos.",
           variant: "destructive",
         });
@@ -484,16 +536,32 @@ export default function RegisterPage() {
         setEmailError("Por favor, introduce un email válido.");
         return;
       }
+      if (password.length < 6) {
+        // Ejemplo de validación de contraseña
+        toast({
+          title: "Contraseña inválida",
+          description: "La contraseña debe tener al menos 6 caracteres.",
+          variant: "destructive",
+        });
+        return;
+      }
       if (password !== confirmPassword) {
-        setMessage("Las contraseñas no coinciden.");
+        toast({
+          title: "Error de contraseña",
+          description: "Las contraseñas no coinciden.",
+          variant: "destructive",
+        });
         return;
       }
     } else if (step === 1) {
       const { firstName, lastName, phone, professionalCategory } = formData;
       if (!firstName || !lastName || !phone || !professionalCategory) {
-        setMessage(
-          "Por favor, completa todos los campos requeridos en Datos Personales."
-        );
+        toast({
+          title: "Campos incompletos",
+          description:
+            "Por favor, completa todos los campos requeridos en Datos Personales.",
+          variant: "destructive",
+        });
         return;
       }
     }
@@ -506,17 +574,15 @@ export default function RegisterPage() {
     setStep((prev) => prev - 1);
   };
 
-  interface HandleSubmitFinalEvent extends React.FormEvent<HTMLFormElement> {}
-
   interface RegisterRequestBody {
     id: string;
     password: string;
-    confirmPassword: string;
+    // confirmPassword: string; // No se envía al backend
     email: string;
     firstName: string;
     lastName: string;
     phone: string;
-    professionalCategory: string;
+    professionalCategory: string; // Se enviará el ID de la categoría
     gender: string;
     address: string;
     interests: string;
@@ -527,47 +593,69 @@ export default function RegisterPage() {
     deviceIp: string;
   }
 
-  const handleSubmitFinal = async (e: HandleSubmitFinalEvent) => {
+  const handleSubmitFinal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage("");
+    setMessage(""); // Limpiar mensajes previos
     setIsLoading(true);
 
-    // Validación: si el país es España se requiere seleccionar al menos una comunidad
     if (formData.country === "España") {
       if (
         !formData.autonomousCommunity ||
         formData.autonomousCommunity.length === 0
       ) {
-        setMessage("Por favor, selecciona al menos una Comunidad Autónoma.");
+        toast({
+          title: "Campo requerido",
+          description: "Por favor, selecciona al menos una Comunidad Autónoma.",
+          variant: "destructive",
+        });
         setIsLoading(false);
         return;
       }
     }
+    if (!termsAccepted) {
+      // Mover esta validación aquí, antes del submit
+      toast({
+        title: "Términos y Condiciones",
+        description:
+          "Debes aceptar los términos y condiciones para registrarte.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Preparar datos para enviar (sin confirmPassword)
+    const { confirmPassword, ...dataToSubmit } = formData;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/register`, {
+      const res = await fetch(`${BASE_API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          ...dataToSubmit,
           termsAccepted,
           infoAccepted,
           deviceIp,
         } as RegisterRequestBody),
       });
-      const data: { message?: string } = await res.json();
+      const data: { message?: string } = await res.json(); // Asumir que el backend puede devolver 'message'
       if (res.ok) {
         toast({
           title: "Registro exitoso",
-          description: "Revisa tu correo para verificar la cuenta.",
+          description:
+            data.message || "Revisa tu correo para verificar la cuenta.", // Usar mensaje del backend si existe
         });
         setRegistrationComplete(true);
+        setMessage(
+          data.message || "Revisa tu correo para verificar la cuenta."
+        ); // Para la pantalla de éxito
       } else {
         toast({
           title: "Error al registrar",
           description: data.message || "Ha ocurrido un error inesperado.",
           variant: "destructive",
         });
+        setMessage(data.message || "Error en el registro."); // También para el estado general si se reintenta
       }
     } catch (error) {
       console.error(error);
@@ -579,6 +667,7 @@ export default function RegisterPage() {
             : "No se ha podido conectar con el servidor.",
         variant: "destructive",
       });
+      setMessage("Error de conexión.");
     } finally {
       setIsLoading(false);
     }
@@ -598,15 +687,15 @@ export default function RegisterPage() {
           <h1 className='text-2xl md:text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
             ¡Registro completado!
           </h1>
-          <p className='text-green-600 mb-6 font-medium'>{message}</p>
+          <p className='text-gray-700 mb-6 font-medium'>{message}</p>{" "}
+          {/* Usar el mensaje del estado para consistencia */}
           <p className='text-gray-600 mb-8 text-sm md:text-base'>
-            Te hemos enviado un correo de verificación. Por favor, revisa tu
-            bandeja de entrada y sigue las instrucciones para activar tu cuenta.
+            Sigue las instrucciones enviadas a tu correo para activar tu cuenta.
           </p>
           <Button
             onClick={() => router.push("/login")}
-            className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
-            Ir a iniciar sesión
+            className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3'>
+            Ir a Iniciar Sesión
           </Button>
         </motion.div>
       </div>
@@ -620,10 +709,9 @@ export default function RegisterPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className='bg-white w-full max-w-5xl shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row'>
-        {/* Columna izquierda: Solo logo e información sin foto de fondo */}
         <div className='relative md:w-2/5 min-h-[250px] md:min-h-0 bg-gradient-to-br from-purple-900 to-purple-700 flex flex-col items-center justify-center p-8'>
           <Image
-            src='/is_white_bg.jpg'
+            src='/is_white_bg.jpg' // Asegúrate que esta ruta sea correcta desde la carpeta public
             alt='Investiga Sanidad'
             width={300}
             height={75}
@@ -644,7 +732,6 @@ export default function RegisterPage() {
           </motion.div>
         </div>
 
-        {/* Columna derecha: Formulario */}
         <div className='md:w-3/5 p-6 md:p-8'>
           <div className='flex justify-center mb-6 md:mb-8'>
             <div className='flex space-x-2 md:space-x-4 overflow-x-auto w-full justify-center'>
@@ -672,17 +759,22 @@ export default function RegisterPage() {
           <AnimatePresence mode='wait'>
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: step === 0 ? 0 : 20 }} // Ajustar animación inicial para el primer paso
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}>
-              <form className='space-y-5' onSubmit={handleSubmitFinal}>
+              <form
+                className='space-y-5'
+                onSubmit={
+                  step === 2 ? handleSubmitFinal : (e) => e.preventDefault()
+                }>
+                {" "}
+                {/* Prevenir submit en pasos intermedios */}
                 {step === 0 && (
                   <>
-                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
-                      Paso 1: DNI/NIE/Pasaporte
+                    <h2 className='text-xl font-semibold mb-5 text-gray-700'>
+                      Paso 1: DNI/NIE/Pasaporte y Acceso
                     </h2>
-                    {/* Identificador */}
                     <div className='space-y-2'>
                       <Label htmlFor='id' className='text-gray-700 font-medium'>
                         DNI/NIE/Pasaporte{" "}
@@ -696,10 +788,9 @@ export default function RegisterPage() {
                         required
                         value={formData.id}
                         onChange={handleChange}
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                        className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm'
                       />
                     </div>
-                    {/* Email */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='email'
@@ -714,18 +805,17 @@ export default function RegisterPage() {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                        className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm'
                       />
                       {emailError && (
                         <motion.p
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className='mt-1 text-sm text-red-600'>
+                          className='mt-1 text-xs text-red-600'>
                           {emailError}
                         </motion.p>
                       )}
                     </div>
-                    {/* Password */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='password'
@@ -740,12 +830,12 @@ export default function RegisterPage() {
                           required
                           value={formData.password}
                           onChange={handleChange}
-                          className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
+                          className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm pr-10'
                         />
                         <button
                           type='button'
                           onClick={() => setShowPassword(!showPassword)}
-                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1'
                           aria-label='Toggle password visibility'>
                           {showPassword ? (
                             <EyeOff className='w-5 h-5' />
@@ -755,7 +845,6 @@ export default function RegisterPage() {
                         </button>
                       </div>
                     </div>
-                    {/* Confirm Password */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='confirmPassword'
@@ -771,14 +860,14 @@ export default function RegisterPage() {
                           required
                           value={formData.confirmPassword}
                           onChange={handleChange}
-                          className='bg-white border-gray-200 focus:border-purple-500 transition-all pr-10'
+                          className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm pr-10'
                         />
                         <button
                           type='button'
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                          className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1'
                           aria-label='Toggle confirm password visibility'>
                           {showConfirmPassword ? (
                             <EyeOff className='w-5 h-5' />
@@ -790,13 +879,11 @@ export default function RegisterPage() {
                     </div>
                   </>
                 )}
-
                 {step === 1 && (
                   <>
-                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
+                    <h2 className='text-xl font-semibold mb-5 text-gray-700'>
                       Paso 2: Datos Personales
                     </h2>
-                    {/* Nombre */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='firstName'
@@ -810,10 +897,9 @@ export default function RegisterPage() {
                         value={formData.firstName}
                         onChange={handleChange}
                         required
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                        className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm'
                       />
                     </div>
-                    {/* Apellido */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='lastName'
@@ -827,10 +913,9 @@ export default function RegisterPage() {
                         value={formData.lastName}
                         onChange={handleChange}
                         required
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                        className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm'
                       />
                     </div>
-                    {/* Teléfono */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='phone'
@@ -845,10 +930,10 @@ export default function RegisterPage() {
                         onChange={handleChange}
                         placeholder='6XX XXX XXX'
                         required
-                        className='bg-white border-gray-200 focus:border-purple-500 transition-all'
+                        className='bg-white border-gray-300 focus:border-purple-500 transition-all shadow-sm'
                       />
                     </div>
-                    {/* Categoría Profesional */}
+                    {/* Categoría Profesional con datos del backend */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='professionalCategory'
@@ -856,31 +941,42 @@ export default function RegisterPage() {
                         Categoría profesional{" "}
                         <span className='text-red-500'>*</span>
                       </Label>
-                      <select
-                        id='professionalCategory'
-                        name='professionalCategory'
-                        value={formData.professionalCategory}
-                        onChange={handleChange}
-                        required
-                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 transition-all'>
-                        <option value=''>
-                          Selecciona tu categoría profesional
-                        </option>
-                        <option value='medico'>Médico</option>
-                        <option value='enfermero'>Enfermero</option>
-                        <option value='farmaceutico'>Farmacéutico</option>
-                        <option value='dentista'>Dentista</option>
-                        <option value='fisioterapeuta'>Fisioterapeuta</option>
-                        <option value='tecnico_lab'>
-                          Técnico de laboratorio
-                        </option>
-                        <option value='auxiliar_enfermeria'>
-                          Auxiliar de enfermería
-                        </option>
-                        <option value='otro'>Otro</option>
-                      </select>
+                      <div className='relative'>
+                        <select
+                          id='professionalCategory'
+                          name='professionalCategory'
+                          value={formData.professionalCategory}
+                          onChange={handleChange}
+                          required
+                          disabled={isLoadingCategories} // Deshabilitar mientras carga
+                          className='w-full border border-gray-300 rounded-md p-2.5 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-300/50 transition-all shadow-sm appearance-none pr-8'>
+                          <option value='' disabled={isLoadingCategories}>
+                            {isLoadingCategories
+                              ? "Cargando categorías..."
+                              : "Selecciona tu categoría"}
+                          </option>
+                          {!isLoadingCategories &&
+                            professionalCategories.length === 0 && (
+                              <option value='' disabled>
+                                No hay categorías disponibles
+                              </option>
+                            )}
+                          {professionalCategories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {" "}
+                              {/* Usar cat.id como value */}
+                              {cat.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        {isLoadingCategories && (
+                          <Loader2 className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-500' />
+                        )}
+                        {!isLoadingCategories && (
+                          <ChevronDown className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none' />
+                        )}
+                      </div>
                     </div>
-                    {/* Género */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='gender'
@@ -892,22 +988,22 @@ export default function RegisterPage() {
                         name='gender'
                         value={formData.gender}
                         onChange={handleChange}
-                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                        className='w-full border border-gray-300 rounded-md p-2.5 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-300/50 transition-all shadow-sm appearance-none pr-8'>
                         <option value=''>Selecciona tu género</option>
                         <option value='M'>Masculino</option>
                         <option value='F'>Femenino</option>
                         <option value='Otro'>Otro</option>
                       </select>
+                      <ChevronDown className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none' />{" "}
+                      {/* Posicionar este icono correctamente si se usa un div relativo en el select */}
                     </div>
                   </>
                 )}
-
                 {step === 2 && (
                   <>
-                    <h2 className='text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-600'>
+                    <h2 className='text-xl font-semibold mb-5 text-gray-700'>
                       Paso 3: Ubicación y Términos
                     </h2>
-                    {/* País */}
                     <div className='space-y-2'>
                       <Label
                         htmlFor='country'
@@ -920,12 +1016,12 @@ export default function RegisterPage() {
                         required
                         value={formData.country}
                         onChange={handleChange}
-                        className='w-full border border-gray-200 rounded-md p-2 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all'>
+                        className='w-full border border-gray-300 rounded-md p-2.5 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-300/50 transition-all shadow-sm appearance-none pr-8'>
                         <option value='España'>España</option>
                         <option value='Otros'>Otros</option>
                       </select>
+                      <ChevronDown className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none' />
                     </div>
-                    {/* Selección múltiple de Comunidades Autónomas con MultiSelect */}
                     {formData.country === "España" && (
                       <div className='space-y-2'>
                         <Label
@@ -943,104 +1039,108 @@ export default function RegisterPage() {
                         />
                       </div>
                     )}
-                    {/* Términos y Condiciones */}
-                    <div className='flex items-center space-x-2 mt-4'>
+                    <div className='items-top flex space-x-2 mt-4 pt-2 border-t'>
+                      {" "}
+                      {/* Alineación y borde superior */}
                       <input
                         type='checkbox'
                         id='termsAccepted'
                         name='termsAccepted'
                         checked={termsAccepted}
                         onChange={(e) => setTermsAccepted(e.target.checked)}
-                        className='h-4 w-4'
+                        className='h-4 w-4 accent-purple-600 mt-1'
                       />
-                      <label
-                        htmlFor='termsAccepted'
-                        className='text-sm text-gray-700'>
-                        Acepto los{" "}
-                        <button
-                          type='button'
-                          onClick={() => setShowTermsModal(true)}
-                          className='text-purple-600 underline'>
-                          Términos y Condiciones
-                        </button>
-                      </label>
+                      <div className='grid gap-1.5 leading-none'>
+                        <label
+                          htmlFor='termsAccepted'
+                          className='text-sm font-medium text-gray-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                          Acepto los{" "}
+                          <button
+                            type='button'
+                            onClick={() => setShowTermsModal(true)}
+                            className='text-purple-600 underline hover:text-purple-800'>
+                            Términos y Condiciones
+                          </button>{" "}
+                          <span className='text-red-500'>*</span>
+                        </label>
+                        {!termsAccepted &&
+                          step === 2 && ( // Mostrar solo si no aceptado y en el último paso antes de submit
+                            <p className='text-xs text-red-500'>
+                              Debes aceptar los términos para continuar.
+                            </p>
+                          )}
+                      </div>
                     </div>
-                    {/* Consentimiento para comunicaciones (infoAccepted) */}
-                    <div className='flex items-center space-x-2 mt-4'>
+                    <div className='items-top flex space-x-2 mt-3'>
                       <input
                         type='checkbox'
                         id='infoAccepted'
                         name='infoAccepted'
                         checked={infoAccepted}
                         onChange={(e) => setInfoAccepted(e.target.checked)}
-                        className='h-4 w-4'
+                        className='h-4 w-4 accent-purple-600 mt-1'
                       />
                       <label
                         htmlFor='infoAccepted'
-                        className='text-sm text-gray-700'>
+                        className='text-sm font-medium text-gray-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
                         Acepto el envío de comunicaciones y promociones por
                         parte de Investiga Sanidad
                       </label>
                     </div>
                   </>
                 )}
-
-                {message && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='text-center text-red-600 bg-red-50 p-2 rounded-md'>
-                    {message}
-                  </motion.p>
-                )}
-
-                <div className='flex justify-between mt-8'>
+                {message &&
+                  !emailError &&
+                  step ===
+                    0 /* Mostrar mensaje general solo si no hay error de email */ && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className='mt-2 text-center text-sm text-red-600 bg-red-50 p-2 rounded-md'>
+                      {message}
+                    </motion.p>
+                  )}
+                {message &&
+                  step !== 0 /* Mostrar mensaje general en otros pasos */ && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className='mt-2 text-center text-sm text-red-600 bg-red-50 p-2 rounded-md'>
+                      {message}
+                    </motion.p>
+                  )}
+                <div
+                  className={`flex mt-8 ${
+                    step === 0 ? "justify-end" : "justify-between"
+                  }`}>
                   {step > 0 && (
                     <Button
                       variant='outline'
                       onClick={handleBack}
-                      className='border-purple-500 text-purple-700 hover:bg-purple-50'>
-                      <ArrowLeft className='mr-2 h-4 w-4' />
-                      Anterior
+                      className='border-purple-500 text-purple-700 hover:bg-purple-50/80'>
+                      <ArrowLeft className='mr-2 h-4 w-4' /> Anterior
                     </Button>
                   )}
                   {step < 2 && (
                     <Button
                       onClick={handleNext}
-                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
-                      Siguiente
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white'>
+                      Siguiente <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   )}
                   {step === 2 && (
                     <Button
                       type='submit'
                       disabled={isLoading || !termsAccepted}
-                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'>
+                      className='ml-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white disabled:opacity-70'>
                       {isLoading ? (
                         <span className='flex items-center'>
-                          <svg
-                            className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
-                            xmlns='http://www.w3.org/2000/svg'
-                            fill='none'
-                            viewBox='0 0 24 24'>
-                            <circle
-                              className='opacity-25'
-                              cx='12'
-                              cy='12'
-                              r='10'
-                              stroke='currentColor'
-                              strokeWidth='4'></circle>
-                            <path
-                              className='opacity-75'
-                              fill='currentColor'
-                              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-                          </svg>
+                          <Loader2 className='animate-spin -ml-1 mr-2 h-4 w-4 text-white' />{" "}
                           Procesando...
                         </span>
                       ) : (
                         <span className='flex items-center'>
-                          Finalizar
+                          Finalizar Registro{" "}
                           <UserPlus className='ml-2 h-4 w-4' />
                         </span>
                       )}
@@ -1049,7 +1149,7 @@ export default function RegisterPage() {
                 </div>
               </form>
               <div className='mt-8 text-center'>
-                <p className='text-gray-600'>
+                <p className='text-sm text-gray-600'>
                   ¿Ya tienes una cuenta?{" "}
                   <Link
                     href='/login'
@@ -1068,15 +1168,38 @@ export default function RegisterPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
-            <div className='bg-white rounded-lg p-6 max-w-3xl mx-auto relative'>
-              <button
-                onClick={() => setShowTermsModal(false)}
-                className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'>
-                Cerrar
-              </button>
-              <Terminos />
-            </div>
+            className='fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className='bg-white rounded-lg shadow-2xl max-w-3xl w-full mx-auto relative max-h-[90vh] flex flex-col'>
+              <div className='flex justify-between items-center p-4 border-b'>
+                <h2 className='text-lg font-semibold text-gray-800'>
+                  Términos y Condiciones
+                </h2>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => setShowTermsModal(false)}
+                  className='text-gray-500 hover:text-gray-800'>
+                  <X className='h-5 w-5' />
+                </Button>
+              </div>
+              <div className='overflow-y-auto flex-grow'>
+                <Terminos />
+              </div>
+              <div className='p-4 border-t flex justify-end'>
+                <Button
+                  onClick={() => {
+                    setTermsAccepted(true);
+                    setShowTermsModal(false);
+                  }}
+                  className='bg-purple-600 hover:bg-purple-700 text-white'>
+                  Aceptar Términos
+                </Button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1084,7 +1207,6 @@ export default function RegisterPage() {
   );
 }
 
-// Componente StepIndicator
 interface StepIndicatorProps {
   stepNumber: number;
   label: string;
@@ -1100,11 +1222,11 @@ function StepIndicator({
 }: StepIndicatorProps) {
   return (
     <div
-      className={`flex flex-col items-center transition-all duration-300 ${
+      className={`flex flex-col items-center transition-all duration-300 min-w-[80px] sm:min-w-[100px] ${
         active ? "opacity-100" : completed ? "opacity-90" : "opacity-60"
       }`}>
       <div
-        className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+        className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all duration-300 text-sm font-semibold ${
           completed
             ? "bg-purple-600 text-white"
             : active
@@ -1118,11 +1240,11 @@ function StepIndicator({
         )}
       </div>
       <span
-        className={`text-xs md:text-sm font-medium mt-1 ${
+        className={`text-xs text-center md:text-sm font-medium mt-1.5 ${
           active
-            ? "text-purple-900"
-            : completed
             ? "text-purple-700"
+            : completed
+            ? "text-purple-600"
             : "text-gray-500"
         }`}>
         {label}

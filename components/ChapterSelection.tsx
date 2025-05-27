@@ -27,6 +27,7 @@ interface ChapterSelectionProps {
   editionId?: string | number;
   isRegulationsAccepted: boolean;
   onRegulationsAcceptChange: (accepted: boolean) => void;
+  maxChaptersAllowed: number;
 }
 
 export default function ChapterSelection({
@@ -36,9 +37,9 @@ export default function ChapterSelection({
   editionId,
   isRegulationsAccepted,
   onRegulationsAcceptChange,
+  maxChaptersAllowed,
 }: ChapterSelectionProps) {
-  const maxChapters = 8;
-  const remaining = maxChapters - purchasedChapters;
+  const remaining = Math.max(0, maxChaptersAllowed - purchasedChapters);
   const options = Array.from({ length: remaining }, (_, i) => i + 1);
   const [regulationsModalOpen, setRegulationsModalOpen] = useState(false);
 

@@ -67,7 +67,7 @@ export default function CertificatesPage() {
     const fetchCertificates = async () => {
       setLoading(true);
       try {
-        const token = sessionStorage.getItem("token"); // O localStorage, según dónde lo guardes
+        const token = localStorage.getItem("token"); // O localStorage, según dónde lo guardes
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/certificates/user/${user.id}`,
           {

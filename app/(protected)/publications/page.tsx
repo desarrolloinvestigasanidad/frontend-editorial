@@ -15,6 +15,7 @@ import {
   ArrowRight,
   PlusCircle,
   MessageCircleWarning,
+  ExternalLink,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -30,6 +31,7 @@ type Book = {
   subtitle?: string;
   bookType: string;
   cover?: string;
+  documentUrl?: string;
   openDate?: string;
   deadlineChapters?: string;
   publishDate?: string;
@@ -74,6 +76,7 @@ export default function PublicationsPage() {
         const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
         const headers = { Authorization: `Bearer ${token}` };
 
+        // 1. Obtener solo los libros donde el usuario es el autor principal
         const ownRes = await fetch(`${base}/books?authorId=${userId}`, {
           headers,
         });
@@ -81,10 +84,15 @@ export default function PublicationsPage() {
           throw new Error(
             `Error al obtener libros propios: ${ownRes.statusText}`
           );
-        let ownData: Book[] = (await ownRes.json()).filter(
+
+        // Filtra para excluir ediciones, si es necesario para los libros propios
+        const ownData: Book[] = (await ownRes.json()).filter(
           (book: Book) => !book.editionId
         );
 
+        // --- SECCIÓN DE COAUTOR ELIMINADA ---
+        // La siguiente sección que obtenía coAuthoredRes y coAuthoredData ha sido eliminada.
+        /*
         const coAuthoredRes = await fetch(
           `${base}/books/coauthor?userId=${userId}`,
           { headers }
@@ -99,20 +107,26 @@ export default function PublicationsPage() {
             "Error al obtener libros de coautor, continuando sin ellos."
           );
         }
+        */
 
-        const allBooksMap = new Map<string, Book>();
-        coAuthoredData.forEach((b) => allBooksMap.set(b.id, b));
-        ownData.forEach((b) => allBooksMap.set(b.id, b));
-
-        setBooks(Array.from(allBooksMap.values()));
+        // 2. Establecer el estado 'books' solo con los libros propios.
+        // Si ownData ya es una lista de libros únicos y no necesitas la lógica del Map para deduplicar
+        // (porque solo hay una fuente de datos), puedes hacer directamente:
+        // setBooks(ownData);
+        // O, para mantener una estructura similar por si se reintroduce otra fuente en el futuro
+        // o para asegurar unicidad si la API pudiera devolver duplicados para authorId:
+        const booksMap = new Map<string, Book>();
+        ownData.forEach((b) => booksMap.set(b.id, b));
+        setBooks(Array.from(booksMap.values()));
       } catch (err) {
         console.error("Error detallado al cargar publicaciones:", err);
+        setBooks([]); // Es buena práctica limpiar los libros en caso de error
       } finally {
         setLoading(false);
       }
     };
     fetchBooks();
-  }, [userId]);
+  }, [userId]); // El efecto depende de userId
 
   const personalBooks = useMemo(
     () =>
@@ -501,6 +515,21 @@ function BookGrid({
                   <ArrowRight className='h-5 w-5 transition-transform duration-300 group-hover:translate-x-1' />
                 </Button>
               </Link>
+              {book.documentUrl && (
+                <a
+                  href={book.documentUrl}
+                  target='_blank' // Abrir en una nueva pestaña
+                  rel='noopener noreferrer' // Buenas prácticas de seguridad para target="_blank"
+                  className='block'>
+                  <Button
+                    variant='outline' // Un estilo diferente para distinguirlo
+                    size='lg'
+                    className='w-full border-purple-600 text-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300 ease-in-out transform group-hover:scale-105 group-hover:shadow-lg flex items-center justify-center gap-2 shadow-md'>
+                    Ver Libro Generado
+                    <ExternalLink className='h-5 w-5' />
+                  </Button>
+                </a>
+              )}
             </div>
           </div>
         </motion.div>

@@ -10,8 +10,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, ArrowRight, Loader2 } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 
 export default function LoginPage() {
+  const { refreshUser } = useUser();
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(true);
   const [formData, setFormData] = useState({
@@ -58,7 +60,8 @@ export default function LoginPage() {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("token", data.token);
-        router.replace("/dashboard");
+        await refreshUser();
+        window.location.href = "/dashboard";
       } else {
         setMessage(
           data.message || "Error al iniciar sesión. Verifica tus credenciales."

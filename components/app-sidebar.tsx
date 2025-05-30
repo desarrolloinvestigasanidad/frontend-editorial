@@ -25,6 +25,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/context/UserContext";
 
 interface AppSidebarProps {
   editionId?: string;
@@ -37,7 +38,7 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
   const [hasBookPayments, setHasBookPayments] = useState(false);
   const [hasChapterPayments, setHasChapterPayments] = useState(false);
   const [hasParticipatingBooks, setHasParticipatingBooks] = useState(false);
-
+  const { setUser } = useUser();
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -125,7 +126,9 @@ export function AppSidebar({ editionId }: AppSidebarProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.push("/login");
+    localStorage.removeItem("userId");
+    setUser(null); // Reinicia el contexto
+    router.replace("/login"); // redirección segura
   };
 
   return (

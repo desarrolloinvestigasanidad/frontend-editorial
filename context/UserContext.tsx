@@ -48,9 +48,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
+      localStorage.removeItem("userId");
+      setUser(null);
       setLoading(false);
       return;
     }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/users/profile`,
@@ -62,15 +65,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       );
+
+      if (res.status === 401 || res.status === 403) {
+        // Token inválido o expirado
+        console.warn("Token expirado o inválido. Cerrando sesión...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        setUser(null);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error("Error al obtener el perfil");
       }
+
       const data: User = await res.json();
       setUser(data);
-      // Guarda el userId para usarlo en otros componentes
       localStorage.setItem("userId", data.id);
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
       setUser(null);
     } finally {
       setLoading(false);

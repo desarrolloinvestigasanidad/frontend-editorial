@@ -79,7 +79,7 @@ export default function CertificatesPage() {
           throw new Error("Error al cargar los certificados");
         }
         const backendCerts: BackendCertificate[] = await response.json();
-
+        console.log(backendCerts);
         // Mapear los certificados del backend al formato de visualización
         // Esta parte es crucial y puede necesitar más lógica para obtener bookTitle/chapterTitle
         // si no vienen directamente con el certificado.

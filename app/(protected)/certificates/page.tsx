@@ -466,7 +466,7 @@ function CertificateList({
               <Button
                 variant='outline'
                 className='border-purple-600 text-purple-700 hover:bg-purple-50' // Estilo mejorado
-                onClick={() => router.push("/dashboard/editions")}>
+                onClick={() => router.push("/editions")}>
                 {" "}
                 {/* Ruta actualizada si es dashboard */}
                 Ver Ediciones

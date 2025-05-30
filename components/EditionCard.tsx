@@ -89,7 +89,7 @@ export function EditionCard({
   const isActive = state === "abierta";
   if (isActive) {
     cardWidth = "w-[600px]";
-    cardMinHeight = "min-h-[270px]";
+    cardMinHeight = "min-h-[220px]";
   }
 
   let cardInnerClass = `relative ${cardWidth} ${cardMinHeight} ${

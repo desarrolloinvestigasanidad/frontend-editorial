@@ -1,4 +1,4 @@
-// components/EditionCard.tsx (o similar)
+"use client";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,6 @@ import {
   CalendarClock,
 } from "lucide-react";
 
-// Funciones helper (getEditionState, getBadgeStyle, getStateIcon)
-// ... (estas funciones pueden permanecer en EditionsPage.tsx o moverse aquí si EditionCard es independiente)
-// Por simplicidad, asumiré que se pasarán como props o se redefinirán aquí si es necesario.
-// Para este ejemplo, las pasaré como props implícitas o las definiré dentro.
-
-// Pegar aquí las funciones getEditionState, getBadgeStyle, getStateIcon
-// O importarlas si las modularizas. Por ahora, las copio para que el componente sea autocontenido:
-
 function getEditionState(edition: any) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -29,9 +21,7 @@ function getEditionState(edition: any) {
   const publishDate = edition.publishDate
     ? new Date(edition.publishDate)
     : null;
-  if (publishDate) {
-    publishDate.setHours(0, 0, 0, 0);
-  }
+  if (publishDate) publishDate.setHours(0, 0, 0, 0);
 
   if (publishDate && publishDate <= today) return "publicada";
   if (openDate <= today && today <= deadline) return "abierta";
@@ -90,8 +80,22 @@ export function EditionCard({
   const stateIcon = getStateIcon(state, displayType);
 
   let cardOuterClass = "group";
-  let cardInnerClass =
-    "relative backdrop-blur-sm bg-white/90 p-6 rounded-2xl shadow-lg border h-full transition-all duration-300 hover:shadow-xl flex flex-col";
+
+  // Tamaño base
+  let cardWidth = "w-[320px]";
+  let cardMinHeight = "h-[180px]";
+
+  // Si es edición abierta (activa), agrandar y colorear fondo
+  const isActive = state === "abierta";
+  if (isActive) {
+    cardWidth = "w-[600px]";
+    cardMinHeight = "min-h-[270px]";
+  }
+
+  let cardInnerClass = `relative ${cardWidth} ${cardMinHeight} ${
+    isActive ? "bg-green-50" : "bg-white/90"
+  } backdrop-blur-sm p-6 rounded-2xl shadow-lg border h-full transition-all duration-300 hover:shadow-xl flex flex-col`;
+
   let titleClass = "text-xl font-bold transition-colors truncate";
   let iconContainerClass =
     "p-3 rounded-full mr-3 transition-colors duration-300 group-hover:scale-110";
@@ -101,8 +105,8 @@ export function EditionCard({
   let showFullDescription = true;
   let buttonSize: "default" | "sm" | "lg" = "default";
 
-  // --- ESTILOS GLOBALES POR ESTADO (Color de acento) ---
-  let accentColorClass = "purple"; // Default
+  // Colores
+  let accentColorClass = "purple";
   if (state === "abierta") accentColorClass = "green";
   else if (state === "cerrada") accentColorClass = "yellow";
   else if (state === "publicada") accentColorClass = "blue";
@@ -113,9 +117,9 @@ export function EditionCard({
   decorativeBlobClass += ` bg-${accentColorClass}-100 group-hover:bg-${accentColorClass}-200`;
   titleClass += ` text-${accentColorClass}-700`;
 
-  // --- AJUSTES ESPECÍFICOS POR TIPO DE DISPLAY ---
+  // Ajustes por displayType
   if (displayType === "prominent") {
-    cardInnerClass = cardInnerClass.replace("p-6", "p-8"); // Más padding
+    cardInnerClass = cardInnerClass.replace("p-6", "p-8");
     titleClass = titleClass.replace("text-xl", "text-2xl md:text-3xl");
     descriptionClass = descriptionClass.replace("text-sm", "text-base");
     iconContainerClass = iconContainerClass.replace("p-3", "p-4");
@@ -124,12 +128,12 @@ export function EditionCard({
   } else if (displayType === "compact") {
     cardInnerClass = cardInnerClass.replace("p-6", "p-4");
     titleClass = titleClass.replace("text-xl", "text-lg");
-    showFullDescription = false; // No mostrar descripción completa o resumirla
-    decorativeBlobClass = "hidden"; // Ocultar blob decorativo
+    showFullDescription = false;
+    decorativeBlobClass = "hidden";
     buttonSize = "sm";
   }
 
-  // --- LÓGICA DEL BOTÓN Y DESCRIPCIÓN (como antes) ---
+  // Botón y navegación
   let buttonText = "Ver Detalles";
   let buttonLink = `/editions/${edition.id}`;
   let buttonIcon = <ArrowRight className='ml-2 h-4 w-4' />;

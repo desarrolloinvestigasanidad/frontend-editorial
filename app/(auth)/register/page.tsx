@@ -703,7 +703,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-white to-purple-50'>
+    <div className='min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#f7ad0040] via-white to-[#52338a40]'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1124,7 +1124,7 @@ export default function RegisterPage() {
                   {step < 2 && (
                     <Button
                       onClick={handleNext}
-                      className='ml-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white'>
+                      className='ml-auto bg-gradient-to-r from-purple-600 to-[#52338a] hover:from-purple-700 hover:to-purple-800 text-white'>
                       Siguiente <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   )}

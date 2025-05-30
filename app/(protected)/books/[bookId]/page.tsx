@@ -119,26 +119,6 @@ export default function BookDetailsPage({ params }: BookDetailsProps) {
 
       <div className='container mx-auto px-4 relative z-10'>
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className='flex items-center justify-between mb-8'>
-          <div className='flex items-center gap-4'>
-            <Link href='/books'>
-              <Button
-                variant='ghost'
-                className='flex items-center text-purple-700 hover:text-purple-900 hover:bg-purple-50'>
-                <ArrowLeft className='mr-1 h-4 w-4' />
-                Volver
-              </Button>
-            </Link>
-          </div>
-          <div className='inline-block text-sm font-medium py-1 px-3 rounded-full bg-purple-100 text-purple-700'>
-            Libro Propio
-          </div>
-        </motion.div>
-
-        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}

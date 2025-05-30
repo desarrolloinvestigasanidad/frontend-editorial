@@ -515,7 +515,7 @@ export default function ProfilePage() {
                   ) : (
                     <Button
                       onClick={handleEdit}
-                      className='mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'>
+                      className='mt-8 bg-gradient-to-r from-[#52338a]  to-[#52338a40] hover:from-[#52338a] hover:to-pink-700 text-white'>
                       <Edit className='mr-2 h-4 w-4' /> Editar Perfil
                     </Button>
                   )}

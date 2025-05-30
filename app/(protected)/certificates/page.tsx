@@ -552,17 +552,6 @@ function CertificateList({
             </div>
             <div className='mt-auto pt-4 border-t border-gray-200/60 flex flex-col sm:flex-row justify-end gap-3'>
               {" "}
-              {/* mt-auto para empujar al fondo */}
-              <Button
-                variant='outline'
-                size='sm'
-                className='w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400' // Estilo neutro
-                onClick={() => onView(cert.pdfUrl)}
-                onMouseEnter={() => handleMouseEnter(`view-${cert.id}`)}
-                onMouseLeave={() => handleMouseLeave(`view-${cert.id}`)}>
-                <Eye className='h-4 w-4 mr-2' />
-                Previsualizar
-              </Button>
               <Button
                 size='sm'
                 className='w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700' // Estilo principal

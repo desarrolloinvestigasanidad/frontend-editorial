@@ -1396,7 +1396,7 @@ export default function SubmitChapterPage({ params }: SubmitChapterProps) {
       setChapterId(chapterId);
 
       // Mostrar el diálogo de invitación de coautores
-      setShowAuthorInvitation(true);
+      // setShowAuthorInvitation(true);
 
       setSuccess(true);
       // No redirigir inmediatamente para permitir la invitación de coautores

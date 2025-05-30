@@ -473,7 +473,7 @@ function CertificateList({
               </Button>
               <Button
                 className='bg-gradient-to-r from-purple-600 to-indigo-600 text-white' // Estilo mejorado
-                onClick={() => router.push("/dashboard/books/new")}>
+                onClick={() => router.push("/create-book")}>
                 {" "}
                 {/* Ruta actualizada si es dashboard */}
                 Crear Libro

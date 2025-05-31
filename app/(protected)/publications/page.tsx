@@ -77,7 +77,7 @@ export default function PublicationsPage() {
         const headers = { Authorization: `Bearer ${token}` };
 
         // 1. Obtener solo los libros donde el usuario es el autor principal
-        const ownRes = await fetch(`${base}/books?authorId=${userId}`, {
+        const ownRes = await fetch(`${base}/books?userId=${userId}`, {
           headers,
         });
         if (!ownRes.ok)
